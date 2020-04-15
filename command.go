@@ -14,6 +14,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/shuLhan/share/lib/io"
 	libssh "github.com/shuLhan/share/lib/ssh"
 )
 
@@ -35,8 +36,6 @@ func New(env *Environment) (cmd *Command) {
 		env: env,
 	}
 
-	env.initialize()
-
 	return cmd
 }
 
@@ -44,13 +43,19 @@ func New(env *Environment) (cmd *Command) {
 // copy file in local system.
 //
 func (cmd *Command) copy(stmt []byte) (err error) {
-	return
-}
+	stmt = bytes.TrimSpace(stmt[5:])
 
-func (cmd *Command) doBootstrap() {
-	cmd.script = newScript(cmd.env, cmd.env.scriptPath)
-	cmd.initSSHClient()
-	cmd.executeScript()
+	paths := bytes.Fields(stmt)
+	if len(paths) != 2 {
+		err = fmt.Errorf("invalid put statement: %s", stmt)
+		log.Println(err)
+		return
+	}
+
+	local := parseTemplate(cmd.env, string(paths[0]))
+	remote := string(paths[1])
+
+	return io.Copy(remote, local)
 }
 
 func (cmd *Command) doPlay() {
@@ -112,12 +117,10 @@ func (cmd *Command) put(stmt []byte) (err error) {
 // Run the script.
 //
 func (cmd *Command) Run() {
-	switch cmd.env.Mode {
-	case CommandModeBootstrap:
-		cmd.doBootstrap()
-	case CommandModeLocal:
+	switch cmd.env.mode {
+	case modeLocal:
 		cmd.doLocal()
-	case CommandModePlay:
+	case modePlay:
 		cmd.doPlay()
 	}
 }
@@ -135,7 +138,7 @@ func (cmd *Command) exec(stmt string) (err error) {
 }
 
 func (cmd *Command) executeLocalScript() {
-	for x := cmd.env.ScriptStart; x <= cmd.env.ScriptEnd; x++ {
+	for x := cmd.env.scriptStart; x <= cmd.env.scriptEnd; x++ {
 		stmt := cmd.script.Statements[x]
 
 		stmt = bytes.TrimSpace(stmt)
@@ -172,7 +175,7 @@ func (cmd *Command) executeLocalScript() {
 }
 
 func (cmd *Command) executeScript() {
-	for x := cmd.env.ScriptStart; x <= cmd.env.ScriptEnd; x++ {
+	for x := cmd.env.scriptStart; x <= cmd.env.scriptEnd; x++ {
 		stmt := cmd.script.Statements[x]
 
 		stmt = bytes.TrimSpace(stmt)
@@ -209,16 +212,7 @@ func (cmd *Command) executeScript() {
 }
 
 func (cmd *Command) initSSHClient() {
-	var remoteUser string
-
-	if cmd.env.Mode == CommandModeBootstrap {
-		remoteUser = cmd.env.Val("ssh::bootstrap-as")
-		if len(remoteUser) == 0 {
-			remoteUser = cmd.env.Val("ssh::user")
-		}
-	} else {
-		remoteUser = cmd.env.Val("ssh::user")
-	}
+	remoteUser := cmd.env.Val("ssh::user")
 
 	strPort := cmd.env.Val("ssh::port")
 
@@ -227,10 +221,13 @@ func (cmd *Command) initSSHClient() {
 		log.Fatalf("cmd: cannot convert port %q to number: %s", strPort, err.Error())
 	}
 
+	privateKeyFile := filepath.Join(cmd.env.BaseDir, cmd.env.ScriptDir,
+		"private.pem")
+
 	cc := &libssh.ClientConfig{
 		Environments:   cmd.env.Vars("ssh:environment"),
 		WorkingDir:     cmd.env.BaseDir,
-		PrivateKeyFile: filepath.Join(cmd.env.ServiceDir, "private.pem"),
+		PrivateKeyFile: privateKeyFile,
 		RemoteUser:     remoteUser,
 		RemoteHost:     cmd.env.Val("ssh::host"),
 		RemotePort:     remotePort,

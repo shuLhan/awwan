@@ -5,13 +5,8 @@
 package awwan
 
 const (
-	CommandModeBootstrap = "bootstrap"
-	CommandModeLocal     = "local"
-	CommandModePlay      = "play"
-)
+	modeLocal = "local"
+	modePlay  = "play"
 
-const (
-	providerAWS        = "aws"
-	providerGCP        = "gcp"
-	providerVirtualbox = "virtualbox"
+	envFileName = "awwan.env" // The default awwan environment file name.
 )

@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="theme-color" content="#375EAB" />
+
+		<title>awwan</title>
+		<link rel="stylesheet" href="_docs/style.css" />
+	</head>
+	<body>
+		<div class="topbar">
+			<div class="container">
+				<div class="top-heading">
+					<a href="/">awwan</a>
+				</div>
+				<div class="menu">
+					<a
+href="https://pkg.go.dev/github.com/shuLhan/awwan">GoDoc</a>
+				</div>
+			</div>
+		</div>
+
+		<div class="page">
+			<div class="container">
+				<h1>awwan</h1>
+				<div id="toc" class="toc">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#_background">Background</a></li>
+<li><a href="#_the_command">The command</a></li>
+<li><a href="#_the_script">The script</a></li>
+<li><a href="#_the_environment">The environment</a></li>
+<li><a href="#_the_workspace">The workspace</a></li>
+<li><a href="#_the_template">The template</a></li>
+</ul>
+</div>
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p><span class="image"><img src="https://img.shields.io/badge/go.dev-reference-007d9c?logo=go&logoColor=white&style=flat-square" alt="GoDoc"></span>
+<span class="image"><img src="https://goreportcard.com/badge/github.com/shuLhan/awwan" alt="Go Report Card"></span></p>
+</div>
+<div class="paragraph">
+<p><code>awwan</code> is command line interface to execute multiple lines of command in
+the local or remote server using SSH.</p>
+</div>
+<div class="paragraph">
+<p>Usage,</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>$ awwan &lt;command&gt; &lt;script&gt; [line-start] [line-end | &#34;-&#34;]</pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_background">Background</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Do you have a collection of shell scripts to manage one more similar server?
+Do you ever want to execute only part of your script?
+Are you get tired with learning others syntax and language for provisioning
+your own server, while you need is a handful of shell script?
+If yes, awwan is the right tools for you.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_the_command">The command</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>awwan only need four arguments, the first two are required, the rest is
+optional.</p>
+</div>
+<div class="paragraph">
+<p>The first two required arguments are the mode and the path to script to be
+executed.
+The last optional arguments are the line start and line end number.</p>
+</div>
+<div class="paragraph">
+<p>The first argument is mode.
+Its currently only have two values: &#34;local&#34; or &#34;play&#34;.
+The &#34;local&#34; mode execute the script in local environment, your own machine,
+without using SSH.
+The &#34;play&#34; mode execute the script in remote environment, your SSH server.</p>
+</div>
+<div class="paragraph">
+<p>The second argument is the path to the awwan script file.</p>
+</div>
+<div class="paragraph">
+<p>The third, optional, argument is line start number.
+Its define the line number in the script where awwan will start
+execution.
+If not defined, default to 1, start from the first line.</p>
+</div>
+<div class="paragraph">
+<p>The fourth, optional, argument is the line end number or &#34;-&#34; to set to the
+last line.
+Its define the line number in the script where awwan will stop executing the
+script.
+If not defined that it will be equal to the line start, which means awwan will
+execute only single line.
+Another value for this argument is &#34;-&#34;, its means execute the script from
+line-start until the last line.</p>
+</div>
+<div class="paragraph">
+<p>Here is some examples of how to execute awwan.</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Execute the first line of &#34;script.sh&#34; in local system.</p>
+</li>
+</ul>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>$ awwan local path/to/script.sh</pre>
+</div>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Execute only line 5 of &#34;script.sh&#34; on remote server,</p>
+</li>
+</ul>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>$ awwan play path/to/script.sh 5</pre>
+</div>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Execute line 5 until line 10 of &#34;script.sh&#34; on remote server,</p>
+</li>
+</ul>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>$ awwan play path/to/script.sh 5 10</pre>
+</div>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Execute line 5 until last line of &#34;script.sh&#34; on remote server,</p>
+</li>
+</ul>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>$ awwan play path/to/script.sh 5 -</pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_the_script">The script</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The awwan script is similar to shell script.
+Each line started with &#39;#&#39; is a comment, except for special, magic words that
+we will explain later.</p>
+</div>
+<div class="paragraph">
+<p>Here is an example of script that install Nginx on remote Arch Linux server
+using configuration from your local computer,</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>##
+## Setup nginx
+##
+sudo pacman -Sy --noconfirm nginx
+sudo systemctl enable nginx
+
+#put: {{.ScriptDir}}/etc/nginx/nginx.conf /tmp/
+sudo mv /tmp/nginx.conf /etc/nginx/
+
+sudo systemctl restart nginx
+sudo systemctl status nginx</pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_the_environment">The environment</h2>
+<div class="sectionbody">
+</div>
+</div>
+<div class="sect1">
+<h2 id="_the_workspace">The workspace</h2>
+<div class="sectionbody">
+</div>
+</div>
+<div class="sect1">
+<h2 id="_the_template">The template</h2>
+<div class="sectionbody">
+</div>
+</div>
+			</div>
+			
+		</div>
+		
+
+		<div class="footer">
+			Copyright 2019, Shulhan &lt;ms@kilabit.info&gt;. All rights reserved.
+			<br />
+			Use of this source code is governed by a BSD-style license that can be
+			found in the <a href="/LICENSE">LICENSE</a> file.
+		</div>
+	</body>
+</html>

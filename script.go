@@ -31,8 +31,8 @@ func newScript(env *Environment, path string) *script {
 
 	s := parseScript(env, content)
 
-	if env.ScriptEnd >= len(s.Statements) {
-		env.ScriptEnd = len(s.Statements) - 1
+	if env.scriptEnd >= len(s.Statements) {
+		env.scriptEnd = len(s.Statements) - 1
 	}
 
 	return s

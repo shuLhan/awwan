@@ -5,94 +5,187 @@
 package awwan
 
 import (
+	"fmt"
 	"io/ioutil"
-	"log"
+	"math"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/shuLhan/share/lib/ini"
 )
 
+//
+// Environment contains all of values required to execute the script.
+//
 type Environment struct {
-	Mode        string
-	ServiceDir  string
-	ScriptStart int
-	ScriptEnd   int
+	BaseDir   string // The current working directory.
+	ScriptDir string // The base directory of the script.
 
-	Provider string
-	Service  string
-	Name     string
+	mode        string // One of the mode to execute the script.
+	scriptPath  string // Location of the script in file system.
+	scriptName  string // The name of the script.
+	scriptStart int
+	scriptEnd   int
 
-	// BaseDir contains the current working directory.
-	BaseDir string
-
-	scriptPath string
-	// vars contains all variables in environment.
-	vars *ini.Ini
+	vars *ini.Ini // All variables from environment files.
 }
 
-func (env *Environment) initialize() {
-	var err error
+//
+// NewEnvironment create and initialize new Environment from command line
+// arguments.
+// The first argument must be the mode of command.
+// The second argument is the script to be executed.
+// The third argument is the line number where we want to start execute the
+// script.
+// The fourth argument is the line number where the script execution will end.
+//
+func NewEnvironment(args []string) (env *Environment, err error) {
+	if len(args) < 2 {
+		return nil, fmt.Errorf("invalid arguments")
+	}
+
+	env = &Environment{}
 
 	env.BaseDir, err = os.Getwd()
 	if err != nil {
-		log.Fatal("environment: os.Getwd: " + err.Error())
+		return nil, fmt.Errorf("NewEnvironment: %w", err)
 	}
 
-	fi, err := os.Stat(env.ServiceDir)
+	err = env.parseArgMode(args[0])
 	if err != nil {
-		log.Fatal("loadScript: " + err.Error())
+		return nil, err
 	}
 
-	switch env.Mode {
-	case CommandModeBootstrap:
-		if fi.IsDir() {
-			env.scriptPath = filepath.Join(env.ServiceDir, "bootstrap.aww")
-		} else {
-			env.scriptPath = env.ServiceDir
-			env.ServiceDir = filepath.Dir(env.ServiceDir)
-		}
+	env.parseArgScript(args[1])
 
-	case CommandModeLocal, CommandModePlay:
-		if fi.IsDir() {
-			env.scriptPath = filepath.Join(env.ServiceDir, "play.aww")
-		} else {
-			env.scriptPath = env.ServiceDir
-			env.ServiceDir = filepath.Dir(env.ServiceDir)
+	if len(args) >= 3 {
+		err = env.parseArgScriptStart(args[2])
+		if err != nil {
+			return nil, err
+		}
+	}
+	if len(args) >= 4 {
+		err = env.parseArgScriptEnd(args[3])
+		if err != nil {
+			return nil, err
 		}
 	}
 
-	env.load(filepath.Join(env.BaseDir, "env.ini"))
-	env.load(filepath.Join(env.ServiceDir, "env.ini"))
+	err = env.load(filepath.Join(env.BaseDir, envFileName))
+	if err != nil {
+		return nil, fmt.Errorf("NewEnvironment: %w", err)
+	}
+	err = env.load(filepath.Join(env.ScriptDir, envFileName))
+	if err != nil {
+		return nil, fmt.Errorf("NewEnvironment: %w", err)
+	}
+
+	return env, nil
 }
 
-func (env *Environment) load(file string) {
+//
+// parseArgMode parse the first argument given to environment, the mode of
+// execution.
+//
+func (env *Environment) parseArgMode(mode string) (err error) {
+	env.mode = strings.ToLower(mode)
+
+	switch env.mode {
+	case modeLocal:
+	case modePlay:
+	default:
+		return fmt.Errorf("unknown mode %q", env.mode)
+	}
+	return nil
+}
+
+//
+// parseArgScript parse the second argument, the script file.
+//
+func (env *Environment) parseArgScript(path string) {
+	path = filepath.Clean(path)
+
+	env.ScriptDir = filepath.Dir(path)
+	env.scriptName = filepath.Base(path)
+	env.scriptPath = path
+}
+
+//
+// parseArgScriptStart parse the third argument, the line start number.
+//
+func (env *Environment) parseArgScriptStart(start string) (err error) {
+	env.scriptStart, err = strconv.Atoi(start)
+	if err != nil {
+		fmt.Errorf("invalid start %q: %w", start, err)
+	}
+
+	if env.scriptStart < 0 {
+		env.scriptStart = 0
+	}
+
+	return nil
+}
+
+//
+// parseArgScriptEnd parse the fourth argument, the line end number or "-" for
+// the end of line.
+//
+func (env *Environment) parseArgScriptEnd(end string) (err error) {
+	if end == "-" {
+		env.scriptEnd = math.MaxInt32
+	} else {
+		env.scriptEnd, err = strconv.Atoi(os.Args[4])
+		if err != nil {
+			return fmt.Errorf("invalid end %q: %w", end, err)
+		}
+	}
+	if env.scriptEnd < env.scriptStart {
+		env.scriptEnd = env.scriptStart
+	}
+
+	return nil
+}
+
+//
+// load the environment variables from file.
+//
+func (env *Environment) load(file string) (err error) {
 	content, err := ioutil.ReadFile(file)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return
+			return nil
 		}
-		log.Fatal("environment: ioutil.ReadFile: " + err.Error())
+		return fmt.Errorf("load %q: %w", file, err)
 	}
 
-	env.parseEnvironment(content)
+	err = env.parse(content)
+	if err != nil {
+		return fmt.Errorf("load %q: %w", file, err)
+	}
+	return nil
 }
 
-func (env *Environment) parseEnvironment(content []byte) {
+//
+// parse the content of environment variables..
+//
+func (env *Environment) parse(content []byte) (err error) {
 	in, err := ini.Parse(content)
 	if err != nil {
-		log.Fatal("environment: ini.Parse: " + err.Error())
+		return err
 	}
 
 	in.Prune()
 
 	if env.vars == nil {
 		env.vars = in
-		return
+		return nil
 	}
 
 	env.vars.Rebase(in)
+
+	return nil
 }
 
 //

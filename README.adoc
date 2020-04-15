@@ -1,0 +1,113 @@
+= awwan
+:author: Shulhan
+:email: <ms@kilabit.info>
+:stylesheet: _docs/style.css
+:toc:
+:url-gocard: https://goreportcard.com/report/github.com/shuLhan/awwan
+:url-godoc: https://pkg.go.dev/github.com/shuLhan/awwan
+
+image:https://img.shields.io/badge/go.dev-reference-007d9c?logo=go&logoColor=white&style=flat-square[GoDoc, link={url-godoc}]
+image:https://goreportcard.com/badge/github.com/shuLhan/awwan[Go Report Card, link={url-gocard}]
+
+`awwan` is command line interface to execute multiple lines of command in
+the local or remote server using SSH.
+
+Usage,
+
+----
+$ awwan <command> <script> [line-start] [line-end | "-"]
+----
+
+==  Background
+
+Do you have a collection of shell scripts to manage one more similar server?
+Do you ever want to execute only part of your script?
+Are you get tired with learning others syntax and language for provisioning
+your own server, while you need is a handful of shell script?
+If yes, awwan is the right tools for you.
+
+
+==  The command
+
+awwan only need four arguments, the first two are required, the rest is
+optional.
+
+The first two required arguments are the mode and the path to script to be
+executed.
+The last optional arguments are the line start and line end number.
+
+The first argument is mode.
+Its currently only have two values: "local" or "play".
+The "local" mode execute the script in local environment, your own machine,
+without using SSH.
+The "play" mode execute the script in remote environment, your SSH server.
+
+The second argument is the path to the awwan script file.
+
+The third, optional, argument is line start number.
+Its define the line number in the script where awwan will start
+execution.
+If not defined, default to 1, start from the first line.
+
+The fourth, optional, argument is the line end number or "-" to set to the
+last line.
+Its define the line number in the script where awwan will stop executing the
+script.
+If not defined that it will be equal to the line start, which means awwan will
+execute only single line.
+Another value for this argument is "-", its means execute the script from
+line-start until the last line.
+
+Here is some examples of how to execute awwan.
+
+* Execute the first line of "script.sh" in local system.
+----
+$ awwan local path/to/script.sh
+----
+
+* Execute only line 5 of "script.sh" on remote server,
+----
+$ awwan play path/to/script.sh 5
+----
+
+* Execute line 5 until line 10 of "script.sh" on remote server,
+----
+$ awwan play path/to/script.sh 5 10
+----
+
+* Execute line 5 until last line of "script.sh" on remote server,
+----
+$ awwan play path/to/script.sh 5 -
+----
+
+
+==  The script
+
+The awwan script is similar to shell script.
+Each line started with '#' is a comment, except for special, magic words that
+we will explain later.
+
+Here is an example of script that install Nginx on remote Arch Linux server
+using configuration from your local computer,
+
+----
+##
+## Setup nginx
+##
+sudo pacman -Sy --noconfirm nginx
+sudo systemctl enable nginx
+
+#put: {{.ScriptDir}}/etc/nginx/nginx.conf /tmp/
+sudo mv /tmp/nginx.conf /etc/nginx/
+
+sudo systemctl restart nginx
+sudo systemctl status nginx
+----
+
+==  The environment
+
+
+==  The workspace
+
+
+==  The template

@@ -7,10 +7,7 @@ package main
 import (
 	"fmt"
 	"log"
-	"math"
 	"os"
-	"strconv"
-	"strings"
 
 	"github.com/shuLhan/awwan"
 )
@@ -20,62 +17,10 @@ func main() {
 		usage()
 	}
 
-	env := &awwan.Environment{}
-
-	strCommand := strings.ToLower(os.Args[1])
-
-	switch strCommand {
-	case awwan.CommandModeBootstrap:
-	case awwan.CommandModeLocal:
-	case awwan.CommandModePlay:
-	default:
+	env, err := awwan.NewEnvironment(os.Args[1:])
+	if err != nil {
+		log.Println(err)
 		usage()
-	}
-
-	provSvcName := strings.Split(os.Args[2], "/")
-	if len(provSvcName) < 2 {
-		log.Println("awwan: missing service name")
-		usage()
-	}
-
-	env.ServiceDir = os.Args[2]
-
-	env.Mode = strCommand
-	env.Provider = provSvcName[0]
-	env.Service = provSvcName[1]
-
-	if len(provSvcName) >= 3 {
-		env.Name = provSvcName[2]
-	}
-
-	var err error
-	if len(os.Args) >= 4 {
-		env.ScriptStart, err = strconv.Atoi(os.Args[3])
-		if err != nil {
-			log.Fatalf("awwan: can not convert start parameter %s: %s",
-				os.Args[3], err.Error())
-		}
-	}
-
-	if env.ScriptStart < 0 {
-		env.ScriptStart = 0
-	}
-
-	if len(os.Args) >= 5 {
-		if os.Args[4] == "-" {
-			env.ScriptEnd = math.MaxInt32
-		} else {
-			env.ScriptEnd, err = strconv.Atoi(os.Args[4])
-			if err != nil {
-				log.Fatalf("can not convert end parameter %s: %s", os.Args[4], err.Error())
-			}
-		}
-	} else {
-		env.ScriptEnd = env.ScriptStart
-	}
-
-	if env.ScriptEnd < env.ScriptStart {
-		env.ScriptEnd = env.ScriptStart
 	}
 
 	cmd := awwan.New(env)

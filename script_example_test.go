@@ -20,7 +20,7 @@ command {{.Val "section::key"}};\
 end;
 `
 	env := &Environment{}
-	env.parseEnvironment([]byte(envContent))
+	env.parse([]byte(envContent))
 
 	s := parseScript(env, []byte(scriptContent))
 
