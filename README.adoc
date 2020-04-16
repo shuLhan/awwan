@@ -332,10 +332,8 @@ previous one.
 
 ==  TODO
 
-Allow each sub-directory to contains environment file.
-For example, given the above workspace example, we can have `awwan.env` in
-root directory, in `gcp`, `development`, `production`, `vm`, and so on until
-the location of the script file.
+Load .ssh/config in current working directory and in ~/.ssh/config to search
+for host, user, port, and identity file.
 
 
 ==  BUGS

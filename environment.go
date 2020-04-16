@@ -77,19 +77,55 @@ func NewEnvironment(args []string) (env *Environment, err error) {
 		}
 	}
 
-	err = env.load(filepath.Join(env.BaseDir, envFileName))
+	paths, err := env.generatePaths()
 	if err != nil {
 		return nil, fmt.Errorf("NewEnvironment: %w", err)
 	}
-	err = env.load(filepath.Join(env.ScriptDir, envFileName))
-	if err != nil {
-		return nil, fmt.Errorf("NewEnvironment: %w", err)
+
+	for _, path := range paths {
+		err = env.load(filepath.Join(path, envFileName))
+		if err != nil {
+			return nil, fmt.Errorf("NewEnvironment: %w", err)
+		}
 	}
 
 	rand.Seed(time.Now().Unix())
 	env.randomString = string(ascii.Random([]byte(ascii.LettersNumber), 16))
 
 	return env, nil
+}
+
+//
+// generatePaths using BaseDir and ScriptDir return all paths from BaseDir
+// to ScriptDir.
+//
+func (env *Environment) generatePaths() (paths []string, err error) {
+	absScriptDir, err := filepath.Abs(env.ScriptDir)
+	if err != nil {
+		return nil, fmt.Errorf("generatePaths %q: %w", absScriptDir, err)
+	}
+
+	if !filepath.HasPrefix(absScriptDir, env.BaseDir) {
+		return nil, fmt.Errorf("%q must be under %q", env.ScriptDir, env.BaseDir)
+	}
+	rel, err := filepath.Rel(env.BaseDir, absScriptDir)
+	if err != nil {
+		return nil, err
+	}
+
+	subs := strings.Split(rel, string(os.PathSeparator))
+	path := env.BaseDir
+	paths = make([]string, 0, len(subs)+1)
+	paths = append(paths, path)
+	for x := 0; x < len(subs); x++ {
+		if subs[x] == "." || subs[x] == "" {
+			continue
+		}
+		path = filepath.Join(path, subs[x])
+		paths = append(paths, path)
+	}
+
+	return paths, nil
 }
 
 //
@@ -167,10 +203,13 @@ func (env *Environment) load(file string) (err error) {
 		return fmt.Errorf("load %q: %w", file, err)
 	}
 
+	fmt.Printf(">>> loading %q ...\n", file)
+
 	err = env.parse(content)
 	if err != nil {
 		return fmt.Errorf("load %q: %w", file, err)
 	}
+
 	return nil
 }
 
