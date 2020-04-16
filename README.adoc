@@ -9,25 +9,33 @@
 image:https://img.shields.io/badge/go.dev-reference-007d9c?logo=go&logoColor=white&style=flat-square[GoDoc, link={url-godoc}]
 image:https://goreportcard.com/badge/github.com/shuLhan/awwan[Go Report Card, link={url-gocard}]
 
+==  NAME
+
+awwan - advanced remote execution program
+
+
+==  SYNOPSIS
+
+awwan <command> <script> [line-start] [line-end | "-"]
+
+
+==  DESCRIPTION
+
 `awwan` is command line interface to execute multiple lines of command in
 the local or remote server using SSH.
 
-Usage,
 
-----
-$ awwan <command> <script> [line-start] [line-end | "-"]
-----
-
-==  Background
+===  BACKGROUND
 
 Do you have a collection of shell scripts to manage one more similar server?
 Do you ever want to execute only part of your script?
-Are you get tired with learning others syntax and language for provisioning
+Are you get tired with learning others syntax and tools for provisioning
 your own server, while you need is a handful of shell script?
+
 If yes, awwan is the right tools for you.
 
 
-==  The command
+===  THE COMMAND
 
 awwan only need four arguments, the first two are required, the rest is
 optional.
@@ -81,33 +89,291 @@ $ awwan play path/to/script.sh 5 -
 ----
 
 
-==  The script
+===  THE SCRIPT
 
 The awwan script is similar to shell script.
-Each line started with '#' is a comment, except for special, magic words that
-we will explain later.
+Each line started with '#' is a comment, except for special, magic words.
+
+There are three magic words in the script: `#get:`, `#put:`, and `#put!`.
+
+Magic word `#get:` will copy file from remote server to your local file
+system.
+Example,
+
+----
+#get: /etc/os-release os-release
+----
+
+Magic word `#put:` will copy file from your local to remote server.
+Example,
+
+----
+#put: /etc/locale.conf /tmp/locale.conf
+----
+
+Magic word `#put!` will copy file from your local system to remote server
+using sudo.
+Example,
+
+----
+#put! /etc/locale.conf /etc/locale.conf
+----
+
+One thing that script can't do is piping, for example "a > b" does not work,
+yet.
 
 Here is an example of script that install Nginx on remote Arch Linux server
 using configuration from your local computer,
 
 ----
-##
-## Setup nginx
-##
 sudo pacman -Sy --noconfirm nginx
 sudo systemctl enable nginx
 
-#put: {{.ScriptDir}}/etc/nginx/nginx.conf /tmp/
-sudo mv /tmp/nginx.conf /etc/nginx/
+#put! {{.ScriptDir}}/etc/nginx/nginx.conf /etc/nginx/
 
 sudo systemctl restart nginx
 sudo systemctl status nginx
 ----
 
-==  The environment
+===  ENVIRONMENT FILE
+
+The environment file is a file named `awwan.env` that contains key-to-value
+that can be used for templating.
+
+When executing the script, `awwan` will read environment files in the current
+directory and in the script directory.
+
+The environment file use the ini file format,
+
+----
+[section "subsection"]
+key = value
+----
+
+Currently, there are only one required section in environment file that
+`awwan` need: "ssh", so awwan can know the host, user, and port number of
+remote server.
+You must put the `awwan.env` in your script.
+
+Example of environment file,
+
+----
+[ssh]
+host = 1.2.3.4
+user = arch
+port = 2222
+----
+
+Beside that, you can put as many sections or any variables inside the file.
+
+We will explain how to use and get the environment variables below.
 
 
-==  The workspace
+==  TEMPLATING
+
+Template file is any text or script files that dynamically generated using
+values from variables defined in environment files.
+
+There are two global variables that shared to all template or script files,
+
+* `.BaseDir` contains the absolute path of current directory, and
+* `.ServiceDir` contains the relative path to script directory.
+
+To get the value wrap the variable using '{{}}' for example,
+
+----
+#put! {{.BaseDir}}/templates/etc/hosts /etc/
+#put! {{.ServiceDir}}/etc/hosts /etc/
+----
+
+To get the value of variable in environment file you put the string ".Val"
+followed by section, subsection and key names, each separated by colon ":".
+If no subsection exist you can leave it empty.
+
+You can put the variable inside the script or in the file that you want to
+copy.
+
+For example, given the following environment file,
+
+----
+[ssh]
+host = 1.2.3.4
+user = arch
+port = 2222
+
+[whitelist "ip"]
+alpha = 1.2.3.4/32
+beta  = 2.3.4.5/32
+----
+
+* `{{.Val "ssh::host"}}` will result "1.2.3.4" (without double quote), and
+* `{{.Val "whitelist:ip:alpha"}}` will result to "1.2.3.4/32" (without double quote)
 
 
-==  The template
+==  EXAMPLE
+
+Let say that we have the working remote server at IP address "1.2.3.4" using
+username "arch" on port "2222" in the following environment file,
+
+----
+[ssh]
+host = 1.2.3.4
+user = arch
+port = 2222
+
+[whitelist "ip"]
+alpha = 1.2.3.4/32
+beta  = 2.3.4.5/32
+----
+
+and script file "test.aww",
+
+----
+echo {{.Val "ssh::host"}}`
+#put: {{.ScriptDir}}/test /tmp/
+cat /tmp/test
+----
+
+and a template file "test",
+
+----
+Hi {{.Val "ssh::user"}}!
+----
+
+When executed, it will print the following output to terminal,
+
+----
+$ awwan play test.aww 1 -
+>>> arch@1.2.3.4:22: 1: echo 1.2.3.4
+
+1.2.3.4
+test                                                  100%    9     0.4KB/s   00:00
+>>> arch@1.2.3.4:22: 3: cat /tmp/test
+
+Hi arch!
+
+----
+
+That's it.
+
+
+==  FAQ
+
+Since this software is working in progress, there are many things that we have
+in mind, but can't put it yet on code.
+
+===  Workspace structure
+
+`awwan` did not require any special directory but we really recommend that you
+use sub directory to group several nodes on several cloud services.
+For example, if you use cloud services with several nodes inside it, we
+recommend the following directory structures,
+
+----
+<cloud-service>/<project-name>/<service-name>/<node-name>
+----
+
+The `<cloud-service>` is the name of your remote server, it could be "AWS",
+"GCP", "DO", and others.
+The `<project-name>` is your account ID in your cloud service or your project
+name.
+The `<service-name>` is a group of several nodes, for example "development",
+"staging", "production".
+The `<node-name>` is name of your node, each node should have one single
+directory.
+
+
+Here is an example of my directory structures,
+
+----
+.
+├── commons
+├── gcp
+│   ├── development
+│   │   └── vm
+│   │       ├── www
+│   │       │   └── etc
+│   │       │       ├── my.cnf.d
+│   │       │       ├── nginx
+│   │       │       ├── php
+│   │       │       │   └── php-fpm.d
+│   │       │       └── systemd
+│   │       │           └── system
+│   │       │               └── mariadb.service.d
+│   │       └── ci
+│   └── production
+│       └── vm
+│           └── stok
+│               └── etc -> ../../../playground/vm/tokenomy-stix/etc
+└── templates
+    ├── etc
+    │   ├── pacman.d
+    │   └── ssh
+    └── home
+----
+
+The `commons` directory contains common script that can be executed in any
+nodes.
+
+The `templates` directory contains common templates that can be used in any
+nodes.
+
+The `gcp` directory is cloud service with two accounts "development" and
+"production", and the rest are node names and templates used in that node.
+
+
+=== What happened if two variables declared inside two environment files?
+
+When executing the script `awwan` will merge the variables from current
+directory with variable from script directory.
+Any keys that are duplicate will be merged and the last one will overwrite the
+previous one.
+
+
+==  TODO
+
+Allow each sub-directory to contains environment file.
+For example, given the above workspace example, we can have `awwan.env` in
+root directory, in `gcp`, `development`, `production`, `vm`, and so on until
+the location of the script file.
+
+
+==  BUGS
+
+Shell pipe "|", "<", or ">"  does not work in script, yet.
+
+For request of features and/or bugs report please submitted through web at
+https://github.com/shuLhan/awwan/issues.
+
+
+==  LICENSE
+
+----
+Copyright (c) 2020 M. Shulhan (m.shulhan@gmail.com). All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+   * Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+   * Redistributions in binary form must reproduce the above
+copyright notice, this list of conditions and the following disclaimer
+in the documentation and/or other materials provided with the
+distribution.
+   * Neither the name of M. Shulhan, nor the names of its
+contributors may be used to endorse or promote products derived from
+this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+----
