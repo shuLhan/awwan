@@ -98,13 +98,13 @@ func (cmd *Command) doPlay() {
 	mkdirStmt := fmt.Sprintf("mkdir %s", cmd.tmpDir)
 	err := cmd.sshClient.Execute(mkdirStmt)
 	if err != nil {
-		log.Fatal("%s %s", mkdirStmt, err.Error())
+		log.Fatalf("%s %s", mkdirStmt, err.Error())
 	}
 	defer func() {
 		rmdirStmt := fmt.Sprintf("rm -rf %s", cmd.tmpDir)
 		err := cmd.sshClient.Execute(rmdirStmt)
 		if err != nil {
-			log.Println("%s %s", rmdirStmt, err.Error())
+			log.Printf("%s %s", rmdirStmt, err.Error())
 		}
 	}()
 
@@ -118,7 +118,7 @@ func (cmd *Command) doLocal() {
 	mkdirStmt := fmt.Sprintf("mkdir %s", cmd.tmpDir)
 	err := cmd.exec(mkdirStmt)
 	if err != nil {
-		log.Fatal("%s %s", mkdirStmt, err.Error())
+		log.Fatalf("%s %s", mkdirStmt, err.Error())
 	}
 	defer func() {
 		err = os.RemoveAll(cmd.tmpDir)
