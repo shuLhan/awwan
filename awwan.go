@@ -10,3 +10,9 @@ const (
 
 	envFileName = "awwan.env" // The default awwan environment file name.
 )
+
+var (
+	cmdMagicGet     = []byte("#get:")
+	cmdMagicPut     = []byte("#put:")
+	cmdMagicSudoPut = []byte("#put!")
+)

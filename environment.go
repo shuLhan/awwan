@@ -8,11 +8,14 @@ import (
 	"fmt"
 	"io/ioutil"
 	"math"
+	"math/rand"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
+	"github.com/shuLhan/share/lib/ascii"
 	"github.com/shuLhan/share/lib/ini"
 )
 
@@ -23,11 +26,12 @@ type Environment struct {
 	BaseDir   string // The current working directory.
 	ScriptDir string // The base directory of the script.
 
-	mode        string // One of the mode to execute the script.
-	scriptPath  string // Location of the script in file system.
-	scriptName  string // The name of the script.
-	scriptStart int
-	scriptEnd   int
+	mode         string // One of the mode to execute the script.
+	scriptPath   string // Location of the script in file system.
+	scriptName   string // The name of the script.
+	scriptStart  int
+	scriptEnd    int
+	randomString string // Uniq string to copy file to /tmp/<random>
 
 	vars *ini.Ini // All variables from environment files.
 }
@@ -81,6 +85,9 @@ func NewEnvironment(args []string) (env *Environment, err error) {
 	if err != nil {
 		return nil, fmt.Errorf("NewEnvironment: %w", err)
 	}
+
+	rand.Seed(time.Now().Unix())
+	env.randomString = string(ascii.Random([]byte(ascii.LettersNumber), 16))
 
 	return env, nil
 }

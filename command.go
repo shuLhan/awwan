@@ -26,6 +26,7 @@ type Command struct {
 	script    *script
 	env       *Environment
 	sshClient *libssh.Client
+	tmpDir    string
 }
 
 //
@@ -33,7 +34,8 @@ type Command struct {
 //
 func New(env *Environment) (cmd *Command) {
 	cmd = &Command{
-		env: env,
+		env:    env,
+		tmpDir: filepath.Join("/tmp", env.randomString),
 	}
 
 	return cmd
@@ -47,7 +49,7 @@ func (cmd *Command) copy(stmt []byte) (err error) {
 
 	paths := bytes.Fields(stmt)
 	if len(paths) != 2 {
-		err = fmt.Errorf("invalid put statement: %s", stmt)
+		err = fmt.Errorf("invalid put statement: %q", stmt)
 		log.Println(err)
 		return
 	}
@@ -58,14 +60,73 @@ func (cmd *Command) copy(stmt []byte) (err error) {
 	return io.Copy(remote, local)
 }
 
+//
+// sudoCopy file in local system using sudo.
+//
+func (cmd *Command) sudoCopy(stmt []byte) (err error) {
+	stmt = bytes.TrimSpace(stmt[5:])
+
+	paths := bytes.Fields(stmt)
+	if len(paths) != 2 {
+		err = fmt.Errorf("invalid put statement: %q", stmt)
+		log.Println(err)
+		return
+	}
+
+	src := string(paths[0])
+	baseName := filepath.Base(src)
+
+	local := parseTemplate(cmd.env, src)
+	tmp := filepath.Join(cmd.tmpDir, baseName)
+	remote := string(paths[1])
+
+	err = io.Copy(tmp, local)
+	if err != nil {
+		return err
+	}
+
+	moveStmt := fmt.Sprintf("sudo mv %s %s", tmp, remote)
+
+	return cmd.exec(moveStmt)
+}
+
 func (cmd *Command) doPlay() {
 	cmd.script = newScript(cmd.env, cmd.env.scriptPath)
 	cmd.initSSHClient()
+
+	// Create temporary directory ...
+	mkdirStmt := fmt.Sprintf("mkdir %s", cmd.tmpDir)
+	err := cmd.sshClient.Execute(mkdirStmt)
+	if err != nil {
+		log.Fatal("%s %s", mkdirStmt, err.Error())
+	}
+	defer func() {
+		rmdirStmt := fmt.Sprintf("rm -rf %s", cmd.tmpDir)
+		err := cmd.sshClient.Execute(rmdirStmt)
+		if err != nil {
+			log.Println("%s %s", rmdirStmt, err.Error())
+		}
+	}()
+
 	cmd.executeScript()
 }
 
 func (cmd *Command) doLocal() {
 	cmd.script = newScript(cmd.env, cmd.env.scriptPath)
+
+	// Create temporary directory ...
+	mkdirStmt := fmt.Sprintf("mkdir %s", cmd.tmpDir)
+	err := cmd.exec(mkdirStmt)
+	if err != nil {
+		log.Fatal("%s %s", mkdirStmt, err.Error())
+	}
+	defer func() {
+		err = os.RemoveAll(cmd.tmpDir)
+		if err != nil {
+			log.Println(err)
+		}
+	}()
+
 	cmd.executeLocalScript()
 }
 
@@ -102,7 +163,7 @@ func (cmd *Command) put(stmt []byte) (err error) {
 
 	paths := bytes.Fields(stmt)
 	if len(paths) != 2 {
-		err = fmt.Errorf("invalid put statement: %s", stmt)
+		err = fmt.Errorf("invalid put statement: %q", stmt)
 		log.Println(err)
 		return
 	}
@@ -111,6 +172,36 @@ func (cmd *Command) put(stmt []byte) (err error) {
 	remote := string(paths[1])
 
 	return cmd.sshClient.Put(local, remote)
+}
+
+//
+// sudoPut copy file using sudo.
+//
+func (cmd *Command) sudoPut(stmt []byte) (err error) {
+	stmt = bytes.TrimSpace(stmt[5:])
+
+	paths := bytes.Fields(stmt)
+	if len(paths) != 2 {
+		err = fmt.Errorf("invalid put statement: %q", stmt)
+		log.Println(err)
+		return
+	}
+
+	src := string(paths[0])
+	baseName := filepath.Base(src)
+
+	local := parseTemplate(cmd.env, src)
+	tmp := filepath.Join(cmd.tmpDir, baseName)
+	remote := string(paths[1])
+
+	err = cmd.sshClient.Put(local, tmp)
+	if err != nil {
+		return err
+	}
+
+	moveStmt := fmt.Sprintf("sudo mv %s %s", tmp, remote)
+
+	return cmd.sshClient.Execute(moveStmt)
 }
 
 //
@@ -146,14 +237,21 @@ func (cmd *Command) executeLocalScript() {
 		if len(stmt) == 0 {
 			continue
 		}
-		if bytes.HasPrefix(stmt, []byte("#put:")) {
+		if bytes.HasPrefix(stmt, cmdMagicPut) {
 			err := cmd.copy(stmt)
 			if err != nil {
 				break
 			}
 			continue
 		}
-		if bytes.HasPrefix(stmt, []byte("#get:")) {
+		if bytes.HasPrefix(stmt, cmdMagicSudoPut) {
+			err := cmd.sudoCopy(stmt)
+			if err != nil {
+				break
+			}
+			continue
+		}
+		if bytes.HasPrefix(stmt, cmdMagicGet) {
 			err := cmd.copy(stmt)
 			if err != nil {
 				break
@@ -183,21 +281,28 @@ func (cmd *Command) executeScript() {
 		if len(stmt) == 0 {
 			continue
 		}
-		if bytes.HasPrefix(stmt, []byte("##")) {
-			continue
-		}
-		if bytes.HasPrefix(stmt, []byte("#put:")) {
+		if bytes.HasPrefix(stmt, cmdMagicPut) {
 			err := cmd.put(stmt)
 			if err != nil {
 				break
 			}
 			continue
 		}
-		if bytes.HasPrefix(stmt, []byte("#get:")) {
+		if bytes.HasPrefix(stmt, cmdMagicSudoPut) {
+			err := cmd.sudoPut(stmt)
+			if err != nil {
+				break
+			}
+			continue
+		}
+		if bytes.HasPrefix(stmt, cmdMagicGet) {
 			err := cmd.get(stmt)
 			if err != nil {
 				break
 			}
+			continue
+		}
+		if stmt[0] == '#' {
 			continue
 		}
 
