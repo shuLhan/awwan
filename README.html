@@ -29,15 +29,13 @@ href="https://pkg.go.dev/github.com/shuLhan/awwan">GoDoc</a>
 <ul class="sectlevel1">
 <li><a href="#_name">NAME</a></li>
 <li><a href="#_synopsis">SYNOPSIS</a></li>
-<li><a href="#_description">DESCRIPTION</a>
-<ul class="sectlevel2">
+<li><a href="#_description">DESCRIPTION</a></li>
 <li><a href="#_background">BACKGROUND</a></li>
 <li><a href="#_the_command">THE COMMAND</a></li>
 <li><a href="#_the_script">THE SCRIPT</a></li>
 <li><a href="#_environment_file">ENVIRONMENT FILE</a></li>
-</ul>
-</li>
 <li><a href="#_templating">TEMPLATING</a></li>
+<li><a href="#_the_ssh_config">THE SSH CONFIG</a></li>
 <li><a href="#_example">EXAMPLE</a></li>
 <li><a href="#_faq">FAQ</a>
 <ul class="sectlevel2">
@@ -62,7 +60,8 @@ href="https://pkg.go.dev/github.com/shuLhan/awwan">GoDoc</a>
 <h2 id="_name">NAME</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>awwan - advanced remote execution program</p>
+<p>awwan - Configuration management software, infrastructure as file and
+directory layout.</p>
 </div>
 </div>
 </div>
@@ -78,11 +77,14 @@ href="https://pkg.go.dev/github.com/shuLhan/awwan">GoDoc</a>
 <h2 id="_description">DESCRIPTION</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><code>awwan</code> is command line interface to execute multiple lines of command in
+<p><code>awwan</code> is command-line interface to execute multiple lines of command in
 the local or remote server using SSH.</p>
 </div>
-<div class="sect2">
-<h3 id="_background">BACKGROUND</h3>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_background">BACKGROUND</h2>
+<div class="sectionbody">
 <div class="paragraph">
 <p>Do you have a collection of shell scripts to manage one more similar server?
 Do you ever want to execute only part of your script?
@@ -93,20 +95,15 @@ your own server, while you need is a handful of shell script?</p>
 <p>If yes, awwan is the right tools for you.</p>
 </div>
 </div>
-<div class="sect2">
-<h3 id="_the_command">THE COMMAND</h3>
+</div>
+<div class="sect1">
+<h2 id="_the_command">THE COMMAND</h2>
+<div class="sectionbody">
 <div class="paragraph">
-<p>awwan only need four arguments, the first two are required, the rest is
-optional.</p>
+<p>The awwan tool only need four arguments.</p>
 </div>
 <div class="paragraph">
-<p>The first two required arguments are the mode and the path to script to be
-executed.
-The last optional arguments are the line start and line end number.</p>
-</div>
-<div class="paragraph">
-<p>The first argument is mode.
-Its currently only have two values: &#34;local&#34; or &#34;play&#34;.
+<p>The first argument is mode: &#34;local&#34; or &#34;play&#34;.
 The &#34;local&#34; mode execute the script in local environment, your own machine,
 without using SSH.
 The &#34;play&#34; mode execute the script in remote environment, your SSH server.</p>
@@ -115,75 +112,75 @@ The &#34;play&#34; mode execute the script in remote environment, your SSH serve
 <p>The second argument is the path to the awwan script file.</p>
 </div>
 <div class="paragraph">
-<p>The third, optional, argument is line start number.
+<p>The third argument is line start number.
 Its define the line number in the script where awwan will start
 execution.
 If not defined, default to 1, start from the first line.</p>
 </div>
 <div class="paragraph">
-<p>The fourth, optional, argument is the line end number or &#34;-&#34; to set to the
-last line.
-Its define the line number in the script where awwan will stop executing the
-script.
-If not defined that it will be equal to the line start, which means awwan will
+<p>The fourth argument define the line number in the script where awwan will stop
+executing the script, or &#34;-&#34; to set to the last line.
+If not defined then it will be equal to the line start, which means awwan will
 execute only single line.
 Another value for this argument is &#34;-&#34;, its means execute the script from
 line-start until the last line.</p>
 </div>
 <div class="paragraph">
-<p>Here is some examples of how to execute awwan.</p>
+<p>Here is some examples of how to execute script,</p>
 </div>
 <div class="ulist">
 <ul>
 <li>
-<p>Execute the first line of &#34;script.sh&#34; in local system.</p>
+<p>Execute the first line of &#34;script.aww&#34; in local system.</p>
 </li>
 </ul>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre>$ awwan local path/to/script.sh</pre>
+<pre>$ awwan local path/to/script.aww</pre>
 </div>
 </div>
 <div class="ulist">
 <ul>
 <li>
-<p>Execute only line 5 of &#34;script.sh&#34; on remote server,</p>
+<p>Execute only line 5 of &#34;script.aww&#34; on remote server,</p>
 </li>
 </ul>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre>$ awwan play path/to/script.sh 5</pre>
+<pre>$ awwan play path/to/script.aww 5</pre>
 </div>
 </div>
 <div class="ulist">
 <ul>
 <li>
-<p>Execute line 5 until line 10 of &#34;script.sh&#34; on remote server,</p>
+<p>Execute line 5 until line 10 of &#34;script.aww&#34; on remote server,</p>
 </li>
 </ul>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre>$ awwan play path/to/script.sh 5 10</pre>
+<pre>$ awwan play path/to/script.aww 5 10</pre>
 </div>
 </div>
 <div class="ulist">
 <ul>
 <li>
-<p>Execute line 5 until last line of &#34;script.sh&#34; on remote server,</p>
+<p>Execute line 5 until last line of &#34;script.aww&#34; on remote server,</p>
 </li>
 </ul>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre>$ awwan play path/to/script.sh 5 -</pre>
+<pre>$ awwan play path/to/script.aww 5 -</pre>
 </div>
 </div>
 </div>
-<div class="sect2">
-<h3 id="_the_script">THE SCRIPT</h3>
+</div>
+<div class="sect1">
+<h2 id="_the_script">THE SCRIPT</h2>
+<div class="sectionbody">
 <div class="paragraph">
 <p>The awwan script is similar to shell script.
 Each line started with &#39;#&#39; is a comment, except for special, magic words.</p>
@@ -221,8 +218,8 @@ Example,</p>
 </div>
 </div>
 <div class="paragraph">
-<p>One thing that script can&#39;t do is piping, for example &#34;a &gt; b&#34; does not work,
-yet.</p>
+<p>One thing that script can&#39;t do is piping, for example &#34;echo a &gt; b&#34; does not
+work, yet.</p>
 </div>
 <div class="paragraph">
 <p>Here is an example of script that install Nginx on remote Arch Linux server
@@ -240,15 +237,17 @@ sudo systemctl status nginx</pre>
 </div>
 </div>
 </div>
-<div class="sect2">
-<h3 id="_environment_file">ENVIRONMENT FILE</h3>
+</div>
+<div class="sect1">
+<h2 id="_environment_file">ENVIRONMENT FILE</h2>
+<div class="sectionbody">
 <div class="paragraph">
-<p>The environment file is a file named <code>awwan.env</code> that contains key-to-value
-that can be used for templating.</p>
+<p>The environment file is a file named <code>awwan.env</code> that contains variables using
+the form &#34;key=value&#34; that can be used for templating.</p>
 </div>
 <div class="paragraph">
 <p>When executing the script, <code>awwan</code> will read environment files in the current
-directory and in the script directory.</p>
+directory, and in each sub-directory, until the script directory.</p>
 </div>
 <div class="paragraph">
 <p>The environment file use the ini file format,</p>
@@ -260,28 +259,7 @@ key = value</pre>
 </div>
 </div>
 <div class="paragraph">
-<p>Currently, there are only one required section in environment file that
-<code>awwan</code> need: &#34;ssh&#34;, so awwan can know the host, user, and port number of
-remote server.
-You must put the <code>awwan.env</code> in your script.</p>
-</div>
-<div class="paragraph">
-<p>Example of environment file,</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre>[ssh]
-host = 1.2.3.4
-user = arch
-port = 2222</pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Beside that, you can put as many sections or any variables inside the file.</p>
-</div>
-<div class="paragraph">
 <p>We will explain how to use and get the environment variables below.</p>
-</div>
 </div>
 </div>
 </div>
@@ -328,10 +306,8 @@ copy.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre>[ssh]
-host = 1.2.3.4
+<pre>[all]
 user = arch
-port = 2222
 
 [whitelist &#34;ip&#34;]
 alpha = 1.2.3.4/32
@@ -341,12 +317,52 @@ beta  = 2.3.4.5/32</pre>
 <div class="ulist">
 <ul>
 <li>
-<p><code>{{.Val &#34;ssh::host&#34;}}</code> will result &#34;1.2.3.4&#34; (without double quote), and</p>
+<p><code>{{.Val &#34;all::user&#34;}}</code> will result to &#34;arch&#34; (without double quote), and</p>
 </li>
 <li>
-<p><code>{{.Val &#34;whitelist:ip:alpha&#34;}}</code> will result to &#34;1.2.3.4/32&#34; (without double quote)</p>
+<p><code>{{.Val &#34;whitelist:ip:alpha&#34;}}</code> will result to &#34;1.2.3.4/32&#34;
+  (without double quote)</p>
 </li>
 </ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_the_ssh_config">THE SSH CONFIG</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>After we learn about the command, script, variables, and templating; we need
+to explain some file and directory structure that required by <code>awwan</code> so it
+can connect to the SSH server.</p>
+</div>
+<div class="paragraph">
+<p>To be able to connect to the remote SSH server, <code>awwan</code> need to know the
+remote host name, remote user, and location of private key file.
+All of this are derived from ssh_config(5) file in the current directory and
+in the user&#39;s home directory.</p>
+</div>
+<div class="paragraph">
+<p>The remote host name is derived from directory name of the script file.
+It will be matched with <code>Host</code> or <code>Match</code> section in the ssh_config(5) file.</p>
+</div>
+<div class="paragraph">
+<p>For example, given the following directory structure,</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>.
+|
++-- .ssh/
+|   |
+|   --- config
++-- development
+    |
+    --- script.aww</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>If we execute the &#34;development/script.aww&#34;, awwan will search for the Host
+that match with &#34;development&#34; in current &#34;.ssh/config&#34; or in &#34;~/.ssh/config&#34;.</p>
 </div>
 </div>
 </div>
@@ -354,15 +370,27 @@ beta  = 2.3.4.5/32</pre>
 <h2 id="_example">EXAMPLE</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Let say that we have the working remote server at IP address &#34;1.2.3.4&#34; using
-username &#34;arch&#34; on port &#34;2222&#34; in the following environment file,</p>
+<p>Let say that we have the working remote server named &#34;myserver&#34; at IP address
+&#34;1.2.3.4&#34; using username &#34;arch&#34; on port &#34;2222&#34; in the current &#34;.ssh/config&#34;
+file</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre>[ssh]
-host = 1.2.3.4
+<pre>Host myserver
+	Hostname 1.2.3.4
+	User arch
+	Port 2222
+	IdentityFile ~/.ssh/id_rsa</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>and the environment file &#34;awwan.env&#34;</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>[all]
 user = arch
-port = 2222
+host = myserver
 
 [whitelist &#34;ip&#34;]
 alpha = 1.2.3.4/32
@@ -374,7 +402,7 @@ beta  = 2.3.4.5/32</pre>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre>echo {{.Val &#34;ssh::host&#34;}}`
+<pre>echo {{.Val &#34;all::host&#34;}}`
 #put: {{.ScriptDir}}/test /tmp/
 cat /tmp/test</pre>
 </div>
@@ -384,7 +412,7 @@ cat /tmp/test</pre>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre>Hi {{.Val &#34;ssh::user&#34;}}!</pre>
+<pre>Hi {{.Val &#34;all::user&#34;}}!</pre>
 </div>
 </div>
 <div class="paragraph">
@@ -392,12 +420,12 @@ cat /tmp/test</pre>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre>$ awwan play test.aww 1 -
-&gt;&gt;&gt; arch@1.2.3.4:22: 1: echo 1.2.3.4
+<pre>$ awwan play myserver/test.aww 1 -
+&gt;&gt;&gt; arch@1.2.3.4:2222: 1: echo myserver
 
-1.2.3.4
+myserver
 test                                                  100%    9     0.4KB/s   00:00
-&gt;&gt;&gt; arch@1.2.3.4:22: 3: cat /tmp/test
+&gt;&gt;&gt; arch@1.2.3.4:2222: 3: cat /tmp/test
 
 Hi arch!
 </pre>
@@ -413,13 +441,14 @@ Hi arch!
 <div class="sectionbody">
 <div class="paragraph">
 <p>Since this software is working in progress, there are many things that we have
-in mind, but can&#39;t put it yet on code.</p>
+in mind, but can&#39;t put it to code, yet.</p>
 </div>
 <div class="sect2">
 <h3 id="_workspace_structure">Workspace structure</h3>
 <div class="paragraph">
-<p><code>awwan</code> did not require any special directory but we really recommend that you
-use sub directory to group several nodes on several cloud services.
+<p>Beside &#34;.ssh&#34; directory and directory as host name, <code>awwan</code> did not require
+any other special directory but we really recommend that you use sub directory
+to group several nodes on several cloud services.
 For example, if you use cloud services with several nodes inside it, we
 recommend the following directory structures,</p>
 </div>
@@ -439,7 +468,7 @@ The <code>&lt;node-name&gt;</code> is name of your node, each node should have o
 directory.</p>
 </div>
 <div class="paragraph">
-<p>Here is an example of my directory structures,</p>
+<p>Here is an example of directory structures,</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -460,8 +489,8 @@ directory.</p>
 │   │       └── ci
 │   └── production
 │       └── vm
-│           └── stok
-│               └── etc -&gt; ../../../playground/vm/tokenomy-stix/etc
+│           └── www
+│               └── etc -&gt; ../../../development/vm/www//etc
 └── templates
     ├── etc
     │   ├── pacman.d
@@ -471,11 +500,11 @@ directory.</p>
 </div>
 <div class="paragraph">
 <p>The <code>commons</code> directory contains common script that can be executed in any
-nodes.</p>
+server.</p>
 </div>
 <div class="paragraph">
-<p>The <code>templates</code> directory contains common templates that can be used in any
-nodes.</p>
+<p>The <code>templates</code> directory contains common templates that can be used by any
+scripts.</p>
 </div>
 <div class="paragraph">
 <p>The <code>gcp</code> directory is cloud service with two accounts &#34;development&#34; and
@@ -497,10 +526,7 @@ previous one.</p>
 <h2 id="_todo">TODO</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Allow each sub-directory to contains environment file.
-For example, given the above workspace example, we can have <code>awwan.env</code> in
-root directory, in <code>gcp</code>, <code>development</code>, <code>production</code>, <code>vm</code>, and so on until
-the location of the script file.</p>
+<p>Handle piping.</p>
 </div>
 </div>
 </div>

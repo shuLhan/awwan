@@ -11,7 +11,8 @@ image:https://goreportcard.com/badge/github.com/shuLhan/awwan[Go Report Card, li
 
 ==  NAME
 
-awwan - advanced remote execution program
+awwan - Configuration management software, infrastructure as file and
+directory layout.
 
 
 ==  SYNOPSIS
@@ -21,11 +22,11 @@ awwan <command> <script> [line-start] [line-end | "-"]
 
 ==  DESCRIPTION
 
-`awwan` is command line interface to execute multiple lines of command in
+`awwan` is command-line interface to execute multiple lines of command in
 the local or remote server using SSH.
 
 
-===  BACKGROUND
+==  BACKGROUND
 
 Do you have a collection of shell scripts to manage one more similar server?
 Do you ever want to execute only part of your script?
@@ -35,61 +36,53 @@ your own server, while you need is a handful of shell script?
 If yes, awwan is the right tools for you.
 
 
-===  THE COMMAND
+==  THE COMMAND
 
-awwan only need four arguments, the first two are required, the rest is
-optional.
+The awwan tool only need four arguments.
 
-The first two required arguments are the mode and the path to script to be
-executed.
-The last optional arguments are the line start and line end number.
-
-The first argument is mode.
-Its currently only have two values: "local" or "play".
+The first argument is mode: "local" or "play".
 The "local" mode execute the script in local environment, your own machine,
 without using SSH.
 The "play" mode execute the script in remote environment, your SSH server.
 
 The second argument is the path to the awwan script file.
 
-The third, optional, argument is line start number.
+The third argument is line start number.
 Its define the line number in the script where awwan will start
 execution.
 If not defined, default to 1, start from the first line.
 
-The fourth, optional, argument is the line end number or "-" to set to the
-last line.
-Its define the line number in the script where awwan will stop executing the
-script.
-If not defined that it will be equal to the line start, which means awwan will
+The fourth argument define the line number in the script where awwan will stop
+executing the script, or "-" to set to the last line.
+If not defined then it will be equal to the line start, which means awwan will
 execute only single line.
 Another value for this argument is "-", its means execute the script from
 line-start until the last line.
 
-Here is some examples of how to execute awwan.
+Here is some examples of how to execute script,
 
-* Execute the first line of "script.sh" in local system.
+* Execute the first line of "script.aww" in local system.
 ----
-$ awwan local path/to/script.sh
-----
-
-* Execute only line 5 of "script.sh" on remote server,
-----
-$ awwan play path/to/script.sh 5
+$ awwan local path/to/script.aww
 ----
 
-* Execute line 5 until line 10 of "script.sh" on remote server,
+* Execute only line 5 of "script.aww" on remote server,
 ----
-$ awwan play path/to/script.sh 5 10
-----
-
-* Execute line 5 until last line of "script.sh" on remote server,
-----
-$ awwan play path/to/script.sh 5 -
+$ awwan play path/to/script.aww 5
 ----
 
+* Execute line 5 until line 10 of "script.aww" on remote server,
+----
+$ awwan play path/to/script.aww 5 10
+----
 
-===  THE SCRIPT
+* Execute line 5 until last line of "script.aww" on remote server,
+----
+$ awwan play path/to/script.aww 5 -
+----
+
+
+==  THE SCRIPT
 
 The awwan script is similar to shell script.
 Each line started with '#' is a comment, except for special, magic words.
@@ -119,8 +112,8 @@ Example,
 #put! /etc/locale.conf /etc/locale.conf
 ----
 
-One thing that script can't do is piping, for example "a > b" does not work,
-yet.
+One thing that script can't do is piping, for example "echo a > b" does not
+work, yet.
 
 Here is an example of script that install Nginx on remote Arch Linux server
 using configuration from your local computer,
@@ -135,13 +128,13 @@ sudo systemctl restart nginx
 sudo systemctl status nginx
 ----
 
-===  ENVIRONMENT FILE
+==  ENVIRONMENT FILE
 
-The environment file is a file named `awwan.env` that contains key-to-value
-that can be used for templating.
+The environment file is a file named `awwan.env` that contains variables using
+the form "key=value" that can be used for templating.
 
 When executing the script, `awwan` will read environment files in the current
-directory and in the script directory.
+directory, and in each sub-directory, until the script directory.
 
 The environment file use the ini file format,
 
@@ -149,22 +142,6 @@ The environment file use the ini file format,
 [section "subsection"]
 key = value
 ----
-
-Currently, there are only one required section in environment file that
-`awwan` need: "ssh", so awwan can know the host, user, and port number of
-remote server.
-You must put the `awwan.env` in your script.
-
-Example of environment file,
-
-----
-[ssh]
-host = 1.2.3.4
-user = arch
-port = 2222
-----
-
-Beside that, you can put as many sections or any variables inside the file.
 
 We will explain how to use and get the environment variables below.
 
@@ -196,30 +173,70 @@ copy.
 For example, given the following environment file,
 
 ----
-[ssh]
-host = 1.2.3.4
+[all]
 user = arch
-port = 2222
 
 [whitelist "ip"]
 alpha = 1.2.3.4/32
 beta  = 2.3.4.5/32
 ----
 
-* `{{.Val "ssh::host"}}` will result "1.2.3.4" (without double quote), and
-* `{{.Val "whitelist:ip:alpha"}}` will result to "1.2.3.4/32" (without double quote)
+* `{{.Val "all::user"}}` will result to "arch" (without double quote), and
+* `{{.Val "whitelist:ip:alpha"}}` will result to "1.2.3.4/32"
+  (without double quote)
+
+
+==  THE SSH CONFIG
+
+After we learn about the command, script, variables, and templating; we need
+to explain some file and directory structure that required by `awwan` so it
+can connect to the SSH server.
+
+To be able to connect to the remote SSH server, `awwan` need to know the
+remote host name, remote user, and location of private key file.
+All of this are derived from ssh_config(5) file in the current directory and
+in the user's home directory.
+
+The remote host name is derived from directory name of the script file.
+It will be matched with `Host` or `Match` section in the ssh_config(5) file.
+
+For example, given the following directory structure,
+
+----
+.
+|
++-- .ssh/
+|   |
+|   --- config
++-- development
+    |
+    --- script.aww
+----
+
+If we execute the "development/script.aww", awwan will search for the Host
+that match with "development" in current ".ssh/config" or in "~/.ssh/config".
 
 
 ==  EXAMPLE
 
-Let say that we have the working remote server at IP address "1.2.3.4" using
-username "arch" on port "2222" in the following environment file,
+Let say that we have the working remote server named "myserver" at IP address
+"1.2.3.4" using username "arch" on port "2222" in the current ".ssh/config"
+file
 
 ----
-[ssh]
-host = 1.2.3.4
+Host myserver
+	Hostname 1.2.3.4
+	User arch
+	Port 2222
+	IdentityFile ~/.ssh/id_rsa
+----
+
+and the environment file "awwan.env"
+
+----
+[all]
 user = arch
-port = 2222
+host = myserver
 
 [whitelist "ip"]
 alpha = 1.2.3.4/32
@@ -229,7 +246,7 @@ beta  = 2.3.4.5/32
 and script file "test.aww",
 
 ----
-echo {{.Val "ssh::host"}}`
+echo {{.Val "all::host"}}`
 #put: {{.ScriptDir}}/test /tmp/
 cat /tmp/test
 ----
@@ -237,18 +254,18 @@ cat /tmp/test
 and a template file "test",
 
 ----
-Hi {{.Val "ssh::user"}}!
+Hi {{.Val "all::user"}}!
 ----
 
 When executed, it will print the following output to terminal,
 
 ----
-$ awwan play test.aww 1 -
->>> arch@1.2.3.4:22: 1: echo 1.2.3.4
+$ awwan play myserver/test.aww 1 -
+>>> arch@1.2.3.4:2222: 1: echo myserver
 
-1.2.3.4
+myserver
 test                                                  100%    9     0.4KB/s   00:00
->>> arch@1.2.3.4:22: 3: cat /tmp/test
+>>> arch@1.2.3.4:2222: 3: cat /tmp/test
 
 Hi arch!
 
@@ -260,12 +277,13 @@ That's it.
 ==  FAQ
 
 Since this software is working in progress, there are many things that we have
-in mind, but can't put it yet on code.
+in mind, but can't put it to code, yet.
 
 ===  Workspace structure
 
-`awwan` did not require any special directory but we really recommend that you
-use sub directory to group several nodes on several cloud services.
+Beside ".ssh" directory and directory as host name, `awwan` did not require
+any other special directory but we really recommend that you use sub directory
+to group several nodes on several cloud services.
 For example, if you use cloud services with several nodes inside it, we
 recommend the following directory structures,
 
@@ -283,7 +301,7 @@ The `<node-name>` is name of your node, each node should have one single
 directory.
 
 
-Here is an example of my directory structures,
+Here is an example of directory structures,
 
 ----
 .
@@ -303,8 +321,8 @@ Here is an example of my directory structures,
 │   │       └── ci
 │   └── production
 │       └── vm
-│           └── stok
-│               └── etc -> ../../../playground/vm/tokenomy-stix/etc
+│           └── www
+│               └── etc -> ../../../development/vm/www//etc
 └── templates
     ├── etc
     │   ├── pacman.d
@@ -313,10 +331,10 @@ Here is an example of my directory structures,
 ----
 
 The `commons` directory contains common script that can be executed in any
-nodes.
+server.
 
-The `templates` directory contains common templates that can be used in any
-nodes.
+The `templates` directory contains common templates that can be used by any
+scripts.
 
 The `gcp` directory is cloud service with two accounts "development" and
 "production", and the rest are node names and templates used in that node.
@@ -332,8 +350,7 @@ previous one.
 
 ==  TODO
 
-Load .ssh/config in current working directory and in ~/.ssh/config to search
-for host, user, port, and identity file.
+Handle piping.
 
 
 ==  BUGS

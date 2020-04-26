@@ -17,6 +17,7 @@ import (
 
 	"github.com/shuLhan/share/lib/ascii"
 	"github.com/shuLhan/share/lib/ini"
+	"github.com/shuLhan/share/lib/ssh"
 )
 
 //
@@ -27,13 +28,15 @@ type Environment struct {
 	ScriptDir string // The base directory of the script.
 
 	mode         string // One of the mode to execute the script.
+	hostname     string // The hostname where script will be executed.
 	scriptPath   string // Location of the script in file system.
 	scriptName   string // The name of the script.
 	scriptStart  int
 	scriptEnd    int
 	randomString string // Uniq string to copy file to /tmp/<random>
 
-	vars *ini.Ini // All variables from environment files.
+	vars      *ini.Ini    // All variables from environment files.
+	sshConfig *ssh.Config // All the Host values from SSH config files.
 }
 
 //
@@ -82,11 +85,14 @@ func NewEnvironment(args []string) (env *Environment, err error) {
 		return nil, fmt.Errorf("NewEnvironment: %w", err)
 	}
 
-	for _, path := range paths {
-		err = env.load(filepath.Join(path, envFileName))
-		if err != nil {
-			return nil, fmt.Errorf("NewEnvironment: %w", err)
-		}
+	err = env.loadAll(paths)
+	if err != nil {
+		return nil, fmt.Errorf("NewEnvironment: %w", err)
+	}
+
+	err = env.loadAllSSHConfig(paths)
+	if err != nil {
+		return nil, fmt.Errorf("NewEnvironment: %w", err)
 	}
 
 	rand.Seed(time.Now().Unix())
@@ -152,6 +158,7 @@ func (env *Environment) parseArgScript(path string) {
 
 	env.ScriptDir = filepath.Dir(path)
 	env.scriptName = filepath.Base(path)
+	env.hostname = filepath.Base(env.ScriptDir)
 	env.scriptPath = path
 }
 
@@ -210,6 +217,49 @@ func (env *Environment) load(file string) (err error) {
 		return fmt.Errorf("load %q: %w", file, err)
 	}
 
+	return nil
+}
+
+//
+// loadAll environment file from each directory in paths.
+//
+func (env *Environment) loadAll(paths []string) (err error) {
+	for _, path := range paths {
+		err = env.load(filepath.Join(path, envFileName))
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+//
+// loadAllSSHConfig load all SSH config from user's home directory and prepend
+// each of the config inside the paths.
+//
+func (env *Environment) loadAllSSHConfig(paths []string) (err error) {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return fmt.Errorf("loadAllSSHConfig: %w", err)
+	}
+
+	configFile := filepath.Join(homeDir, sshDir, sshConfig)
+	env.sshConfig, err = ssh.NewConfig(configFile)
+	if err != nil {
+		return fmt.Errorf("loadAllSSHConfig: %w", err)
+	}
+
+	for _, path := range paths {
+		configFile = filepath.Join(path, sshDir, sshConfig)
+		otherConfig, err := ssh.NewConfig(configFile)
+		if err != nil {
+			return fmt.Errorf("loadAllSSHConfig: %w", err)
+		}
+		if otherConfig == nil {
+			continue
+		}
+		env.sshConfig.Prepend(otherConfig)
+	}
 	return nil
 }
 

@@ -11,11 +11,10 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strconv"
 	"strings"
 
 	"github.com/shuLhan/share/lib/io"
-	libssh "github.com/shuLhan/share/lib/ssh"
+	"github.com/shuLhan/share/lib/ssh"
 )
 
 //
@@ -25,7 +24,7 @@ import (
 type Command struct {
 	script    *script
 	env       *Environment
-	sshClient *libssh.Client
+	sshClient *ssh.Client
 	tmpDir    string
 }
 
@@ -317,28 +316,17 @@ func (cmd *Command) executeScript() {
 }
 
 func (cmd *Command) initSSHClient() {
-	remoteUser := cmd.env.Val("ssh::user")
+	var err error
 
-	strPort := cmd.env.Val("ssh::port")
-
-	remotePort, err := strconv.Atoi(strPort)
-	if err != nil {
-		log.Fatalf("cmd: cannot convert port %q to number: %s", strPort, err.Error())
+	sshSection := cmd.env.sshConfig.Get(cmd.env.hostname)
+	if sshSection == nil {
+		log.Fatal("cmd: can not find Host %q in SSH config",
+			cmd.env.hostname)
 	}
 
-	privateKeyFile := filepath.Join(cmd.env.BaseDir, cmd.env.ScriptDir,
-		"private.pem")
+	log.Printf("sshSection:%+v\n", sshSection)
 
-	cc := &libssh.ClientConfig{
-		Environments:   cmd.env.Vars("ssh:environment"),
-		WorkingDir:     cmd.env.BaseDir,
-		PrivateKeyFile: privateKeyFile,
-		RemoteUser:     remoteUser,
-		RemoteHost:     cmd.env.Val("ssh::host"),
-		RemotePort:     remotePort,
-	}
-
-	cmd.sshClient, err = libssh.NewClient(cc)
+	cmd.sshClient, err = ssh.NewClient(sshSection)
 	if err != nil {
 		log.Fatal("cmd: cannot create new SSH client: " + err.Error())
 	}

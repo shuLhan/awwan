@@ -9,6 +9,8 @@ const (
 	modePlay  = "play"
 
 	envFileName = "awwan.env" // The default awwan environment file name.
+	sshDir      = ".ssh"      // The default SSH config directory name.
+	sshConfig   = "config"    // The default SSH config file name.
 )
 
 var (
