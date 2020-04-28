@@ -17,7 +17,7 @@ directory layout.
 
 ==  SYNOPSIS
 
-awwan <command> <script> [line-start] [line-end | "-"]
+awwan <command> <script> <line-start> [line-end | "-"]
 
 
 ==  DESCRIPTION
@@ -50,7 +50,6 @@ The second argument is the path to the awwan script file.
 The third argument is line start number.
 Its define the line number in the script where awwan will start
 execution.
-If not defined, default to 1, start from the first line.
 
 The fourth argument define the line number in the script where awwan will stop
 executing the script, or "-" to set to the last line.
@@ -61,24 +60,24 @@ line-start until the last line.
 
 Here is some examples of how to execute script,
 
-* Execute the first line of "script.aww" in local system.
+* Execute only line 5 of "script.aww" on local system,
+
 ----
-$ awwan local path/to/script.aww
+$ awwan local myserver/script.aww 5
 ----
 
-* Execute only line 5 of "script.aww" on remote server,
+* Execute line 5 until line 10 of "script.aww" on remote server known as
+  "myserver",
+
 ----
-$ awwan play path/to/script.aww 5
+$ awwan play myserver/script.aww 5 10
 ----
 
-* Execute line 5 until line 10 of "script.aww" on remote server,
-----
-$ awwan play path/to/script.aww 5 10
-----
+* Execute line 5 until last line of "script.aww" on remote server known as
+  "myserver",
 
-* Execute line 5 until last line of "script.aww" on remote server,
 ----
-$ awwan play path/to/script.aww 5 -
+$ awwan play cloud/myserver/script.aww 5 -
 ----
 
 
