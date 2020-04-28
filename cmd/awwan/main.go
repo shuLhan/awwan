@@ -30,20 +30,21 @@ func main() {
 
 func usage() {
 	fmt.Println(`
-	awwan <commands> <service> [start] [end]
+awwan <command> <script> <start> [end]
 
-	commands     = "bootstrap" | "local" | "play"
+command  = "local" / "play"
+	The local command execute the script in current system.
+	The play command execute the script in the remove server.
 
-	service      = provider "/" service_name "/" node_name
+script = STRING
+	A path to script to be executed.
 
-	provider     = "virtualbox" | "aws" | "gcp"
+start = 1*DIGITS
+	The starting line number in the script.
 
-	service_name = "ec2" | "vm"
-
-	node_name    = 1*ALPHANUM ( "." / "-" / ALPHANUM )
-
-	start        = 1*DIGITS
-
-	end          = 1*DIGITS / "-"`)
+end = 1*DIGITS / "-"
+	The end of line number, default to start. The "-" means until the
+	last line
+`)
 	os.Exit(1)
 }
