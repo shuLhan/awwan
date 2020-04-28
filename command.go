@@ -198,7 +198,7 @@ func (cmd *Command) sudoPut(stmt []byte) (err error) {
 		return err
 	}
 
-	moveStmt := fmt.Sprintf("sudo mv %s %s", tmp, remote)
+	moveStmt := fmt.Sprintf("sudo mv -f %s %s", tmp, remote)
 
 	return cmd.sshClient.Execute(moveStmt)
 }
