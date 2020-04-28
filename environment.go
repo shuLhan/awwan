@@ -73,11 +73,14 @@ func NewEnvironment(args []string) (env *Environment, err error) {
 			return nil, err
 		}
 	}
+
 	if len(args) >= 4 {
 		err = env.parseArgScriptEnd(args[3])
 		if err != nil {
 			return nil, err
 		}
+	} else {
+		env.scriptEnd = env.scriptStart
 	}
 
 	paths, err := env.generatePaths()
