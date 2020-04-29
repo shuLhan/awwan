@@ -5,7 +5,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 
@@ -29,7 +28,7 @@ func main() {
 }
 
 func usage() {
-	fmt.Println(`
+	log.Println(`
 awwan <command> <script> <start> [end]
 
 command  = "local" / "play"

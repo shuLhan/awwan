@@ -261,7 +261,7 @@ func (cmd *Command) executeLocalScript() {
 			continue
 		}
 
-		fmt.Printf(">>> local %d: %s\n\n", x, stmt)
+		log.Printf(">>> local %d: %s\n\n", x, stmt)
 
 		err := cmd.exec(string(stmt))
 		if err != nil {
@@ -305,7 +305,7 @@ func (cmd *Command) executeScript() {
 			continue
 		}
 
-		fmt.Printf(">>> %s: %d: %s\n\n", cmd.sshClient, x, stmt)
+		log.Printf(">>> %s: %d: %s\n\n", cmd.sshClient, x, stmt)
 
 		err := cmd.sshClient.Execute(string(stmt))
 		if err != nil {

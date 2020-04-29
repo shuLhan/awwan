@@ -7,6 +7,7 @@ package awwan
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
 	"math"
 	"math/rand"
 	"os"
@@ -213,7 +214,7 @@ func (env *Environment) load(file string) (err error) {
 		return fmt.Errorf("load %q: %w", file, err)
 	}
 
-	fmt.Printf(">>> loading %q ...\n", file)
+	log.Printf(">>> loading %q ...\n", file)
 
 	err = env.parse(content)
 	if err != nil {
