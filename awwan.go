@@ -16,5 +16,6 @@ const (
 var (
 	cmdMagicGet     = []byte("#get:")
 	cmdMagicPut     = []byte("#put:")
+	cmdMagicSudoGet = []byte("#get!")
 	cmdMagicSudoPut = []byte("#put!")
 )

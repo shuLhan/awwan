@@ -152,6 +152,38 @@ func (cmd *Command) get(stmt []byte) (err error) {
 }
 
 //
+// sudoGet copy file from remote that can be accessed by root, to local.
+// Syntax,
+//
+//	#get! <remote> <local>
+//
+func (cmd *Command) sudoGet(stmt []byte) (err error) {
+	stmt = bytes.TrimSpace(stmt[5:])
+
+	paths := bytes.Fields(stmt)
+	if len(paths) != 2 {
+		err = fmt.Errorf("invalid get! statement: %q", stmt)
+		log.Println(err)
+		return
+	}
+
+	remoteSrc := string(paths[0])
+	remoteBase := filepath.Base(remoteSrc)
+	remoteTmp := filepath.Join(cmd.tmpDir, remoteBase)
+
+	local := string(paths[1])
+
+	cpRemoteToTmp := fmt.Sprintf("sudo cp -f %s %s", remoteSrc, remoteTmp)
+
+	err = cmd.sshClient.Execute(cpRemoteToTmp)
+	if err != nil {
+		return fmt.Errorf("sudoGet %q: %w", cpRemoteToTmp, err)
+	}
+
+	return cmd.sshClient.Get(remoteTmp, local)
+}
+
+//
 // put copy file from local to remote system.
 // Syntax,
 //
@@ -257,6 +289,13 @@ func (cmd *Command) executeLocalScript() {
 			}
 			continue
 		}
+		if bytes.HasPrefix(stmt, cmdMagicSudoGet) {
+			err := cmd.sudoCopy(stmt)
+			if err != nil {
+				break
+			}
+			continue
+		}
 		if stmt[0] == '#' {
 			continue
 		}
@@ -296,6 +335,13 @@ func (cmd *Command) executeScript() {
 		}
 		if bytes.HasPrefix(stmt, cmdMagicGet) {
 			err := cmd.get(stmt)
+			if err != nil {
+				break
+			}
+			continue
+		}
+		if bytes.HasPrefix(stmt, cmdMagicSudoGet) {
+			err := cmd.sudoGet(stmt)
 			if err != nil {
 				break
 			}

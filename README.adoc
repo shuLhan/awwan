@@ -86,7 +86,8 @@ $ awwan play cloud/myserver/script.aww 5 -
 The awwan script is similar to shell script.
 Each line started with '#' is a comment, except for special, magic words.
 
-There are three magic words in the script: `#get:`, `#put:`, and `#put!`.
+There are three magic words in the script: `#get:`, `#get!`, `#put:`, and
+`#put!`.
 
 Magic word `#get:` will copy file from remote server to your local file
 system.
@@ -94,6 +95,14 @@ Example,
 
 ----
 #get: /etc/os-release os-release
+----
+
+Magic word `#get!` will copy file from remote server, that can be accessed
+only by using sudo, to your local file.
+Example,
+
+----
+#get! /etc/nginx/ssl/my.crt server.crt
 ----
 
 Magic word `#put:` will copy file from your local to remote server.
