@@ -1,0 +1,12 @@
+= Changelog for awwan
+
+==  awwan 0.1.0 (2020.05.30)
+
+Its better late than never.
+
+The first release works for everyday use.
+The `local`, `play` command works as it is, and its has been used for
+deploying and managing postfix, dovecot, haproxy, and my personal server and
+services at kilabit.info.
+Also it has been used to deploy Go microservices using Kubernetes using
+combination of `gcloud` and `kubectl`.
