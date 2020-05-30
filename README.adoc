@@ -1,7 +1,6 @@
 = awwan
 :author: Shulhan
 :email: <ms@kilabit.info>
-:stylesheet: _docs/style.css
 :toc:
 :url-gocard: https://goreportcard.com/report/github.com/shuLhan/awwan
 :url-godoc: https://pkg.go.dev/github.com/shuLhan/awwan

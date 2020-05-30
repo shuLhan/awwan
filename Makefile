@@ -14,7 +14,7 @@ test:
 	go test ./...
 
 serve-doc:
-	ciigo -template _docs/html.tmpl serve .
+	ciigo serve .
 
 ##
 ## Build for release
