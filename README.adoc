@@ -162,13 +162,13 @@ values from variables defined in environment files.
 There are two global variables that shared to all template or script files,
 
 * `.BaseDir` contains the absolute path of current directory, and
-* `.ServiceDir` contains the relative path to script directory.
+* `.ScriptDir` contains the relative path to script directory.
 
 To get the value wrap the variable using '{{}}' for example,
 
 ----
 #put! {{.BaseDir}}/templates/etc/hosts /etc/
-#put! {{.ServiceDir}}/etc/hosts /etc/
+#put! {{.ScriptDir}}/etc/hosts /etc/
 ----
 
 To get the value of variable in environment file you put the string ".Val"
