@@ -2,11 +2,11 @@
 :author: Shulhan
 :email: <ms@kilabit.info>
 :toc:
-:url-gocard: https://goreportcard.com/report/github.com/shuLhan/awwan
-:url-godoc: https://pkg.go.dev/github.com/shuLhan/awwan
+:url-gocard: https://goreportcard.com/report/git.sr.ht/~shulhan/awwan
+:url-godoc: https://pkg.go.dev/git.sr.ht/~shulhan/awwan
 
 image:https://img.shields.io/badge/go.dev-reference-007d9c?logo=go&logoColor=white&style=flat-square[GoDoc, link={url-godoc}]
-image:https://goreportcard.com/badge/github.com/shuLhan/awwan[Go Report Card, link={url-gocard}]
+image:https://goreportcard.com/badge/git.sr.ht/~shulhan/awwan[Go Report Card, link={url-gocard}]
 
 ==  NAME
 
@@ -355,17 +355,18 @@ Any keys that are duplicate will be merged and the last one will overwrite the
 previous one.
 
 
-==  TODO
-
-Handle piping.
-
-
 ==  BUGS
 
-Shell pipe "|", "<", or ">"  does not work in script, yet.
+Shell pipe "|", "<", or ">"  does not work in the script, yet.
+
+
+==  LINKS
+
+The source codes for this software project can be viewed at
+https://sr.ht/~shulhan/awwan/ .
 
 For request of features and/or bugs report please submitted through web at
-https://github.com/shuLhan/awwan/issues.
+https://todo.sr.ht/~shulhan/awwan .
 
 
 ==  LICENSE

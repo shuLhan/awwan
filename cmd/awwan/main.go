@@ -8,7 +8,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/shuLhan/awwan"
+	"git.sr.ht/~shulhan/awwan"
 )
 
 func main() {
@@ -43,7 +43,7 @@ start = 1*DIGITS
 
 end = 1*DIGITS / "-"
 	The end of line number, default to start. The "-" means until the
-	last line
-`)
+	last line`)
+
 	os.Exit(1)
 }

@@ -366,7 +366,7 @@ func (cmd *Command) initSSHClient() {
 
 	sshSection := cmd.env.sshConfig.Get(cmd.env.hostname)
 	if sshSection == nil {
-		log.Fatal("cmd: can not find Host %q in SSH config",
+		log.Fatalf("cmd: can not find Host %q in SSH config",
 			cmd.env.hostname)
 	}
 

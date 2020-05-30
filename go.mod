@@ -1,4 +1,4 @@
-module github.com/shuLhan/awwan
+module git.sr.ht/~shulhan/awwan
 
 go 1.13
 

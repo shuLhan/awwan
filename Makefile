@@ -6,9 +6,10 @@ RELEASE_BINARIES=\
 	_bin/awwan-linux-amd64 \
 	_bin/awwan-darwin-amd64
 
-.PHONY: all release
+.PHONY: all test serve-doc release
 
-all: test serve-doc
+all:
+	go build ./cmd/awwan
 
 test:
 	go test ./...
@@ -17,7 +18,7 @@ serve-doc:
 	ciigo serve .
 
 ##
-## Build for release
+## Build for releases
 ##
 
 _bin/awwan-linux-amd64:
