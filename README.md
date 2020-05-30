@@ -219,21 +219,29 @@ that match with "development" in current ".ssh/config" or in "~/.ssh/config".
 
 ##  EXAMPLE
 
+To give you the taste of the idea, I will show you an example using the
+working directory $WORKDIR as our base directory.
+
 Let say that we have the working remote server named "myserver" at IP address
-"1.2.3.4" using username "arch" on port "2222" in the current ".ssh/config"
-file
+"1.2.3.4" using username "arch" on port "2222".
+
+In the $WORKDIR, create directory ".ssh" and "config" file,
 
 ```
+$ mkdir -p .ssh
+$ cat > .ssh/config <<EOF
 Host myserver
 	Hostname 1.2.3.4
 	User arch
 	Port 2222
-	IdentityFile ~/.ssh/id_rsa
+	IdentityFile .ssh/myserver
+EOF
 ```
 
-and the environment file "awwan.env"
+Still in the $WORKDIR, create  the environment file "awwan.env"
 
 ```
+$ cat > awwan.env <<EOF
 [all]
 user = arch
 host = myserver
@@ -241,26 +249,38 @@ host = myserver
 [whitelist "ip"]
 alpha = 1.2.3.4/32
 beta  = 2.3.4.5/32
+EOF
 ```
 
-and script file "test.aww",
+Inside the $WORKDIR we create the directory that match with our server name
+and a script file "test.aww",
 
 ```
+$ mkdir -p myserver
+$ cat > myserver/test.aww <<EOF
 echo {{.Val "all::host"}}`
 #put: {{.ScriptDir}}/test /tmp/
 cat /tmp/test
+EOF
 ```
 
 and a template file "test",
 
 ```
+$ cat > myserver/test <<EOF
 Hi {{.Val "all::user"}}!
+EOF
 ```
 
-When executed, it will print the following output to terminal,
+When executed from start to end like these,
 
 ```
 $ awwan play myserver/test.aww 1 -
+```
+
+it will print the following output to terminal,
+
+```
 >>> arch@1.2.3.4:2222: 1: echo myserver
 
 myserver
@@ -268,7 +288,6 @@ test                                                  100%    9     0.4KB/s   00
 >>> arch@1.2.3.4:2222: 3: cat /tmp/test
 
 Hi arch!
-
 ```
 
 That's it.
