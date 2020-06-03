@@ -9,6 +9,8 @@ import (
 	"io/ioutil"
 	"log"
 	"text/template"
+
+	libbytes "github.com/shuLhan/share/lib/bytes"
 )
 
 //
@@ -109,6 +111,7 @@ func (s *script) join() {
 				break
 			}
 		}
+		s.Statements[x] = libbytes.MergeSpaces(s.Statements[x])
 		x = y
 	}
 }

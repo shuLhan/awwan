@@ -4,6 +4,8 @@
 
 ===  Enhancements
 
+*  command: merge sequences of spaces on command into single space
+
 *  command: check for single, double, or back quote on command
 
 Previously, if command contains quote like,
