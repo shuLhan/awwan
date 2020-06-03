@@ -1,5 +1,22 @@
 = Changelog for awwan
 
+==  awwan 0.1.1 (2020.06.xx)
+
+===  Enhancements
+
+*  command: check for single, double, or back quote on command
+
+Previously, if command contains quote like,
+
+	echo "a b"
+
+the script will run it as ["echo", `"a`, `b"`] which is not what we
+will expected and may cause some command failed to run.
+
+This changes fix the parsing of command string by detecting possible
+quote.
+
+
 ==  awwan 0.1.0 (2020.05.30)
 
 Its better late than never.

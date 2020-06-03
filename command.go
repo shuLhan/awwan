@@ -9,11 +9,10 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"strings"
 
 	"github.com/shuLhan/share/lib/io"
+	"github.com/shuLhan/share/lib/os/exec"
 	"github.com/shuLhan/share/lib/ssh"
 )
 
@@ -86,7 +85,7 @@ func (cmd *Command) sudoCopy(stmt []byte) (err error) {
 
 	moveStmt := fmt.Sprintf("sudo mv %s %s", tmp, remote)
 
-	return cmd.exec(moveStmt)
+	return exec.Run(moveStmt, os.Stdout, os.Stderr)
 }
 
 func (cmd *Command) doPlay() {
@@ -115,7 +114,7 @@ func (cmd *Command) doLocal() {
 
 	// Create temporary directory ...
 	mkdirStmt := fmt.Sprintf("mkdir %s", cmd.tmpDir)
-	err := cmd.exec(mkdirStmt)
+	err := exec.Run(mkdirStmt, os.Stdout, os.Stderr)
 	if err != nil {
 		log.Fatalf("%s %s", mkdirStmt, err.Error())
 	}
@@ -247,18 +246,6 @@ func (cmd *Command) Run() {
 	}
 }
 
-//
-// exec execute command on local system.
-//
-func (cmd *Command) exec(stmt string) (err error) {
-	cmds := strings.Fields(stmt)
-	localCmd := exec.Command(cmds[0], cmds[1:]...)
-	localCmd.Stdout = os.Stdout
-	localCmd.Stderr = os.Stderr
-
-	return localCmd.Run()
-}
-
 func (cmd *Command) executeLocalScript() {
 	for x := cmd.env.scriptStart; x <= cmd.env.scriptEnd; x++ {
 		stmt := cmd.script.Statements[x]
@@ -302,7 +289,7 @@ func (cmd *Command) executeLocalScript() {
 
 		log.Printf(">>> local %d: %s\n\n", x, stmt)
 
-		err := cmd.exec(string(stmt))
+		err := exec.Run(string(stmt), os.Stdout, os.Stderr)
 		if err != nil {
 			log.Println("cmd: Execute: " + err.Error())
 			break
