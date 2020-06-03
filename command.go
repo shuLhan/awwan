@@ -106,6 +106,11 @@ func (cmd *Command) doPlay() {
 		}
 	}()
 
+	err = cmd.executeRequires()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	cmd.executeScript()
 }
 
@@ -125,6 +130,10 @@ func (cmd *Command) doLocal() {
 		}
 	}()
 
+	err = cmd.executeRequires()
+	if err != nil {
+		log.Fatal(err)
+	}
 	cmd.executeLocalScript()
 }
 
@@ -295,6 +304,27 @@ func (cmd *Command) executeLocalScript() {
 			break
 		}
 	}
+}
+
+//
+// executeRequires run the #require: statements.
+//
+func (cmd *Command) executeRequires() (err error) {
+	for x := 0; x < cmd.env.scriptStart; x++ {
+		stmt := cmd.script.requires[x]
+		if len(stmt) == 0 {
+			continue
+		}
+
+		log.Printf("--- require %d: %s\n\n", x, stmt)
+
+		err = exec.Run(string(stmt), os.Stdout, os.Stderr)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (cmd *Command) executeScript() {

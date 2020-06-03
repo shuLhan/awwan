@@ -17,6 +17,7 @@ import (
 // script define the content of ".aww" file, line by line.
 //
 type script struct {
+	requires   [][]byte
 	Statements [][]byte
 }
 
@@ -36,6 +37,8 @@ func newScript(env *Environment, path string) *script {
 	if env.scriptEnd >= len(s.Statements) {
 		env.scriptEnd = len(s.Statements) - 1
 	}
+
+	s.parseMagicRequire()
 
 	return s
 }
@@ -113,5 +116,18 @@ func (s *script) join() {
 		}
 		s.Statements[x] = libbytes.MergeSpaces(s.Statements[x])
 		x = y
+	}
+}
+
+func (s *script) parseMagicRequire() {
+	s.requires = make([][]byte, len(s.Statements))
+
+	for x, stmt := range s.Statements {
+		if !bytes.HasPrefix(stmt, cmdMagicRequire) {
+			continue
+		}
+		if len(s.Statements) > x+1 {
+			s.requires[x+1] = bytes.TrimSpace(s.Statements[x+1])
+		}
 	}
 }

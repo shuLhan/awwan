@@ -18,4 +18,5 @@ var (
 	cmdMagicPut     = []byte("#put:")
 	cmdMagicSudoGet = []byte("#get!")
 	cmdMagicSudoPut = []byte("#put!")
+	cmdMagicRequire = []byte("#require:")
 )

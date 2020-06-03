@@ -1,6 +1,25 @@
 = Changelog for awwan
 
-==  awwan 0.1.1 (2020.06.xx)
+==  awwan 0.2.0 (2020.06.xx)
+
+===  New features
+
+*  all: add magic command "#require:"
+
+Magic word `#require:` will ensure that the next statement will always
+executed when its skipped with start number.
+For example, given following script with line number
+
+  1: #require:
+  2: echo a
+  3: echo b
+  4: #require:
+  5: echo c
+```
+
+executing `awwan local script.aww 3`, will always execute line
+number 2 `echo a`, but not line number 5 (because its before line start 3).
+
 
 ===  Enhancements
 

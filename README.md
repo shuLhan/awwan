@@ -78,8 +78,23 @@ $ awwan play cloud/myserver/script.aww 5 -
 The awwan script is similar to shell script.
 Each line started with '#' is a comment, except for special, magic words.
 
-There are three magic words in the script: `#get:`, `#get!`, `#put:`, and
-`#put!`.
+There are five magic words in the script: `#require:`, `#get:`, `#get!`,
+`#put:`, and `#put!`.
+
+Magic word `#require:` will ensure that the next statement will always
+executed when its skipped with start number.
+For example, given following script with line number
+
+```
+1: #require:
+2: echo a
+3: echo b
+4: #require:
+5: echo c
+```
+
+executing `awwan local script.aww 3`, will always execute line number 2 `echo
+a`, but not line number 5 (because its before line start 3).
 
 Magic word `#get:` will copy file from remote server to your local file
 system.
@@ -365,6 +380,65 @@ When executing the script `awwan` will merge the variables from current
 directory with variable from script directory.
 Any keys that are duplicate will be merged and the last one will overwrite the
 previous one.
+
+
+### Use case of magic command `#require:`
+
+The magic command `#require:` is added to prevent running local command using
+different project or configuration.
+
+The use case was derived from experience with `gcloud` and `kubectl` commands.
+When you have more than one projects in GCP, you need to make sure that the
+command that you run is using correct configuration.
+
+Here is the example of deploying Cloud Functions using local awwan script,
+
+```
+1: #require:
+2: gcloud config configurations activate {{.Val "gcloud::config"}}
+3:
+4: ## Create PubSub topic.
+5:
+6: gcloud pubsub topics create {{.Val "CloudFunctions:log2slack:pubsub_topic"}}
+7:
+8: ## Create Logger Sink to Route the log to PubSub topic.
+9:
+10: gcloud logging sinks create {{.Val "CloudFunctions:log2slack:pubsub_topic"}} \
+11:	pubsub.googleapis.com/projects/{{.Val "gcloud::project"}}/topics/{{.Val "CloudFunctions:log2slack:pubsub_topic"}} \
+12:	--log-filter=severity>=WARNING
+13:
+14: ## Create Cloud Functions to forward log to Slack.
+15:
+16: gcloud functions deploy Log2Slack \
+17:	--source {{.ScriptDir}} \
+18:	--entry-point Log2Slack \
+19:	--runtime go113 \
+20:	--trigger-topic {{.Val "CloudFunctions:log2slack:pubsub_topic"}} \
+21:	--set-env-vars SLACK_WEBHOOK_URL={{.Val "slack::slack_webhook_url"}} \
+22:	--ingress-settings internal-only \
+23:	--max-instances=5
+24:
+25: ## Test the chains by publishing a message to Topic...
+26:
+27: gcloud pubsub topics \
+28:	publish {{.Val "CloudFunctions:log2slack:pubsub_topic"}} \
+29:	--message='Hello World!'
+```
+
+When executing statement at line number 6, 10, 16 or 27 we need to make sure
+that it always using the correct environment "gcloud::config",
+
+```
+$ awwan local awwan/playground/CloudFunctions/log2slack/local.deploy.aww 27
+2020/06/04 01:48:38 >>> loading "/xxx//awwan.env" ...
+2020/06/04 01:48:38 >>> loading "/xxx/awwan/dev/awwan.env" ...
+2020/06/04 01:48:38 --- require 2: gcloud config configurations activate dev
+
+Activated [dev].
+2020/06/04 01:48:38 >>> local 29: gcloud pubsub topics publish logs
+--message='Hello World!'
+```
+
 
 
 ##  BUGS
