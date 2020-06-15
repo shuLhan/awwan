@@ -20,6 +20,10 @@ For example, given following script with line number
 executing `awwan local script.aww 3`, will always execute line
 number 2 `echo a`, but not line number 5 (because its before line start 3).
 
+===  Bug fixes
+
+*  command: fix magic copy and get command on templates
+
 
 ===  Enhancements
 
