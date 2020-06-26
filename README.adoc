@@ -173,16 +173,22 @@ We will explain how to use and get the environment variables below.
 Template file is any text or script files that dynamically generated using
 values from variables defined in environment files.
 
-There are two global variables that shared to all template or script files,
+There are six global variables that shared to all template or script files,
 
-* `.BaseDir` contains the absolute path of current directory, and
-* `.ScriptDir` contains the relative path to script directory.
+* `.BaseDir` contains the absolute path of current directory
+* `.ScriptDir` contains the relative path to script directory
+* `.SSHKey` contains the value of "IdentityFile" in SSH configuration
+* `.SSHUser` contains the value of "User" in SSH configuration
+* `.SSHHost` contains the value of "Host" in SSH configuration
+* `.SSHPort` contains the value of "Port" in SSH configuration
 
 To get the value wrap the variable using '{{}}' for example,
 
 ----
 #put! {{.BaseDir}}/templates/etc/hosts /etc/
 #put! {{.ScriptDir}}/etc/hosts /etc/
+
+scp -i {{.SSHKey}} src {{.SSHUser}}@{{.SSHHost}}:{{.SSHPort}}/dst
 ----
 
 To get the value of variable in environment file you put the string ".Val"

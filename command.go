@@ -401,4 +401,9 @@ func (cmd *Command) initSSHClient() {
 	if err != nil {
 		log.Fatal("cmd: cannot create new SSH client: " + err.Error())
 	}
+
+	cmd.env.SSHKey = sshSection.IdentityFile[0]
+	cmd.env.SSHUser = sshSection.User
+	cmd.env.SSHHost = sshSection.Hostname
+	cmd.env.SSHPort = strconv.Itoa(sshSection.Port)
 }

@@ -4,6 +4,13 @@
 
 ===  New features
 
+*  environment: export the SSH key, user, host, and port
+
+By knowing this values, user can use it to invoke other SSH related
+command, for example to copy file using `scp`
+
+  scp -i {{.SSHKey}} src {{.SSHUser}}@{{.SSHHost}}:{{.SSHPort}}/dst
+
 *  all: add magic command "#require:"
 
 Magic word `#require:` will ensure that the next statement will always

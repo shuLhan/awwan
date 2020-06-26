@@ -28,6 +28,11 @@ type Environment struct {
 	BaseDir   string // The current working directory.
 	ScriptDir string // The base directory of the script.
 
+	SSHKey  string // The value of "IdentityFile" in SSH config.
+	SSHUser string // The value of "User" in SSH config.
+	SSHHost string // The value of "Hostname" in configuration.
+	SSHPort string // The value of "Port" in configuration.
+
 	mode         string // One of the mode to execute the script.
 	hostname     string // The hostname where script will be executed.
 	scriptPath   string // Location of the script in file system.
