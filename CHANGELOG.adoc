@@ -29,6 +29,12 @@ number 2 `echo a`, but not line number 5 (because its before line start 3).
 
 ===  Bug fixes
 
+*  command: change the owner of file when doing #get!
+
+In case the owner of file is not active user and it does not have
+read permission, the "#get!" command will fail when copying command
+from remote to local.
+
 *  command: fix magic copy and get command on templates
 
 

@@ -10,6 +10,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/shuLhan/share/lib/io"
 	"github.com/shuLhan/share/lib/os/exec"
@@ -186,6 +187,13 @@ func (cmd *Command) sudoGet(stmt []byte) (err error) {
 	err = cmd.sshClient.Execute(cpRemoteToTmp)
 	if err != nil {
 		return fmt.Errorf("sudoGet %q: %w", cpRemoteToTmp, err)
+	}
+
+	chmod := fmt.Sprintf("sudo chown %s %s", cmd.env.SSHUser, remoteTmp)
+
+	err = cmd.sshClient.Execute(chmod)
+	if err != nil {
+		return fmt.Errorf("sudoGet %q: %w", chmod, err)
 	}
 
 	return cmd.sshClient.Get(remoteTmp, local)
