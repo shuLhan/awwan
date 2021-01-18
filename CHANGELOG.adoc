@@ -37,7 +37,6 @@ from remote to local.
 
 *  command: fix magic copy and get command on templates
 
-
 ===  Enhancements
 
 *  command: merge sequences of spaces on command into single space
