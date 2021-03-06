@@ -8,11 +8,14 @@ RELEASE_BINARIES=\
 
 .PHONY: all test serve-doc release
 
-all:
+all: test lint
 	go build ./cmd/awwan
 
 test:
-	go test ./...
+	go test -race ./...
+
+lint:
+	golangci-lint run ./...
 
 serve-doc:
 	ciigo serve .
