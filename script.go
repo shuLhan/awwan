@@ -6,8 +6,8 @@ package awwan
 
 import (
 	"bytes"
+	"fmt"
 	"io/ioutil"
-	"log"
 	"text/template"
 
 	libbytes "github.com/shuLhan/share/lib/bytes"
@@ -26,13 +26,18 @@ type script struct {
 // environment variables into the script content, and split each statement by
 // lines.
 //
-func newScript(env *Environment, path string) *script {
+func newScript(env *Environment, path string) (s *script, err error) {
+	logp := "newScript"
+
 	content, err := ioutil.ReadFile(path)
 	if err != nil {
-		log.Fatal("newScript: ioutil.ReadFile: " + err.Error())
+		return nil, fmt.Errorf("%s: %w", logp, err)
 	}
 
-	s := parseScript(env, content)
+	s, err = parseScript(env, content)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", logp, err)
+	}
 
 	if env.scriptEnd >= len(s.Statements) {
 		env.scriptEnd = len(s.Statements) - 1
@@ -40,30 +45,30 @@ func newScript(env *Environment, path string) *script {
 
 	s.parseMagicRequire()
 
-	return s
+	return s, nil
 }
 
 //
 // parseScript parse the script content by applying the environment values and
 // splitting it into statements.
 //
-func parseScript(env *Environment, content []byte) (s *script) {
+func parseScript(env *Environment, content []byte) (s *script, err error) {
 	var (
+		logp = "parseScript"
 		tmpl *template.Template
 		buf  bytes.Buffer
-		err  error
 	)
 
 	tmpl = template.New("aww")
 
 	tmpl, err = tmpl.Parse(string(content))
 	if err != nil {
-		log.Fatal("newScript: template.Parse: " + err.Error())
+		return nil, fmt.Errorf("%s: %w", logp, err)
 	}
 
 	err = tmpl.Execute(&buf, env)
 	if err != nil {
-		log.Fatal("newScript: template.Execute: " + err.Error())
+		return nil, fmt.Errorf("%s: %w", logp, err)
 	}
 
 	stmts := bytes.Split(buf.Bytes(), []byte{'\n'})
@@ -75,7 +80,7 @@ func parseScript(env *Environment, content []byte) (s *script) {
 
 	s.join()
 
-	return
+	return s, nil
 }
 
 //

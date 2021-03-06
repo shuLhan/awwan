@@ -120,7 +120,7 @@ func (env *Environment) generatePaths() (paths []string, err error) {
 		return nil, fmt.Errorf("generatePaths %q: %w", absScriptDir, err)
 	}
 
-	if !filepath.HasPrefix(absScriptDir, env.BaseDir) {
+	if !strings.HasPrefix(absScriptDir, env.BaseDir) {
 		return nil, fmt.Errorf("%q must be under %q", env.ScriptDir, env.BaseDir)
 	}
 	rel, err := filepath.Rel(env.BaseDir, absScriptDir)
@@ -177,7 +177,7 @@ func (env *Environment) parseArgScript(path string) {
 func (env *Environment) parseArgScriptStart(start string) (err error) {
 	env.scriptStart, err = strconv.Atoi(start)
 	if err != nil {
-		fmt.Errorf("invalid start %q: %w", start, err)
+		return fmt.Errorf("invalid start %q: %w", start, err)
 	}
 
 	if env.scriptStart < 0 {

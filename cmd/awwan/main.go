@@ -24,7 +24,10 @@ func main() {
 
 	cmd := awwan.New(env)
 
-	cmd.Run()
+	err = cmd.Run()
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func usage() {

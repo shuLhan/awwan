@@ -5,7 +5,7 @@
 package awwan
 
 import (
-	"log"
+	"fmt"
 	"os"
 	"path/filepath"
 	"text/template"
@@ -19,39 +19,41 @@ const cacheDir = ".cache"
 // parseTemplate read the file input "in" and apply the environment variables,
 // and write the result to ".cache" directory.
 //
-func parseTemplate(env *Environment, in string) (out string) {
+func parseTemplate(env *Environment, in string) (out string, err error) {
+	logp := "parseTemplate"
+
 	if libio.IsBinary(in) {
-		return in
+		return in, nil
 	}
 
 	outDir := filepath.Join(env.BaseDir, cacheDir, filepath.Dir(in))
 	base := filepath.Base(in)
 	out = filepath.Join(outDir, base)
 
-	err := os.MkdirAll(outDir, 0700)
+	err = os.MkdirAll(outDir, 0700)
 	if err != nil {
-		log.Fatalf("parseTemplate %s: %s\n", in, err)
+		return "", fmt.Errorf("%s %s: %w", logp, in, err)
 	}
 
 	tmpl, err := template.ParseFiles(in)
 	if err != nil {
-		log.Fatalf("parseTemplate %s: %s\n", in, err)
+		return "", fmt.Errorf("%s %s: %w", logp, in, err)
 	}
 
 	f, err := os.Create(out)
 	if err != nil {
-		log.Fatalf("parseTemplate: %s\n", err)
+		return "", fmt.Errorf("%s %s: %w", logp, in, err)
 	}
 
 	err = tmpl.Execute(f, env)
 	if err != nil {
-		log.Fatalf("parseTemplate: %s\n", err)
+		return "", fmt.Errorf("%s %s: %w", logp, in, err)
 	}
 
 	err = f.Close()
 	if err != nil {
-		log.Fatalf("parseTemplate: %s\n", err)
+		return "", fmt.Errorf("%s %s: %w", logp, in, err)
 	}
 
-	return out
+	return out, nil
 }

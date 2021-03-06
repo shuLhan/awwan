@@ -6,6 +6,7 @@ package awwan
 
 import (
 	"fmt"
+	"log"
 )
 
 func Examplescript_join() {
@@ -20,9 +21,15 @@ command {{.Val "section::key"}};\
 end;
 `
 	env := &Environment{}
-	env.parse([]byte(envContent))
+	err := env.parse([]byte(envContent))
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	s := parseScript(env, []byte(scriptContent))
+	s, err := parseScript(env, []byte(scriptContent))
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	for _, stmt := range s.Statements {
 		fmt.Printf("%s\n", stmt)

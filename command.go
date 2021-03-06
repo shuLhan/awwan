@@ -44,16 +44,20 @@ func New(env *Environment) (cmd *Command) {
 // copy file in local system.
 //
 func (cmd *Command) copy(stmt []byte) (err error) {
+	logp := "copy"
+
 	stmt = bytes.TrimSpace(stmt[5:])
 
 	paths := bytes.Fields(stmt)
 	if len(paths) != 2 {
-		err = fmt.Errorf("invalid put statement: %q", stmt)
-		log.Println(err)
-		return
+		return fmt.Errorf("%s: invalid statement: %q", logp, stmt)
 	}
 
-	local := parseTemplate(cmd.env, string(paths[0]))
+	local, err := parseTemplate(cmd.env, string(paths[0]))
+	if err != nil {
+		return fmt.Errorf("%s: %w", logp, err)
+	}
+
 	remote := string(paths[1])
 
 	return io.Copy(remote, local)
@@ -63,25 +67,29 @@ func (cmd *Command) copy(stmt []byte) (err error) {
 // sudoCopy file in local system using sudo.
 //
 func (cmd *Command) sudoCopy(stmt []byte) (err error) {
+	logp := "sudoCopy"
+
 	stmt = bytes.TrimSpace(stmt[5:])
 
 	paths := bytes.Fields(stmt)
 	if len(paths) != 2 {
-		err = fmt.Errorf("invalid put statement: %q", stmt)
-		log.Println(err)
-		return
+		return fmt.Errorf("%s: invalid statement: %q", logp, stmt)
 	}
 
 	src := string(paths[0])
 	baseName := filepath.Base(src)
 
-	local := parseTemplate(cmd.env, src)
+	local, err := parseTemplate(cmd.env, src)
+	if err != nil {
+		return fmt.Errorf("%s: %w", logp, err)
+	}
+
 	tmp := filepath.Join(cmd.tmpDir, baseName)
 	remote := string(paths[1])
 
 	err = io.Copy(tmp, local)
 	if err != nil {
-		return err
+		return fmt.Errorf("%s: %w", logp, err)
 	}
 
 	moveStmt := fmt.Sprintf("sudo mv %s %s", tmp, remote)
@@ -89,15 +97,24 @@ func (cmd *Command) sudoCopy(stmt []byte) (err error) {
 	return exec.Run(moveStmt, os.Stdout, os.Stderr)
 }
 
-func (cmd *Command) doPlay() {
-	cmd.script = newScript(cmd.env, cmd.env.scriptPath)
-	cmd.initSSHClient()
+func (cmd *Command) doPlay() (err error) {
+	logp := "doPlay"
+
+	cmd.script, err = newScript(cmd.env, cmd.env.scriptPath)
+	if err != nil {
+		return fmt.Errorf("%s: %w", logp, err)
+	}
+
+	err = cmd.initSSHClient()
+	if err != nil {
+		return fmt.Errorf("%s: %w", logp, err)
+	}
 
 	// Create temporary directory ...
 	mkdirStmt := fmt.Sprintf("mkdir %s", cmd.tmpDir)
-	err := cmd.sshClient.Execute(mkdirStmt)
+	err = cmd.sshClient.Execute(mkdirStmt)
 	if err != nil {
-		log.Fatalf("%s %s", mkdirStmt, err.Error())
+		return fmt.Errorf("%s: %s: %w", logp, mkdirStmt, err)
 	}
 	defer func() {
 		rmdirStmt := fmt.Sprintf("rm -rf %s", cmd.tmpDir)
@@ -109,20 +126,27 @@ func (cmd *Command) doPlay() {
 
 	err = cmd.executeRequires()
 	if err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("%s: %w", logp, err)
 	}
 
 	cmd.executeScript()
+
+	return nil
 }
 
-func (cmd *Command) doLocal() {
-	cmd.script = newScript(cmd.env, cmd.env.scriptPath)
+func (cmd *Command) doLocal() (err error) {
+	logp := "doLocal"
+
+	cmd.script, err = newScript(cmd.env, cmd.env.scriptPath)
+	if err != nil {
+		return fmt.Errorf("%s: %w", logp, err)
+	}
 
 	// Create temporary directory ...
 	mkdirStmt := fmt.Sprintf("mkdir %s", cmd.tmpDir)
-	err := exec.Run(mkdirStmt, os.Stdout, os.Stderr)
+	err = exec.Run(mkdirStmt, os.Stdout, os.Stderr)
 	if err != nil {
-		log.Fatalf("%s %s", mkdirStmt, err.Error())
+		return fmt.Errorf("%s: %s: %w", logp, mkdirStmt, err)
 	}
 	defer func() {
 		err = os.RemoveAll(cmd.tmpDir)
@@ -133,9 +157,12 @@ func (cmd *Command) doLocal() {
 
 	err = cmd.executeRequires()
 	if err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("%s:%w", logp, err)
 	}
+
 	cmd.executeLocalScript()
+
+	return nil
 }
 
 //
@@ -206,16 +233,20 @@ func (cmd *Command) sudoGet(stmt []byte) (err error) {
 //	#put: <local> <remote>
 //
 func (cmd *Command) put(stmt []byte) (err error) {
+	logp := "put"
+
 	stmt = bytes.TrimSpace(stmt[5:])
 
 	paths := bytes.Fields(stmt)
 	if len(paths) != 2 {
-		err = fmt.Errorf("invalid put statement: %q", stmt)
-		log.Println(err)
-		return
+		return fmt.Errorf("%s: invalid statement: %q", logp, stmt)
 	}
 
-	local := parseTemplate(cmd.env, string(paths[0]))
+	local, err := parseTemplate(cmd.env, string(paths[0]))
+	if err != nil {
+		return fmt.Errorf("%s: %w", logp, err)
+	}
+
 	remote := string(paths[1])
 
 	return cmd.sshClient.Put(local, remote)
@@ -225,25 +256,29 @@ func (cmd *Command) put(stmt []byte) (err error) {
 // sudoPut copy file using sudo.
 //
 func (cmd *Command) sudoPut(stmt []byte) (err error) {
+	logp := "sudoPut"
+
 	stmt = bytes.TrimSpace(stmt[5:])
 
 	paths := bytes.Fields(stmt)
 	if len(paths) != 2 {
-		err = fmt.Errorf("invalid put statement: %q", stmt)
-		log.Println(err)
-		return
+		return fmt.Errorf("%s: invalid statement: %q", logp, stmt)
 	}
 
 	src := string(paths[0])
 	baseName := filepath.Base(src)
 
-	local := parseTemplate(cmd.env, src)
+	local, err := parseTemplate(cmd.env, src)
+	if err != nil {
+		return fmt.Errorf("%s: %w", logp, err)
+	}
+
 	tmp := filepath.Join(cmd.tmpDir, baseName)
 	remote := string(paths[1])
 
 	err = cmd.sshClient.Put(local, tmp)
 	if err != nil {
-		return err
+		return fmt.Errorf("%s: %w", logp, err)
 	}
 
 	moveStmt := fmt.Sprintf("sudo mv -f %s %s", tmp, remote)
@@ -254,13 +289,15 @@ func (cmd *Command) sudoPut(stmt []byte) (err error) {
 //
 // Run the script.
 //
-func (cmd *Command) Run() {
+func (cmd *Command) Run() (err error) {
 	switch cmd.env.mode {
 	case modeLocal:
-		cmd.doLocal()
+		err = cmd.doLocal()
 	case modePlay:
-		cmd.doPlay()
+		err = cmd.doPlay()
 	}
+
+	return err
 }
 
 func (cmd *Command) executeLocalScript() {
@@ -394,12 +431,10 @@ func (cmd *Command) executeScript() {
 	}
 }
 
-func (cmd *Command) initSSHClient() {
-	var err error
-
+func (cmd *Command) initSSHClient() (err error) {
 	sshSection := cmd.env.sshConfig.Get(cmd.env.hostname)
 	if sshSection == nil {
-		log.Fatalf("cmd: can not find Host %q in SSH config",
+		return fmt.Errorf("cmd: can not find Host %q in SSH config",
 			cmd.env.hostname)
 	}
 
@@ -407,11 +442,13 @@ func (cmd *Command) initSSHClient() {
 
 	cmd.sshClient, err = ssh.NewClient(sshSection)
 	if err != nil {
-		log.Fatal("cmd: cannot create new SSH client: " + err.Error())
+		return fmt.Errorf("cmd: cannot create new SSH client: %w", err)
 	}
 
 	cmd.env.SSHKey = sshSection.IdentityFile[0]
 	cmd.env.SSHUser = sshSection.User
 	cmd.env.SSHHost = sshSection.Hostname
 	cmd.env.SSHPort = strconv.Itoa(sshSection.Port)
+
+	return nil
 }
