@@ -1,5 +1,10 @@
 = Changelog for awwan
 
+==  awwan 0.2.1 (2021.01.18)
+
+Update the share modules which bring fixes to "#put" commands.
+
+
 ==  awwan 0.2.0 (2020.07.05)
 
 ===  New features
