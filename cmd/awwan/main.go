@@ -12,17 +12,21 @@ import (
 )
 
 func main() {
+	log.SetFlags(0)
+
 	if len(os.Args) <= 3 {
 		usage()
 	}
 
-	env, err := awwan.NewEnvironment(os.Args[1:])
+	env, err := awwan.NewEnvironment(os.Args[2:])
 	if err != nil {
-		log.Println(err)
-		usage()
+		log.Fatalf("awwan: %s", err)
 	}
 
-	cmd := awwan.New(env)
+	cmd, err := awwan.NewCommand(os.Args[1], env)
+	if err != nil {
+		log.Fatalf("awwan: %s", err)
+	}
 
 	err = cmd.Run()
 	if err != nil {

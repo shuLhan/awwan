@@ -33,7 +33,6 @@ type Environment struct {
 	SSHHost string // The value of "Hostname" in configuration.
 	SSHPort string // The value of "Port" in configuration.
 
-	mode         string // One of the mode to execute the script.
 	hostname     string // The hostname where script will be executed.
 	scriptPath   string // Location of the script in file system.
 	scriptName   string // The name of the script.
@@ -48,11 +47,10 @@ type Environment struct {
 //
 // NewEnvironment create and initialize new Environment from command line
 // arguments.
-// The first argument must be the mode of command.
-// The second argument is the script to be executed.
-// The third argument is the line number where we want to start execute the
+// The first argument is the script to be executed.
+// The second argument is the line number where we want to start execute the
 // script.
-// The fourth argument is the line number where the script execution will end.
+// The third argument is the line number where the script execution will end.
 //
 func NewEnvironment(args []string) (env *Environment, err error) {
 	if len(args) < 2 {
@@ -66,22 +64,17 @@ func NewEnvironment(args []string) (env *Environment, err error) {
 		return nil, fmt.Errorf("NewEnvironment: %w", err)
 	}
 
-	err = env.parseArgMode(args[0])
-	if err != nil {
-		return nil, err
-	}
+	env.parseArgScript(args[0])
 
-	env.parseArgScript(args[1])
-
-	if len(args) >= 3 {
-		err = env.parseArgScriptStart(args[2])
+	if len(args) >= 2 {
+		err = env.parseArgScriptStart(args[1])
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	if len(args) >= 4 {
-		err = env.parseArgScriptEnd(args[3])
+	if len(args) >= 3 {
+		err = env.parseArgScriptEnd(args[2])
 		if err != nil {
 			return nil, err
 		}
@@ -141,22 +134,6 @@ func (env *Environment) generatePaths() (paths []string, err error) {
 	}
 
 	return paths, nil
-}
-
-//
-// parseArgMode parse the first argument given to environment, the mode of
-// execution.
-//
-func (env *Environment) parseArgMode(mode string) (err error) {
-	env.mode = strings.ToLower(mode)
-
-	switch env.mode {
-	case modeLocal:
-	case modePlay:
-	default:
-		return fmt.Errorf("unknown mode %q", env.mode)
-	}
-	return nil
 }
 
 //

@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/shuLhan/share/lib/io"
 	"github.com/shuLhan/share/lib/os/exec"
@@ -18,10 +19,11 @@ import (
 )
 
 //
-// Command contains the environment, script, and SSH client per one command
+// Command contains the mode, environment, script, and SSH client per one
 // execution.
 //
 type Command struct {
+	mode      string // One of the mode to execute the script.
 	script    *script
 	env       *Environment
 	sshClient *ssh.Client
@@ -29,15 +31,24 @@ type Command struct {
 }
 
 //
-// New create new command from environment.
+// NewCommand create new command from environment.
 //
-func New(env *Environment) (cmd *Command) {
+func NewCommand(mode string, env *Environment) (cmd *Command, err error) {
+	mode = strings.ToLower(mode)
+	switch mode {
+	case modeLocal:
+	case modePlay:
+	default:
+		return nil, fmt.Errorf("NewCommand: unknown command %s\n", mode)
+	}
+
 	cmd = &Command{
+		mode:   mode,
 		env:    env,
 		tmpDir: filepath.Join("/tmp", env.randomString),
 	}
 
-	return cmd
+	return cmd, nil
 }
 
 //
@@ -290,7 +301,7 @@ func (cmd *Command) sudoPut(stmt []byte) (err error) {
 // Run the script.
 //
 func (cmd *Command) Run() (err error) {
-	switch cmd.env.mode {
+	switch cmd.mode {
 	case modeLocal:
 		err = cmd.doLocal()
 	case modePlay:
