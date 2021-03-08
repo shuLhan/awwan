@@ -20,9 +20,9 @@ import (
 )
 
 //
-// Environment contains all of values required to execute the script.
+// environment contains all of values required to execute the script.
 //
-type Environment struct {
+type environment struct {
 	BaseDir   string // The current working directory.
 	ScriptDir string // The base directory of the script.
 
@@ -40,31 +40,33 @@ type Environment struct {
 }
 
 //
-// NewEnvironment create and initialize new Environment from the script path.
+// newEnvironment create and initialize new environment from the script path.
 //
-func NewEnvironment(scriptPath string) (env *Environment, err error) {
-	env = &Environment{}
+func newEnvironment(scriptPath string) (env *environment, err error) {
+	logp := "newEnvironment"
+
+	env = &environment{}
 
 	err = env.lookupBaseDir()
 	if err != nil {
-		return nil, fmt.Errorf("NewEnvironment: %w", err)
+		return nil, fmt.Errorf("%s: %w", logp, err)
 	}
 
 	env.parseArgScript(scriptPath)
 
 	paths, err := env.generatePaths()
 	if err != nil {
-		return nil, fmt.Errorf("NewEnvironment: %w", err)
+		return nil, fmt.Errorf("%s: %w", logp, err)
 	}
 
 	err = env.loadAll(paths)
 	if err != nil {
-		return nil, fmt.Errorf("NewEnvironment: %w", err)
+		return nil, fmt.Errorf("%s: %w", logp, err)
 	}
 
 	err = env.loadAllSSHConfig(paths)
 	if err != nil {
-		return nil, fmt.Errorf("NewEnvironment: %w", err)
+		return nil, fmt.Errorf("%s: %w", logp, err)
 	}
 
 	rand.Seed(time.Now().Unix())
@@ -78,7 +80,7 @@ func NewEnvironment(scriptPath string) (env *Environment, err error) {
 // current working directory until "/", as the base working directory of
 // awwan.
 //
-func (env *Environment) lookupBaseDir() (err error) {
+func (env *environment) lookupBaseDir() (err error) {
 	var (
 		logp  = "lookupBaseDir"
 		found bool
@@ -115,7 +117,7 @@ func (env *Environment) lookupBaseDir() (err error) {
 // generatePaths using BaseDir and ScriptDir return all paths from BaseDir
 // to ScriptDir.
 //
-func (env *Environment) generatePaths() (paths []string, err error) {
+func (env *environment) generatePaths() (paths []string, err error) {
 	absScriptDir, err := filepath.Abs(env.ScriptDir)
 	if err != nil {
 		return nil, fmt.Errorf("generatePaths %q: %w", absScriptDir, err)
@@ -147,7 +149,7 @@ func (env *Environment) generatePaths() (paths []string, err error) {
 //
 // parseArgScript parse the second argument, the script file.
 //
-func (env *Environment) parseArgScript(path string) {
+func (env *environment) parseArgScript(path string) {
 	path = filepath.Clean(path)
 
 	env.ScriptDir = filepath.Dir(path)
@@ -158,7 +160,7 @@ func (env *Environment) parseArgScript(path string) {
 //
 // load the environment variables from file.
 //
-func (env *Environment) load(file string) (err error) {
+func (env *environment) load(file string) (err error) {
 	content, err := ioutil.ReadFile(file)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -180,7 +182,7 @@ func (env *Environment) load(file string) (err error) {
 //
 // loadAll environment file from each directory in paths.
 //
-func (env *Environment) loadAll(paths []string) (err error) {
+func (env *environment) loadAll(paths []string) (err error) {
 	for _, path := range paths {
 		err = env.load(filepath.Join(path, envFileName))
 		if err != nil {
@@ -194,7 +196,7 @@ func (env *Environment) loadAll(paths []string) (err error) {
 // loadAllSSHConfig load all SSH config from user's home directory and prepend
 // each of the config inside the paths.
 //
-func (env *Environment) loadAllSSHConfig(paths []string) (err error) {
+func (env *environment) loadAllSSHConfig(paths []string) (err error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return fmt.Errorf("loadAllSSHConfig: %w", err)
@@ -223,7 +225,7 @@ func (env *Environment) loadAllSSHConfig(paths []string) (err error) {
 //
 // parse the content of environment variables..
 //
-func (env *Environment) parse(content []byte) (err error) {
+func (env *environment) parse(content []byte) (err error) {
 	in, err := ini.Parse(content)
 	if err != nil {
 		return err
@@ -246,7 +248,7 @@ func (env *Environment) parse(content []byte) (err error) {
 // name.
 // Section and subsection name is separated by ":".
 //
-func (env *Environment) Section(secPath string) (sec *ini.Section) {
+func (env *environment) Section(secPath string) (sec *ini.Section) {
 	names := strings.Split(secPath, ":")
 	switch len(names) {
 	case 0:
@@ -262,27 +264,27 @@ func (env *Environment) Section(secPath string) (sec *ini.Section) {
 //
 // Subs return list of sub sections that have the same section name.
 //
-func (env *Environment) Subs(secName string) (subs []*ini.Section) {
+func (env *environment) Subs(secName string) (subs []*ini.Section) {
 	return env.vars.Subs(secName)
 }
 
 //
 // Vars return all variables in section and/or subsection as map of string.
 //
-func (env *Environment) Vars(path string) (vars map[string]string) {
+func (env *environment) Vars(path string) (vars map[string]string) {
 	return env.vars.Vars(path)
 }
 
 //
 // Val return the last variable value defined in key path.
 //
-func (env *Environment) Val(keyPath string) string {
+func (env *environment) Val(keyPath string) string {
 	return env.vars.Val(keyPath)
 }
 
 //
 // Vals return all variable values as slice of string.
 //
-func (env *Environment) Vals(keyPath string) []string {
+func (env *environment) Vals(keyPath string) []string {
 	return env.vars.Vals(keyPath)
 }

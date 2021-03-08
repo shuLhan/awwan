@@ -16,7 +16,7 @@ import (
 func TestEnvironment_generatePaths(t *testing.T) {
 	var err error
 
-	env := &Environment{}
+	env := &environment{}
 	env.BaseDir, err = os.Getwd()
 	if err != nil {
 		t.Fatal(err)

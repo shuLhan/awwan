@@ -20,7 +20,7 @@ multiline\
 command {{.Val "section::key"}};\
 end;
 `
-	env := &Environment{}
+	env := &environment{}
 	err := env.parse([]byte(envContent))
 	if err != nil {
 		log.Fatal(err)

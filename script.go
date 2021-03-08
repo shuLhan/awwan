@@ -26,7 +26,7 @@ type script struct {
 // environment variables into the script content, and split each statement by
 // lines.
 //
-func newScript(env *Environment, path string) (s *script, err error) {
+func newScript(env *environment, path string) (s *script, err error) {
 	logp := "newScript"
 
 	content, err := ioutil.ReadFile(path)
@@ -48,7 +48,7 @@ func newScript(env *Environment, path string) (s *script, err error) {
 // parseScript parse the script content by applying the environment values and
 // splitting it into statements.
 //
-func parseScript(env *Environment, content []byte) (s *script, err error) {
+func parseScript(env *environment, content []byte) (s *script, err error) {
 	var (
 		logp = "parseScript"
 		tmpl *template.Template

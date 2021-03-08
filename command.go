@@ -29,7 +29,7 @@ type Command struct {
 	scriptEnd   int
 
 	script    *script
-	env       *Environment
+	env       *environment
 	sshClient *ssh.Client
 	tmpDir    string
 }
@@ -64,7 +64,7 @@ func NewCommand(mode, scriptPath string, startAt, endAt int) (cmd *Command, err 
 		scriptEnd:   endAt,
 	}
 
-	cmd.env, err = NewEnvironment(scriptPath)
+	cmd.env, err = newEnvironment(scriptPath)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", logp, err)
 	}

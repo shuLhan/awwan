@@ -19,7 +19,7 @@ const cacheDir = ".cache"
 // parseTemplate read the file input "in" and apply the environment variables,
 // and write the result to ".cache" directory.
 //
-func parseTemplate(env *Environment, in string) (out string, err error) {
+func parseTemplate(env *environment, in string) (out string, err error) {
 	logp := "parseTemplate"
 
 	if libio.IsBinary(in) {
