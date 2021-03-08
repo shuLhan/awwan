@@ -45,7 +45,7 @@ type Environment struct {
 func NewEnvironment(scriptPath string) (env *Environment, err error) {
 	env = &Environment{}
 
-	env.BaseDir, err = os.Getwd()
+	err = env.lookupBaseDir()
 	if err != nil {
 		return nil, fmt.Errorf("NewEnvironment: %w", err)
 	}
@@ -71,6 +71,44 @@ func NewEnvironment(scriptPath string) (env *Environment, err error) {
 	env.randomString = string(ascii.Random([]byte(ascii.LettersNumber), 16))
 
 	return env, nil
+}
+
+//
+// lookupBaseDir find the directory that contains ".ssh" directory from
+// current working directory until "/", as the base working directory of
+// awwan.
+//
+func (env *Environment) lookupBaseDir() (err error) {
+	var (
+		logp  = "lookupBaseDir"
+		found bool
+	)
+
+	dir, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("%s: %w", logp, err)
+	}
+
+	for dir != "/" {
+		_, err := os.Stat(filepath.Join(dir, sshDir))
+		if err == nil {
+			found = true
+			break
+		}
+		if os.IsNotExist(err) {
+			dir = filepath.Dir(dir)
+			continue
+		}
+		return fmt.Errorf("%s: %w", logp, err)
+	}
+
+	if !found {
+		return fmt.Errorf("%s: cannot find .ssh directory", logp)
+	}
+
+	env.BaseDir = dir
+
+	return nil
 }
 
 //

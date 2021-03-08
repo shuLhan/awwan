@@ -48,6 +48,11 @@ func NewCommand(mode, scriptPath string, startAt, endAt int) (cmd *Command, err 
 		return nil, fmt.Errorf("%s: unknown command %s\n", logp, mode)
 	}
 
+	scriptPath, err = filepath.Abs(scriptPath)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", logp, err)
+	}
+
 	if endAt < startAt {
 		endAt = startAt
 	}
@@ -468,7 +473,10 @@ func (cmd *Command) initSSHClient() (err error) {
 			cmd.env.hostname)
 	}
 
-	log.Printf("sshSection:%+v\n", sshSection)
+	log.Printf("\nSSH Hostname: %s\n", sshSection.Hostname)
+	log.Printf("SSH Port: %d\n", sshSection.Port)
+	log.Printf("SSH User: %s\n", sshSection.User)
+	log.Printf("SSH IdentityFile %s\n\n", sshSection.IdentityFile)
 
 	cmd.sshClient, err = ssh.NewClient(sshSection)
 	if err != nil {
