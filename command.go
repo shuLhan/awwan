@@ -23,7 +23,11 @@ import (
 // execution.
 //
 type Command struct {
-	mode      string // One of the mode to execute the script.
+	mode        string // One of the mode to execute the script.
+	scriptPath  string // Location of the script in file system.
+	scriptStart int
+	scriptEnd   int
+
 	script    *script
 	env       *Environment
 	sshClient *ssh.Client
@@ -33,19 +37,42 @@ type Command struct {
 //
 // NewCommand create new command from environment.
 //
-func NewCommand(mode string, env *Environment) (cmd *Command, err error) {
+func NewCommand(mode, scriptPath string, startAt, endAt int) (cmd *Command, err error) {
+	logp := "NewCommand"
+
 	mode = strings.ToLower(mode)
 	switch mode {
 	case modeLocal:
 	case modePlay:
 	default:
-		return nil, fmt.Errorf("NewCommand: unknown command %s\n", mode)
+		return nil, fmt.Errorf("%s: unknown command %s\n", logp, mode)
+	}
+
+	if endAt < startAt {
+		endAt = startAt
 	}
 
 	cmd = &Command{
-		mode:   mode,
-		env:    env,
-		tmpDir: filepath.Join("/tmp", env.randomString),
+		mode:        mode,
+		scriptPath:  scriptPath,
+		scriptStart: startAt,
+		scriptEnd:   endAt,
+	}
+
+	cmd.env, err = NewEnvironment(scriptPath)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", logp, err)
+	}
+
+	cmd.tmpDir = filepath.Join("/tmp", cmd.env.randomString)
+
+	cmd.script, err = newScript(cmd.env, cmd.scriptPath)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", logp, err)
+	}
+
+	if cmd.scriptEnd >= len(cmd.script.Statements) {
+		cmd.scriptEnd = len(cmd.script.Statements) - 1
 	}
 
 	return cmd, nil
@@ -111,11 +138,6 @@ func (cmd *Command) sudoCopy(stmt []byte) (err error) {
 func (cmd *Command) doPlay() (err error) {
 	logp := "doPlay"
 
-	cmd.script, err = newScript(cmd.env, cmd.env.scriptPath)
-	if err != nil {
-		return fmt.Errorf("%s: %w", logp, err)
-	}
-
 	err = cmd.initSSHClient()
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
@@ -147,11 +169,6 @@ func (cmd *Command) doPlay() (err error) {
 
 func (cmd *Command) doLocal() (err error) {
 	logp := "doLocal"
-
-	cmd.script, err = newScript(cmd.env, cmd.env.scriptPath)
-	if err != nil {
-		return fmt.Errorf("%s: %w", logp, err)
-	}
 
 	// Create temporary directory ...
 	mkdirStmt := fmt.Sprintf("mkdir %s", cmd.tmpDir)
@@ -312,7 +329,7 @@ func (cmd *Command) Run() (err error) {
 }
 
 func (cmd *Command) executeLocalScript() {
-	for x := cmd.env.scriptStart; x <= cmd.env.scriptEnd; x++ {
+	for x := cmd.scriptStart; x <= cmd.scriptEnd; x++ {
 		stmt := cmd.script.Statements[x]
 
 		stmt = bytes.TrimSpace(stmt)
@@ -370,7 +387,7 @@ func (cmd *Command) executeLocalScript() {
 // executeRequires run the #require: statements.
 //
 func (cmd *Command) executeRequires() (err error) {
-	for x := 0; x < cmd.env.scriptStart; x++ {
+	for x := 0; x < cmd.scriptStart; x++ {
 		stmt := cmd.script.requires[x]
 		if len(stmt) == 0 {
 			continue
@@ -388,7 +405,7 @@ func (cmd *Command) executeRequires() (err error) {
 }
 
 func (cmd *Command) executeScript() {
-	for x := cmd.env.scriptStart; x <= cmd.env.scriptEnd; x++ {
+	for x := cmd.scriptStart; x <= cmd.scriptEnd; x++ {
 		stmt := cmd.script.Statements[x]
 
 		stmt = bytes.TrimSpace(stmt)

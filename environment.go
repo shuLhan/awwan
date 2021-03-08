@@ -8,11 +8,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"math"
 	"math/rand"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"time"
 
@@ -34,10 +32,7 @@ type Environment struct {
 	SSHPort string // The value of "Port" in configuration.
 
 	hostname     string // The hostname where script will be executed.
-	scriptPath   string // Location of the script in file system.
 	scriptName   string // The name of the script.
-	scriptStart  int
-	scriptEnd    int
 	randomString string // Uniq string to copy file to /tmp/<random>
 
 	vars      *ini.Ini    // All variables from environment files.
@@ -45,18 +40,9 @@ type Environment struct {
 }
 
 //
-// NewEnvironment create and initialize new Environment from command line
-// arguments.
-// The first argument is the script to be executed.
-// The second argument is the line number where we want to start execute the
-// script.
-// The third argument is the line number where the script execution will end.
+// NewEnvironment create and initialize new Environment from the script path.
 //
-func NewEnvironment(args []string) (env *Environment, err error) {
-	if len(args) < 2 {
-		return nil, fmt.Errorf("invalid arguments")
-	}
-
+func NewEnvironment(scriptPath string) (env *Environment, err error) {
 	env = &Environment{}
 
 	env.BaseDir, err = os.Getwd()
@@ -64,23 +50,7 @@ func NewEnvironment(args []string) (env *Environment, err error) {
 		return nil, fmt.Errorf("NewEnvironment: %w", err)
 	}
 
-	env.parseArgScript(args[0])
-
-	if len(args) >= 2 {
-		err = env.parseArgScriptStart(args[1])
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	if len(args) >= 3 {
-		err = env.parseArgScriptEnd(args[2])
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		env.scriptEnd = env.scriptStart
-	}
+	env.parseArgScript(scriptPath)
 
 	paths, err := env.generatePaths()
 	if err != nil {
@@ -145,43 +115,6 @@ func (env *Environment) parseArgScript(path string) {
 	env.ScriptDir = filepath.Dir(path)
 	env.scriptName = filepath.Base(path)
 	env.hostname = filepath.Base(env.ScriptDir)
-	env.scriptPath = path
-}
-
-//
-// parseArgScriptStart parse the third argument, the line start number.
-//
-func (env *Environment) parseArgScriptStart(start string) (err error) {
-	env.scriptStart, err = strconv.Atoi(start)
-	if err != nil {
-		return fmt.Errorf("invalid start %q: %w", start, err)
-	}
-
-	if env.scriptStart < 0 {
-		env.scriptStart = 0
-	}
-
-	return nil
-}
-
-//
-// parseArgScriptEnd parse the fourth argument, the line end number or "-" for
-// the end of line.
-//
-func (env *Environment) parseArgScriptEnd(end string) (err error) {
-	if end == "-" {
-		env.scriptEnd = math.MaxInt32
-	} else {
-		env.scriptEnd, err = strconv.Atoi(os.Args[4])
-		if err != nil {
-			return fmt.Errorf("invalid end %q: %w", end, err)
-		}
-	}
-	if env.scriptEnd < env.scriptStart {
-		env.scriptEnd = env.scriptStart
-	}
-
-	return nil
 }
 
 //

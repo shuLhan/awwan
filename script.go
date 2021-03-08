@@ -39,10 +39,6 @@ func newScript(env *Environment, path string) (s *script, err error) {
 		return nil, fmt.Errorf("%s: %w", logp, err)
 	}
 
-	if env.scriptEnd >= len(s.Statements) {
-		env.scriptEnd = len(s.Statements) - 1
-	}
-
 	s.parseMagicRequire()
 
 	return s, nil
