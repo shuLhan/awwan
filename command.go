@@ -66,6 +66,13 @@ func NewCommand(mode, scriptPath string, startAt, endAt int) (cmd *Command, err 
 
 	cmd.tmpDir = filepath.Join("/tmp", cmd.env.randomString)
 
+	if mode == modePlay {
+		err = cmd.initSSHClient()
+		if err != nil {
+			return nil, fmt.Errorf("%s: %w", logp, err)
+		}
+	}
+
 	cmd.script, err = newScript(cmd.env, cmd.scriptPath)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", logp, err)
@@ -137,11 +144,6 @@ func (cmd *Command) sudoCopy(stmt []byte) (err error) {
 
 func (cmd *Command) doPlay() (err error) {
 	logp := "doPlay"
-
-	err = cmd.initSSHClient()
-	if err != nil {
-		return fmt.Errorf("%s: %w", logp, err)
-	}
 
 	// Create temporary directory ...
 	mkdirStmt := fmt.Sprintf("mkdir %s", cmd.tmpDir)
