@@ -33,7 +33,7 @@ func main() {
 	}
 	endAt = startAt
 
-	if len(os.Args) >= 4 {
+	if len(os.Args) >= 5 {
 		endAt, err = parseArgScriptEnd(os.Args[4])
 		if err != nil {
 			log.Fatalf("awwan: %s", err)
