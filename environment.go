@@ -42,7 +42,7 @@ type environment struct {
 //
 // newEnvironment create and initialize new environment from the script path.
 //
-func newEnvironment(scriptPath string) (env *environment, err error) {
+func newEnvironment(mode, scriptPath string) (env *environment, err error) {
 	logp := "newEnvironment"
 
 	env = &environment{}
@@ -64,9 +64,11 @@ func newEnvironment(scriptPath string) (env *environment, err error) {
 		return nil, fmt.Errorf("%s: %w", logp, err)
 	}
 
-	err = env.loadAllSSHConfig(paths)
-	if err != nil {
-		return nil, fmt.Errorf("%s: %w", logp, err)
+	if mode == modePlay {
+		err = env.loadAllSSHConfig(paths)
+		if err != nil {
+			return nil, fmt.Errorf("%s: %w", logp, err)
+		}
 	}
 
 	rand.Seed(time.Now().Unix())

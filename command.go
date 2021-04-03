@@ -64,7 +64,7 @@ func NewCommand(mode, scriptPath string, startAt, endAt int) (cmd *Command, err 
 		scriptEnd:   endAt,
 	}
 
-	cmd.env, err = newEnvironment(scriptPath)
+	cmd.env, err = newEnvironment(mode, scriptPath)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", logp, err)
 	}
