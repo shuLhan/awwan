@@ -65,9 +65,9 @@ func TestEnvironment_generatePaths(t *testing.T) {
 		env.parseArgScript(c.scriptDir)
 		got, err := env.generatePaths()
 		if err != nil {
-			test.Assert(t, "error", c.expError, err.Error(), true)
+			test.Assert(t, "error", c.expError, err.Error())
 			continue
 		}
-		test.Assert(t, "generatePaths:", c.exp, got, true)
+		test.Assert(t, "generatePaths:", c.exp, got)
 	}
 }
