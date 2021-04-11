@@ -68,6 +68,8 @@ func parseScript(env *environment, content []byte) (s *script, err error) {
 	}
 
 	stmts := bytes.Split(buf.Bytes(), []byte{'\n'})
+	// Add empty line at the beginning to make the start index start from
+	// 1, not 0.
 	stmts = append([][]byte{{}}, stmts...)
 
 	s = &script{

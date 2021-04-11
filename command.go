@@ -83,6 +83,9 @@ func NewCommand(mode, scriptPath string, startAt, endAt int) (cmd *Command, err 
 		return nil, fmt.Errorf("%s: %w", logp, err)
 	}
 
+	if cmd.scriptStart >= len(cmd.script.Statements) {
+		return nil, fmt.Errorf("%s: start index out of range", logp)
+	}
 	if cmd.scriptEnd >= len(cmd.script.Statements) {
 		cmd.scriptEnd = len(cmd.script.Statements) - 1
 	}
