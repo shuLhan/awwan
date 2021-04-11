@@ -348,6 +348,7 @@ func (cmd *Command) executeLocalScript() {
 			log.Printf("\n>>> %3d: %s\n", x, stmt)
 			err := cmd.copy(stmt)
 			if err != nil {
+				log.Printf("%s\n", err)
 				break
 			}
 			continue
@@ -356,6 +357,7 @@ func (cmd *Command) executeLocalScript() {
 			log.Printf("\n>>> %3d: %s\n", x, stmt)
 			err := cmd.sudoCopy(stmt)
 			if err != nil {
+				log.Printf("%s\n", err)
 				break
 			}
 			continue
@@ -364,6 +366,7 @@ func (cmd *Command) executeLocalScript() {
 			log.Printf("\n>>> %3d: %s\n", x, stmt)
 			err := cmd.copy(stmt)
 			if err != nil {
+				log.Printf("%s\n", err)
 				break
 			}
 			continue
@@ -372,6 +375,7 @@ func (cmd *Command) executeLocalScript() {
 			log.Printf("\n>>> %3d: %s\n", x, stmt)
 			err := cmd.sudoCopy(stmt)
 			if err != nil {
+				log.Printf("%s\n", err)
 				break
 			}
 			continue
@@ -424,6 +428,7 @@ func (cmd *Command) executeScript() {
 			log.Printf("\n>>> %s: %3d: %s\n\n", cmd.sshClient, x, stmt)
 			err := cmd.put(stmt)
 			if err != nil {
+				log.Printf("%s\n", err)
 				break
 			}
 			continue
@@ -432,6 +437,7 @@ func (cmd *Command) executeScript() {
 			log.Printf("\n>>> %s: %3d: %s\n\n", cmd.sshClient, x, stmt)
 			err := cmd.sudoPut(stmt)
 			if err != nil {
+				log.Printf("%s\n", err)
 				break
 			}
 			continue
@@ -440,6 +446,7 @@ func (cmd *Command) executeScript() {
 			log.Printf("\n>>> %s: %3d: %s\n\n", cmd.sshClient, x, stmt)
 			err := cmd.get(stmt)
 			if err != nil {
+				log.Printf("%s\n", err)
 				break
 			}
 			continue
@@ -448,6 +455,7 @@ func (cmd *Command) executeScript() {
 			log.Printf("\n>>> %s: %3d: %s\n\n", cmd.sshClient, x, stmt)
 			err := cmd.sudoGet(stmt)
 			if err != nil {
+				log.Printf("%s\n", err)
 				break
 			}
 			continue
