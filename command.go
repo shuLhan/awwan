@@ -229,13 +229,14 @@ func (cmd *Command) get(stmt []byte) (err error) {
 //	#get! <remote> <local>
 //
 func (cmd *Command) sudoGet(stmt []byte) (err error) {
+	logp := "sudoGet"
 	stmt = bytes.TrimSpace(stmt[5:])
 
 	paths := bytes.Fields(stmt)
 	if len(paths) != 2 {
-		err = fmt.Errorf("invalid get! statement: %q", stmt)
+		err = fmt.Errorf("%s: invalid statement: %q", logp, stmt)
 		log.Println(err)
-		return
+		return err
 	}
 
 	remoteSrc := string(paths[0])
@@ -248,14 +249,14 @@ func (cmd *Command) sudoGet(stmt []byte) (err error) {
 
 	err = cmd.sshClient.Execute(cpRemoteToTmp)
 	if err != nil {
-		return fmt.Errorf("sudoGet %q: %w", cpRemoteToTmp, err)
+		return fmt.Errorf("%s: %w", logp, err)
 	}
 
 	chmod := fmt.Sprintf("sudo chown %s %s", cmd.env.SSHUser, remoteTmp)
 
 	err = cmd.sshClient.Execute(chmod)
 	if err != nil {
-		return fmt.Errorf("sudoGet %q: %w", chmod, err)
+		return fmt.Errorf("%s: %w", logp, err)
 	}
 
 	return cmd.sshClient.Get(remoteTmp, local)
@@ -475,23 +476,32 @@ func (cmd *Command) executeScript() {
 }
 
 func (cmd *Command) initSSHClient() (err error) {
-	sshSection := cmd.env.sshConfig.Get(cmd.env.hostname)
+	var (
+		logp          = "initSSHClient"
+		sshSection    *ssh.ConfigSection
+		lastIdentFile string
+	)
+
+	sshSection = cmd.env.sshConfig.Get(cmd.env.hostname)
 	if sshSection == nil {
-		return fmt.Errorf("cmd: can not find Host %q in SSH config",
-			cmd.env.hostname)
+		return fmt.Errorf("%s: can not find Host %q in SSH config",
+			logp, cmd.env.hostname)
+	}
+	if len(sshSection.IdentityFile) > 0 {
+		lastIdentFile = sshSection.IdentityFile[len(sshSection.IdentityFile)-1]
 	}
 
 	log.Printf("\nSSH Hostname: %s\n", sshSection.Hostname)
 	log.Printf("SSH Port: %d\n", sshSection.Port)
 	log.Printf("SSH User: %s\n", sshSection.User)
-	log.Printf("SSH IdentityFile %s\n\n", sshSection.IdentityFile)
+	log.Printf("SSH IdentityFile %s\n\n", lastIdentFile)
 
 	cmd.sshClient, err = ssh.NewClient(sshSection)
 	if err != nil {
-		return fmt.Errorf("cmd: cannot create new SSH client: %w", err)
+		return fmt.Errorf("%s: %w", logp, err)
 	}
 
-	cmd.env.SSHKey = sshSection.IdentityFile[0]
+	cmd.env.SSHKey = lastIdentFile
 	cmd.env.SSHUser = sshSection.User
 	cmd.env.SSHHost = sshSection.Hostname
 	cmd.env.SSHPort = strconv.Itoa(sshSection.Port)
