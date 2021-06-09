@@ -85,12 +85,18 @@ func parseArgScriptEnd(in string) (out int, err error) {
 }
 
 func usage() {
-	log.Println(`
-awwan <command> <script> <start> [end]
+	log.Printf(`
+= awwan v%s
+
+== USAGE
+
+	awwan <command> <script> <start> [end]
+
+== OPTIONS
 
 command  = "local" / "play"
 	The local command execute the script in current system.
-	The play command execute the script in the remove server.
+	The play command execute the script in the remote server.
 
 script = STRING
 	A path to script to be executed.
@@ -100,7 +106,8 @@ start = 1*DIGITS
 
 end = 1*DIGITS / "-"
 	The end of line number, default to start. The "-" means until the
-	last line`)
+	last line.
+`, awwan.Version)
 
 	os.Exit(1)
 }

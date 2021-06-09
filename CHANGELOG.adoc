@@ -1,5 +1,33 @@
 = Changelog for awwan
 
+==  awwan 0.3.0 (2021.06.09)
+
+* go.mod: set the minimum Go to 1.16 and update to share module v0.25.1
+
+=== Enhancements
+
+* cmd/awwan: print the awwan version on command usage output
+
+* all: check and return an error if start index is out of range
+
+* all: log error when executing script (local or play)
+
+* all: do not load SSH config if command mode is "local"
+
+  If the mode is local there is no need to parse and load the SSH config,
+  since the command to be executed will run on local machine anyway.
+
+* all: set base dir based on the first .ssh directory that we found
+
+  Previously, the base directory is set on current working directory.
+  This limit the way to execute awwan only from the directory
+  that contains the .ssh directory.
+
+  This changes set the environment BaseDir based on the first .ssh
+  directory that we found from script path up to the "/".  So, user can
+  execute awwan script from any sub-directories.
+
+
 ==  awwan 0.2.1 (2021.01.18)
 
 Update the share modules which bring fixes to "#put" commands.

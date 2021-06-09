@@ -5,6 +5,8 @@
 package awwan
 
 const (
+	Version = "0.3.0"
+
 	modeLocal = "local"
 	modePlay  = "play"
 
