@@ -10,12 +10,12 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 
 	"github.com/shuLhan/share/lib/io"
 	"github.com/shuLhan/share/lib/os/exec"
 	"github.com/shuLhan/share/lib/ssh"
+	"github.com/shuLhan/share/lib/ssh/config"
 )
 
 //
@@ -222,7 +222,7 @@ func (cmd *Command) get(stmt []byte) (err error) {
 	remote := string(paths[0])
 	local := string(paths[1])
 
-	return cmd.sshClient.Get(remote, local)
+	return cmd.sshClient.ScpGet(remote, local)
 }
 
 //
@@ -262,7 +262,7 @@ func (cmd *Command) sudoGet(stmt []byte) (err error) {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
 
-	return cmd.sshClient.Get(remoteTmp, local)
+	return cmd.sshClient.ScpGet(remoteTmp, local)
 }
 
 //
@@ -288,7 +288,7 @@ func (cmd *Command) put(stmt []byte) (err error) {
 
 	remote := string(paths[1])
 
-	return cmd.sshClient.Put(local, remote)
+	return cmd.sshClient.ScpPut(local, remote)
 }
 
 //
@@ -315,7 +315,7 @@ func (cmd *Command) sudoPut(stmt []byte) (err error) {
 	tmp := filepath.Join(cmd.tmpDir, baseName)
 	remote := string(paths[1])
 
-	err = cmd.sshClient.Put(local, tmp)
+	err = cmd.sshClient.ScpPut(local, tmp)
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
@@ -481,7 +481,7 @@ func (cmd *Command) executeScript() {
 func (cmd *Command) initSSHClient() (err error) {
 	var (
 		logp          = "initSSHClient"
-		sshSection    *ssh.ConfigSection
+		sshSection    *config.Section
 		lastIdentFile string
 	)
 
@@ -495,11 +495,11 @@ func (cmd *Command) initSSHClient() (err error) {
 	}
 
 	log.Printf("\nSSH Hostname: %s\n", sshSection.Hostname)
-	log.Printf("SSH Port: %d\n", sshSection.Port)
+	log.Printf("SSH Port: %s\n", sshSection.Port)
 	log.Printf("SSH User: %s\n", sshSection.User)
 	log.Printf("SSH IdentityFile %s\n\n", lastIdentFile)
 
-	cmd.sshClient, err = ssh.NewClient(sshSection)
+	cmd.sshClient, err = ssh.NewClientFromConfig(sshSection)
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
@@ -507,7 +507,7 @@ func (cmd *Command) initSSHClient() (err error) {
 	cmd.env.SSHKey = lastIdentFile
 	cmd.env.SSHUser = sshSection.User
 	cmd.env.SSHHost = sshSection.Hostname
-	cmd.env.SSHPort = strconv.Itoa(sshSection.Port)
+	cmd.env.SSHPort = sshSection.Port
 
 	return nil
 }

@@ -16,7 +16,7 @@ import (
 
 	"github.com/shuLhan/share/lib/ascii"
 	"github.com/shuLhan/share/lib/ini"
-	"github.com/shuLhan/share/lib/ssh"
+	"github.com/shuLhan/share/lib/ssh/config"
 )
 
 //
@@ -35,8 +35,8 @@ type environment struct {
 	scriptName   string // The name of the script.
 	randomString string // Uniq string to copy file to /tmp/<random>
 
-	vars      *ini.Ini    // All variables from environment files.
-	sshConfig *ssh.Config // All the Host values from SSH config files.
+	vars      *ini.Ini       // All variables from environment files.
+	sshConfig *config.Config // All the Host values from SSH config files.
 }
 
 //
@@ -205,14 +205,14 @@ func (env *environment) loadAllSSHConfig(paths []string) (err error) {
 	}
 
 	configFile := filepath.Join(homeDir, sshDir, sshConfig)
-	env.sshConfig, err = ssh.NewConfig(configFile)
+	env.sshConfig, err = config.Load(configFile)
 	if err != nil {
 		return fmt.Errorf("loadAllSSHConfig: %w", err)
 	}
 
 	for _, path := range paths {
 		configFile = filepath.Join(path, sshDir, sshConfig)
-		otherConfig, err := ssh.NewConfig(configFile)
+		otherConfig, err := config.Load(configFile)
 		if err != nil {
 			return fmt.Errorf("loadAllSSHConfig: %w", err)
 		}
