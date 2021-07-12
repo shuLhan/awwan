@@ -16,6 +16,7 @@ import (
 	"github.com/shuLhan/share/lib/os/exec"
 	"github.com/shuLhan/share/lib/ssh"
 	"github.com/shuLhan/share/lib/ssh/config"
+	"github.com/shuLhan/share/lib/ssh/sftp"
 )
 
 //
@@ -31,6 +32,7 @@ type Command struct {
 	script    *script
 	env       *environment
 	sshClient *ssh.Client
+	sftpc     *sftp.Client
 	tmpDir    string
 }
 
@@ -222,7 +224,10 @@ func (cmd *Command) get(stmt []byte) (err error) {
 	remote := string(paths[0])
 	local := string(paths[1])
 
-	return cmd.sshClient.ScpGet(remote, local)
+	if cmd.sftpc == nil {
+		return cmd.sshClient.ScpGet(remote, local)
+	}
+	return cmd.sftpc.Get(remote, local)
 }
 
 //
@@ -262,6 +267,9 @@ func (cmd *Command) sudoGet(stmt []byte) (err error) {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
 
+	if cmd.sftpc == nil {
+		return cmd.sshClient.ScpGet(remoteTmp, local)
+	}
 	return cmd.sshClient.ScpGet(remoteTmp, local)
 }
 
@@ -288,7 +296,10 @@ func (cmd *Command) put(stmt []byte) (err error) {
 
 	remote := string(paths[1])
 
-	return cmd.sshClient.ScpPut(local, remote)
+	if cmd.sftpc == nil {
+		return cmd.sshClient.ScpPut(local, remote)
+	}
+	return cmd.sftpc.Put(local, remote)
 }
 
 //
@@ -315,7 +326,11 @@ func (cmd *Command) sudoPut(stmt []byte) (err error) {
 	tmp := filepath.Join(cmd.tmpDir, baseName)
 	remote := string(paths[1])
 
-	err = cmd.sshClient.ScpPut(local, tmp)
+	if cmd.sftpc == nil {
+		err = cmd.sshClient.ScpPut(local, tmp)
+	} else {
+		err = cmd.sftpc.Put(local, tmp)
+	}
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
@@ -502,6 +517,12 @@ func (cmd *Command) initSSHClient() (err error) {
 	cmd.sshClient, err = ssh.NewClientFromConfig(sshSection)
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
+	}
+
+	// Try initialize the sftp client.
+	cmd.sftpc, err = sftp.NewClient(cmd.sshClient.Client)
+	if err != nil {
+		log.Printf("%s: %s\n", logp, err)
 	}
 
 	cmd.env.SSHKey = lastIdentFile
