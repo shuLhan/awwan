@@ -361,15 +361,15 @@ func (cmd *Command) executeLocalScript() {
 		stmt := cmd.script.Statements[x]
 
 		stmt = bytes.TrimSpace(stmt)
-
 		if len(stmt) == 0 {
 			continue
 		}
+
 		if bytes.HasPrefix(stmt, cmdMagicPut) {
 			log.Printf("\n>>> %3d: %s\n", x, stmt)
 			err := cmd.copy(stmt)
 			if err != nil {
-				log.Printf("%s\n", err)
+				log.Printf("!!! %s\n", err)
 				break
 			}
 			continue
@@ -378,16 +378,16 @@ func (cmd *Command) executeLocalScript() {
 			log.Printf("\n>>> %3d: %s\n", x, stmt)
 			err := cmd.sudoCopy(stmt)
 			if err != nil {
-				log.Printf("%s\n", err)
+				log.Printf("!!! %s", err)
 				break
 			}
 			continue
 		}
 		if bytes.HasPrefix(stmt, cmdMagicGet) {
-			log.Printf("\n>>> %3d: %s\n", x, stmt)
+			log.Printf("\n>>> %3d: %s", x, stmt)
 			err := cmd.copy(stmt)
 			if err != nil {
-				log.Printf("%s\n", err)
+				log.Printf("!!! %s", err)
 				break
 			}
 			continue
@@ -396,7 +396,7 @@ func (cmd *Command) executeLocalScript() {
 			log.Printf("\n>>> %3d: %s\n", x, stmt)
 			err := cmd.sudoCopy(stmt)
 			if err != nil {
-				log.Printf("%s\n", err)
+				log.Printf("!!! %s", err)
 				break
 			}
 			continue
@@ -427,7 +427,7 @@ func (cmd *Command) executeRequires() (err error) {
 			continue
 		}
 
-		log.Printf("--- require %d: %s\n\n", x, stmt)
+		log.Printf("--- require %d: %s\n", x, stmt)
 
 		err = exec.Run(string(stmt), os.Stdout, os.Stderr)
 		if err != nil {
@@ -448,7 +448,7 @@ func (cmd *Command) executeScript() {
 			continue
 		}
 		if bytes.HasPrefix(stmt, cmdMagicPut) {
-			log.Printf("\n>>> %s: %3d: %s\n\n", cmd.sshClient, x, stmt)
+			log.Printf("\n>>> %s: %3d: %s\n", cmd.sshClient, x, stmt)
 			err := cmd.put(stmt)
 			if err != nil {
 				log.Printf("%s\n", err)
@@ -457,7 +457,7 @@ func (cmd *Command) executeScript() {
 			continue
 		}
 		if bytes.HasPrefix(stmt, cmdMagicSudoPut) {
-			log.Printf("\n>>> %s: %3d: %s\n\n", cmd.sshClient, x, stmt)
+			log.Printf("\n>>> %s: %3d: %s\n", cmd.sshClient, x, stmt)
 			err := cmd.sudoPut(stmt)
 			if err != nil {
 				log.Printf("%s\n", err)
@@ -466,7 +466,7 @@ func (cmd *Command) executeScript() {
 			continue
 		}
 		if bytes.HasPrefix(stmt, cmdMagicGet) {
-			log.Printf("\n>>> %s: %3d: %s\n\n", cmd.sshClient, x, stmt)
+			log.Printf("\n>>> %s: %3d: %s\n", cmd.sshClient, x, stmt)
 			err := cmd.get(stmt)
 			if err != nil {
 				log.Printf("%s\n", err)
@@ -475,7 +475,7 @@ func (cmd *Command) executeScript() {
 			continue
 		}
 		if bytes.HasPrefix(stmt, cmdMagicSudoGet) {
-			log.Printf("\n>>> %s: %3d: %s\n\n", cmd.sshClient, x, stmt)
+			log.Printf("\n>>> %s: %3d: %s\n", cmd.sshClient, x, stmt)
 			err := cmd.sudoGet(stmt)
 			if err != nil {
 				log.Printf("%s\n", err)
@@ -487,7 +487,7 @@ func (cmd *Command) executeScript() {
 			continue
 		}
 
-		log.Printf("\n>>> %s: %3d: %s\n\n", cmd.sshClient, x, stmt)
+		log.Printf("\n>>> %s: %3d: %s\n", cmd.sshClient, x, stmt)
 
 		err := cmd.sshClient.Execute(string(stmt))
 		if err != nil {
