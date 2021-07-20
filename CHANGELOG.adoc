@@ -1,5 +1,18 @@
 = Changelog for awwan
 
+==  awwan 0.3.x (2021.07.xx)
+
+=== Enhancements
+
+* all: expand the environment on statement when executing local script
+
+  This changes replace the string ${x} or $x in the statements with the
+  current environment variables values.
+
+  For example, statement "mkdir ${HOME}/tmp" will expand the ${HOME} to
+  the current user home directory.
+
+
 ==  awwan 0.3.0 (2021.06.09)
 
 * go.mod: set the minimum Go to 1.16 and update to share module v0.25.1

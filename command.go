@@ -108,14 +108,16 @@ func (cmd *Command) copy(stmt []byte) (err error) {
 		return fmt.Errorf("%s: invalid statement: %q", logp, stmt)
 	}
 
-	local, err := parseTemplate(cmd.env, string(paths[0]))
+	src := os.ExpandEnv(string(paths[0]))
+
+	src, err = parseTemplate(cmd.env, src)
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
 
-	remote := string(paths[1])
+	dest := os.ExpandEnv(string(paths[1]))
 
-	return io.Copy(remote, local)
+	return io.Copy(dest, src)
 }
 
 //
@@ -131,7 +133,7 @@ func (cmd *Command) sudoCopy(stmt []byte) (err error) {
 		return fmt.Errorf("%s: invalid statement: %q", logp, stmt)
 	}
 
-	src := string(paths[0])
+	src := os.ExpandEnv(string(paths[0]))
 	baseName := filepath.Base(src)
 
 	local, err := parseTemplate(cmd.env, src)
@@ -140,7 +142,7 @@ func (cmd *Command) sudoCopy(stmt []byte) (err error) {
 	}
 
 	tmp := filepath.Join(cmd.tmpDir, baseName)
-	remote := string(paths[1])
+	remote := os.ExpandEnv(string(paths[1]))
 
 	err = io.Copy(tmp, local)
 	if err != nil {
@@ -403,11 +405,13 @@ func (cmd *Command) executeLocalScript() {
 			continue
 		}
 
-		log.Printf("\n>>> %3d: %s\n\n", x, stmt)
+		log.Printf("\n>>> %3d: %s\n", x, stmt)
 
-		err := exec.Run(string(stmt), os.Stdout, os.Stderr)
+		stmts := os.ExpandEnv(string(stmt))
+
+		err := exec.Run(stmts, os.Stdout, os.Stderr)
 		if err != nil {
-			log.Println("cmd: Execute: " + err.Error())
+			log.Printf("!!! %s", err)
 			break
 		}
 	}
