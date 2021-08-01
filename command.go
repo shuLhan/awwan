@@ -10,7 +10,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/shuLhan/share/lib/io"
 	"github.com/shuLhan/share/lib/os/exec"
@@ -20,11 +19,10 @@ import (
 )
 
 //
-// Command contains the mode, environment, script, and SSH client per one
+// Command contains the environment, script, and SSH client per one
 // execution.
 //
 type Command struct {
-	mode        string // One of the mode to execute the script.
 	scriptPath  string // Location of the script in file system.
 	scriptStart int
 	scriptEnd   int
@@ -42,25 +40,12 @@ type Command struct {
 func NewCommand(mode, scriptPath string, startAt, endAt int) (cmd *Command, err error) {
 	logp := "NewCommand"
 
-	mode = strings.ToLower(mode)
-	switch mode {
-	case modeLocal:
-	case modePlay:
-	default:
-		return nil, fmt.Errorf("%s: unknown command %s\n", logp, mode)
-	}
-
 	scriptPath, err = filepath.Abs(scriptPath)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", logp, err)
 	}
 
-	if endAt < startAt {
-		endAt = startAt
-	}
-
 	cmd = &Command{
-		mode:        mode,
 		scriptPath:  scriptPath,
 		scriptStart: startAt,
 		scriptEnd:   endAt,
@@ -73,7 +58,7 @@ func NewCommand(mode, scriptPath string, startAt, endAt int) (cmd *Command, err 
 
 	cmd.tmpDir = filepath.Join("/tmp", cmd.env.randomString)
 
-	if mode == modePlay {
+	if mode == CommandModePlay {
 		err = cmd.initSSHClient()
 		if err != nil {
 			return nil, fmt.Errorf("%s: %w", logp, err)
@@ -340,20 +325,6 @@ func (cmd *Command) sudoPut(stmt []byte) (err error) {
 	moveStmt := fmt.Sprintf("sudo mv -f %s %s", tmp, remote)
 
 	return cmd.sshClient.Execute(moveStmt)
-}
-
-//
-// Run the script.
-//
-func (cmd *Command) Run() (err error) {
-	switch cmd.mode {
-	case modeLocal:
-		err = cmd.doLocal()
-	case modePlay:
-		err = cmd.doPlay()
-	}
-
-	return err
 }
 
 func (cmd *Command) executeLocalScript() {

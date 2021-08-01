@@ -5,49 +5,94 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"math"
-	"os"
 	"strconv"
+	"strings"
 
 	"git.sr.ht/~shulhan/awwan"
 )
 
 func main() {
 	var (
-		startAt int
-		endAt   int
-		err     error
+		logp             = "awwan"
+		script           string
+		startAt          int
+		endAt            int
+		err              error
+		flagCommandLocal bool
+		flagCommandPlay  bool
+		flagHelp         bool
+		flagVersion      bool
 	)
 
 	log.SetFlags(0)
 
-	if len(os.Args) <= 3 {
-		usage()
+	flag.Usage = usage
+	flag.BoolVar(&flagVersion, "version", false, "Display version and exit.")
+	flag.BoolVar(&flagHelp, "help", false, "Display the command usage and its description.")
+	flag.Parse()
+
+	if flagHelp {
+		flag.Usage()
+	}
+	if flagVersion {
+		version()
+		return
+	}
+	if flag.NArg() <= 0 {
+		flag.Usage()
 	}
 
-	startAt, err = parseArgScriptStart(os.Args[3])
-	if err != nil {
-		log.Fatalf("awwan: %s", err)
-	}
-	endAt = startAt
+	cmdMode := strings.ToLower(flag.Arg(0))
 
-	if len(os.Args) >= 5 {
-		endAt, err = parseArgScriptEnd(os.Args[4])
+	// Check for valid command and flags.
+	switch cmdMode {
+	case awwan.CommandModeLocal:
+		flagCommandLocal = true
+	case awwan.CommandModePlay:
+		flagCommandPlay = true
+	default:
+		log.Printf("%s: missing or invalid command %s\n", logp, cmdMode)
+		flag.Usage()
+	}
+
+	if flagCommandLocal || flagCommandPlay {
+		if flag.NArg() <= 2 {
+			flag.Usage()
+		}
+
+		script = flag.Arg(1)
+
+		startAt, err = parseArgScriptStart(flag.Arg(2))
 		if err != nil {
-			log.Fatalf("awwan: %s", err)
+			log.Fatalf("%s: %s", logp, err)
+		}
+		endAt = startAt
+
+		if flag.NArg() >= 4 {
+			endAt, err = parseArgScriptEnd(flag.Arg(3))
+			if err != nil {
+				log.Fatalf("%s: %s", logp, err)
+			}
+			if endAt < startAt {
+				endAt = startAt
+			}
 		}
 	}
 
-	cmd, err := awwan.NewCommand(os.Args[1], os.Args[2], startAt, endAt)
-	if err != nil {
-		log.Fatalf("awwan: %s", err)
-	}
+	aww := awwan.New()
 
-	err = cmd.Run()
+	if flagCommandLocal {
+		err = aww.Local(script, startAt, endAt)
+	}
+	if flagCommandPlay {
+		err = aww.Play(script, startAt, endAt)
+	}
 	if err != nil {
-		log.Fatal(err)
+		log.Printf("%s: %s", logp, err)
 	}
 }
 
@@ -59,11 +104,9 @@ func parseArgScriptStart(in string) (out int, err error) {
 	if err != nil {
 		return 0, fmt.Errorf("invalid start at argument %q: %w", in, err)
 	}
-
 	if out < 0 {
 		out = 0
 	}
-
 	return out, nil
 }
 
@@ -75,12 +118,10 @@ func parseArgScriptEnd(in string) (out int, err error) {
 	if in == "-" {
 		return math.MaxInt32, nil
 	}
-
 	out, err = strconv.Atoi(in)
 	if err != nil {
 		return 0, fmt.Errorf("invalid end at argument %q: %w", in, err)
 	}
-
 	return out, nil
 }
 
@@ -108,6 +149,8 @@ end = 1*DIGITS / "-"
 	The end of line number, default to start. The "-" means until the
 	last line.
 `, awwan.Version)
+}
 
-	os.Exit(1)
+func version() {
+	fmt.Printf("awwan %s\n", awwan.Version)
 }

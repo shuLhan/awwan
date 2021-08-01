@@ -32,7 +32,6 @@ type environment struct {
 	SSHPort string // The value of "Port" in configuration.
 
 	hostname     string // The hostname where script will be executed.
-	scriptName   string // The name of the script.
 	randomString string // Uniq string to copy file to /tmp/<random>
 
 	vars      *ini.Ini       // All variables from environment files.
@@ -64,7 +63,7 @@ func newEnvironment(mode, scriptPath string) (env *environment, err error) {
 		return nil, fmt.Errorf("%s: %w", logp, err)
 	}
 
-	if mode == modePlay {
+	if mode == CommandModePlay {
 		err = env.loadAllSSHConfig(paths)
 		if err != nil {
 			return nil, fmt.Errorf("%s: %w", logp, err)
@@ -155,7 +154,6 @@ func (env *environment) parseArgScript(path string) {
 	path = filepath.Clean(path)
 
 	env.ScriptDir = filepath.Dir(path)
-	env.scriptName = filepath.Base(path)
 	env.hostname = filepath.Base(env.ScriptDir)
 }
 
