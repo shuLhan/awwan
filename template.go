@@ -13,20 +13,18 @@ import (
 	libio "github.com/shuLhan/share/lib/io"
 )
 
-const cacheDir = ".cache"
-
 //
-// parseTemplate read the file input "in" and apply the environment variables,
+// parseTemplate read the file input "in" and apply the session variables,
 // and write the result to ".cache" directory.
 //
-func parseTemplate(env *environment, in string) (out string, err error) {
+func parseTemplate(ses *Session, in string) (out string, err error) {
 	logp := "parseTemplate"
 
 	if libio.IsBinary(in) {
 		return in, nil
 	}
 
-	outDir := filepath.Join(env.BaseDir, cacheDir, filepath.Dir(in))
+	outDir := filepath.Join(ses.BaseDir, defCacheDir, filepath.Dir(in))
 	base := filepath.Base(in)
 	out = filepath.Join(outDir, base)
 
@@ -45,7 +43,7 @@ func parseTemplate(env *environment, in string) (out string, err error) {
 		return "", fmt.Errorf("%s %s: %w", logp, in, err)
 	}
 
-	err = tmpl.Execute(f, env)
+	err = tmpl.Execute(f, ses)
 	if err != nil {
 		return "", fmt.Errorf("%s %s: %w", logp, in, err)
 	}

@@ -8,33 +8,37 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
+	"log"
+	"os"
 	"text/template"
 
 	libbytes "github.com/shuLhan/share/lib/bytes"
+	"github.com/shuLhan/share/lib/os/exec"
 )
 
 //
-// script define the content of ".aww" file, line by line.
+// Script define the content of ".aww" file, line by line.
 //
-type script struct {
-	requires   [][]byte
+type Script struct {
 	Statements [][]byte
+
+	requires [][]byte
 }
 
 //
-// newScript load the content of awwan script (".aww"), apply the value of
-// environment variables into the script content, and split each statement by
+// NewScript load the content of awwan script (".aww"), apply the value of
+// session variables into the script content, and split each statement by
 // lines.
 //
-func newScript(env *environment, path string) (s *script, err error) {
-	logp := "newScript"
+func NewScript(ses *Session, path string) (s *Script, err error) {
+	logp := "NewScript"
 
 	content, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", logp, err)
 	}
 
-	s, err = parseScript(env, content)
+	s, err = ParseScript(ses, content)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", logp, err)
 	}
@@ -45,12 +49,12 @@ func newScript(env *environment, path string) (s *script, err error) {
 }
 
 //
-// parseScript parse the script content by applying the environment values and
+// ParseScript parse the script content by applying the session variables and
 // splitting it into statements.
 //
-func parseScript(env *environment, content []byte) (s *script, err error) {
+func ParseScript(ses *Session, content []byte) (s *Script, err error) {
 	var (
-		logp = "parseScript"
+		logp = "ParseScript"
 		tmpl *template.Template
 		buf  bytes.Buffer
 	)
@@ -62,17 +66,20 @@ func parseScript(env *environment, content []byte) (s *script, err error) {
 		return nil, fmt.Errorf("%s: %w", logp, err)
 	}
 
-	err = tmpl.Execute(&buf, env)
+	err = tmpl.Execute(&buf, ses)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", logp, err)
 	}
 
-	stmts := bytes.Split(buf.Bytes(), []byte{'\n'})
+	rawb := buf.Bytes()
+	rawb = bytes.TrimRight(rawb, " \t\r\n\v")
+
+	stmts := bytes.Split(rawb, []byte{'\n'})
 	// Add empty line at the beginning to make the start index start from
 	// 1, not 0.
 	stmts = append([][]byte{{}}, stmts...)
 
-	s = &script{
+	s = &Script{
 		Statements: stmts,
 	}
 
@@ -82,9 +89,30 @@ func parseScript(env *environment, content []byte) (s *script, err error) {
 }
 
 //
+// ExecuteRequires run the #require: statements in the local.
+//
+func (scr *Script) ExecuteRequires(untilStart int) (err error) {
+	for x := 0; x < untilStart; x++ {
+		stmt := scr.requires[x]
+		if len(stmt) == 0 {
+			continue
+		}
+
+		log.Printf("--- require %d: %s\n", x, stmt)
+
+		err = exec.Run(string(stmt), os.Stdout, os.Stderr)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+//
 // join all statements that ends with "\" into single statement.
 //
-func (s *script) join() {
+func (s *Script) join() {
 	for x := 0; x < len(s.Statements); x++ {
 		if len(s.Statements[x]) == 0 {
 			continue
@@ -122,7 +150,7 @@ func (s *script) join() {
 	}
 }
 
-func (s *script) parseMagicRequire() {
+func (s *Script) parseMagicRequire() {
 	s.requires = make([][]byte, len(s.Statements))
 
 	for x, stmt := range s.Statements {

@@ -83,7 +83,11 @@ func main() {
 		}
 	}
 
-	aww := awwan.New()
+	aww, err := awwan.New("")
+	if err != nil {
+		log.Printf("%s: %s", logp, err)
+		return
+	}
 
 	if flagCommandLocal {
 		err = aww.Local(script, startAt, endAt)

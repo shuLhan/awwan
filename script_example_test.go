@@ -9,7 +9,7 @@ import (
 	"log"
 )
 
-func Examplescript_join() {
+func ExampleScript_join() {
 	envContent := `
 [section]
 key=value
@@ -20,13 +20,13 @@ multiline\
 command {{.Val "section::key"}};\
 end;
 `
-	env := &environment{}
-	err := env.parse([]byte(envContent))
+	ses := &Session{}
+	err := ses.loadEnvFromBytes([]byte(envContent))
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	s, err := parseScript(env, []byte(scriptContent))
+	s, err := ParseScript(ses, []byte(scriptContent))
 	if err != nil {
 		log.Fatal(err)
 	}
