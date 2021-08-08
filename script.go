@@ -12,7 +12,6 @@ import (
 	"os"
 	"text/template"
 
-	libbytes "github.com/shuLhan/share/lib/bytes"
 	"github.com/shuLhan/share/lib/os/exec"
 )
 
@@ -20,9 +19,8 @@ import (
 // Script define the content of ".aww" file, line by line.
 //
 type Script struct {
-	Statements [][]byte
-
-	requires [][]byte
+	requires   [][]byte
+	statements [][]byte
 }
 
 //
@@ -71,19 +69,18 @@ func ParseScript(ses *Session, content []byte) (s *Script, err error) {
 		return nil, fmt.Errorf("%s: %w", logp, err)
 	}
 
-	rawb := buf.Bytes()
-	rawb = bytes.TrimRight(rawb, " \t\r\n\v")
+	raw := buf.Bytes()
+	raw = bytes.TrimRight(raw, " \t\r\n\v")
+	splits := bytes.Split(raw, newLine)
 
-	stmts := bytes.Split(rawb, []byte{'\n'})
 	// Add empty line at the beginning to make the start index start from
 	// 1, not 0.
-	stmts = append([][]byte{{}}, stmts...)
+	stmts := [][]byte{newLine}
+	stmts = append(stmts, splits...)
 
 	s = &Script{
-		Statements: stmts,
+		statements: joinStatements(stmts),
 	}
-
-	s.join()
 
 	return s, nil
 }
@@ -109,56 +106,73 @@ func (scr *Script) ExecuteRequires(untilStart int) (err error) {
 	return nil
 }
 
+func (s *Script) parseMagicRequire() {
+	s.requires = make([][]byte, len(s.statements))
+
+	for x, stmt := range s.statements {
+		if !bytes.HasPrefix(stmt, []byte(cmdMagicRequire)) {
+			continue
+		}
+		if len(s.statements) > x+1 {
+			s.requires[x+1] = bytes.TrimSpace(s.statements[x+1])
+		}
+	}
+}
+
 //
-// join all statements that ends with "\" into single statement.
+// joinStatements join multiline statements that ends with "\" into single
+// line.
 //
-func (s *Script) join() {
-	for x := 0; x < len(s.Statements); x++ {
-		if len(s.Statements[x]) == 0 {
+func joinStatements(in [][]byte) (out [][]byte) {
+	out = make([][]byte, len(in))
+
+	if len(in) > 0 {
+		out[0] = nil
+	}
+	for x := 1; x < len(in); x++ {
+		stmt := bytes.TrimSpace(in[x])
+		if len(stmt) == 0 {
+			in[x] = nil
+			out[x] = nil
 			continue
 		}
 
-		endc := len(s.Statements[x]) - 1
-		if s.Statements[x][endc] != '\\' {
+		endc := len(stmt) - 1
+		if stmt[endc] != '\\' {
+			in[x] = nil
+			out[x] = stmt
 			continue
 		}
 
-		s.Statements[x][endc] = ' '
+		stmt = bytes.TrimRight(stmt, "\\ \t")
+		stmt = append(stmt, ' ')
 
 		y := x + 1
-		for ; y < len(s.Statements); y++ {
-			if len(s.Statements[y]) == 0 {
+		for ; y < len(in); y++ {
+			nextStmt := bytes.TrimSpace(in[y])
+			if len(nextStmt) == 0 {
+				in[y] = nil
+				out[y] = nil
 				break
 			}
 
-			endc = len(s.Statements[y]) - 1
-			lastc := s.Statements[y][endc]
+			endc = len(nextStmt) - 1
+			lastc := nextStmt[endc]
 
 			if lastc == '\\' {
-				s.Statements[y][endc] = ' '
+				nextStmt = bytes.TrimRight(nextStmt, "\\ \t")
+				nextStmt = append(nextStmt, ' ')
 			}
 
-			s.Statements[x] = append(s.Statements[x], s.Statements[y]...)
-			s.Statements[y] = nil
+			stmt = append(stmt, nextStmt...)
 
+			in[y] = nil
 			if lastc != '\\' {
 				break
 			}
 		}
-		s.Statements[x] = libbytes.MergeSpaces(s.Statements[x])
+		out[x] = stmt
 		x = y
 	}
-}
-
-func (s *Script) parseMagicRequire() {
-	s.requires = make([][]byte, len(s.Statements))
-
-	for x, stmt := range s.Statements {
-		if !bytes.HasPrefix(stmt, cmdMagicRequire) {
-			continue
-		}
-		if len(s.Statements) > x+1 {
-			s.requires[x+1] = bytes.TrimSpace(s.Statements[x+1])
-		}
-	}
+	return out
 }

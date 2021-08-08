@@ -31,7 +31,7 @@ end;
 		log.Fatal(err)
 	}
 
-	for _, stmt := range s.Statements {
+	for _, stmt := range s.statements {
 		fmt.Printf("%s\n", stmt)
 	}
 	// Output:

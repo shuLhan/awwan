@@ -37,10 +37,10 @@ type Session struct {
 	SSHHost string // The value of "Hostname" in configuration.
 	SSHPort string // The value of "Port" in configuration.
 
-	hostname  string
-	paths     []string
-	tmpDir    string
-	vars      *ini.Ini
+	hostname string
+	paths    []string
+	tmpDir   string
+	vars     *ini.Ini
 
 	sshClient *ssh.Client
 	sftpc     *sftp.Client
@@ -306,7 +306,7 @@ func (ses *Session) SudoPut(stmt []byte) (err error) {
 
 func (ses *Session) executeScriptOnLocal(script *Script, startAt, endAt int) {
 	for x := startAt; x <= endAt; x++ {
-		stmt := script.Statements[x]
+		stmt := script.statements[x]
 
 		stmt = bytes.TrimSpace(stmt)
 		if len(stmt) == 0 {
@@ -369,7 +369,7 @@ func (ses *Session) executeScriptOnRemote(script *Script, startAt, endAt int) {
 	logp := "executeScriptOnRemote"
 
 	for x := startAt; x <= endAt; x++ {
-		stmt := script.Statements[x]
+		stmt := script.statements[x]
 
 		stmt = bytes.TrimSpace(stmt)
 

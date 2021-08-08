@@ -33,6 +33,7 @@ var (
 	cmdMagicSudoGet = []byte("#get!")
 	cmdMagicSudoPut = []byte("#put!")
 	cmdMagicRequire = []byte("#require:")
+	newLine         = []byte("\n")
 )
 
 //
@@ -85,7 +86,7 @@ func (aww *Awwan) Local(scriptPath string, startAt, endAt int) (err error) {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
 
-	maxLines := len(script.Statements)
+	maxLines := len(script.statements)
 	if startAt >= maxLines {
 		return fmt.Errorf("%s: start index %d out of range %d", logp, startAt, maxLines)
 	}
@@ -154,7 +155,7 @@ func (aww *Awwan) Play(scriptPath string, startAt, endAt int) (err error) {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
 
-	maxLines := len(script.Statements)
+	maxLines := len(script.statements)
 	if startAt >= maxLines {
 		return fmt.Errorf("%s: start index %d out of range %d", logp, startAt, maxLines)
 	}
