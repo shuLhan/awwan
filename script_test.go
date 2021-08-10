@@ -11,6 +11,31 @@ import (
 	"github.com/shuLhan/share/lib/test"
 )
 
+func TestJoinRequireStatements(t *testing.T) {
+	in := bytes.Split([]byte(`
+#require:
+a
+b
+#require: c
+#require:
+#get:
+#require:`), newLine)
+
+	exp := [][]byte{
+		nil,
+		[]byte("#require: a"),
+		nil,
+		[]byte("b"),
+		[]byte("#require: c"),
+		nil,
+		[]byte("#get:"),
+		nil,
+	}
+
+	got := joinRequireStatements(in)
+	test.Assert(t, "joinRequireStatements", exp, got)
+}
+
 func TestJoinStatements(t *testing.T) {
 	cases := []struct {
 		in  [][]byte

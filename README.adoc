@@ -88,20 +88,33 @@ Each line started with '#' is a comment, except for special, magic words.
 There are five magic words in the script: `#require:`, `#get:`, `#get!`,
 `#put:`, and `#put!`.
 
-Magic word `#require:` will ensure that the next statement will always
-executed when its skipped with start number.
+Magic word `#require:` will ensure that the statement will always executed
+when its skipped with start number.
 For example, given following script with line number
 
-```
-1: #require:
-2: echo a
-3: echo b
-4: #require:
-5: echo c
-```
+----
+1: #require: echo a
+2: echo b
+3: #require: echo c
+4: echo d
+----
 
-executing `awwan local script.aww 3`, will always execute line number 2 `echo
-a`, but not line number 5 (because its before line start 3).
+Executing `awwan local script.aww 2`, will always execute line number 1 `echo
+a`, so the output would be
+
+----
+a
+b
+----
+
+Executing `awwan local script.aww 4` will always execute line number 1 and 3,
+so the output would be
+
+----
+a
+c
+d
+----
 
 Magic word `#get:` will copy file from remote server to your local file
 system.

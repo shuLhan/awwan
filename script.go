@@ -77,9 +77,11 @@ func ParseScript(ses *Session, content []byte) (s *Script, err error) {
 	// 1, not 0.
 	stmts := [][]byte{newLine}
 	stmts = append(stmts, splits...)
+	stmts = joinStatements(stmts)
+	stmts = joinRequireStatements(stmts)
 
 	s = &Script{
-		statements: joinStatements(stmts),
+		statements: stmts,
 	}
 
 	return s, nil
@@ -117,6 +119,42 @@ func (s *Script) parseMagicRequire() {
 			s.requires[x+1] = bytes.TrimSpace(s.statements[x+1])
 		}
 	}
+}
+
+func joinRequireStatements(in [][]byte) (out [][]byte) {
+	out = make([][]byte, len(in))
+	if len(in) > 0 {
+		out[0] = in[0]
+	}
+	for x := 1; x < len(in); x++ {
+		stmt := in[x]
+		if !bytes.HasPrefix(stmt, cmdMagicRequire) {
+			out[x] = in[x]
+			continue
+		}
+		stmt = stmt[len(cmdMagicRequire):]
+		if len(stmt) != 0 {
+			// #require: already has command on the same line.
+			out[x] = in[x]
+			continue
+		}
+		if x+1 == len(in) {
+			break
+		}
+		if in[x+1][0] == '#' {
+			// Empty require statement followed by comment or
+			// magic command.
+			out[x] = nil
+			continue
+		}
+
+		stmt = in[x]
+		stmt = append(stmt, ' ')
+		stmt = append(stmt, in[x+1]...)
+		out[x] = stmt
+		in[x+1] = nil
+	}
+	return out
 }
 
 //
