@@ -11,52 +11,82 @@ import (
 	"log"
 	"os"
 	"text/template"
-
-	"github.com/shuLhan/share/lib/os/exec"
 )
 
 //
 // Script define the content of ".aww" file, line by line.
 //
 type Script struct {
-	requires   [][]byte
-	statements [][]byte
+	stmts    []*Statement
+	requires []*Statement
+	rawLines [][]byte
 }
 
 //
-// NewScript load the content of awwan script (".aww"), apply the value of
-// session variables into the script content, and split each statement by
-// lines.
+// NewScriptForLocal load the content of awwan script (".aww"), apply the
+// value of session and environment variables into the script content, and
+// split it into Statements.
 //
-func NewScript(ses *Session, path string) (s *Script, err error) {
-	logp := "NewScript"
+func NewScriptForLocal(ses *Session, path string) (script *Script, err error) {
+	logp := "NewScriptForLocal"
 
 	content, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", logp, err)
 	}
 
-	s, err = ParseScript(ses, content)
+	script, err = ParseScriptForLocal(ses, content)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", logp, err)
+	}
+	return script, nil
+}
+
+//
+// NewScriptForRemote load the content of awwan script (".aww"), apply the
+// value of session variables into the script content, and split it into
+// Statements.
+//
+func NewScriptForRemote(ses *Session, path string) (script *Script, err error) {
+	logp := "NewScriptForRemote"
+
+	content, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", logp, err)
 	}
 
-	s.parseMagicRequire()
-
-	return s, nil
+	script, err = ParseScriptForRemote(ses, content)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", logp, err)
+	}
+	return script, nil
 }
 
 //
-// ParseScript parse the script content by applying the session variables and
-// splitting it into statements.
+// ParseScriptForLocal parse the script content by applying the session and
+// environment variables and splitting it into Statement.
 //
-func ParseScript(ses *Session, content []byte) (s *Script, err error) {
+func ParseScriptForLocal(ses *Session, content []byte) (s *Script, err error) {
+	return parseScript(ses, content, true)
+}
+
+//
+// ParseScriptForRemote parse the script content by applying the session
+// variables and splitting it into Statement.
+//
+func ParseScriptForRemote(ses *Session, content []byte) (s *Script, err error) {
+	return parseScript(ses, content, false)
+}
+
+func parseScript(ses *Session, content []byte, isLocal bool) (script *Script, err error) {
 	var (
-		logp = "ParseScript"
+		logp = "parseScript"
 		tmpl *template.Template
 		buf  bytes.Buffer
+		raw  []byte
 	)
 
+	// Apply the session variables.
 	tmpl = template.New("aww")
 
 	tmpl, err = tmpl.Parse(string(content))
@@ -69,58 +99,90 @@ func ParseScript(ses *Session, content []byte) (s *Script, err error) {
 		return nil, fmt.Errorf("%s: %w", logp, err)
 	}
 
-	raw := buf.Bytes()
+	if isLocal {
+		// Apply the environment variables into script content.
+		raw = []byte(os.ExpandEnv(buf.String()))
+	} else {
+		raw = buf.Bytes()
+	}
+
 	raw = bytes.TrimRight(raw, " \t\r\n\v")
 	splits := bytes.Split(raw, newLine)
 
 	// Add empty line at the beginning to make the start index start from
 	// 1, not 0.
-	stmts := [][]byte{newLine}
-	stmts = append(stmts, splits...)
-	stmts = joinStatements(stmts)
-	stmts = joinRequireStatements(stmts)
+	rawLines := [][]byte{newLine}
+	rawLines = append(rawLines, splits...)
+	rawLines = joinStatements(rawLines)
+	rawLines = joinRequireStatements(rawLines)
 
-	s = &Script{
-		statements: stmts,
+	stmts := make([]*Statement, len(rawLines))
+	requires := make([]*Statement, len(rawLines))
+
+	for x, line := range rawLines {
+		stmt, err := ParseStatement(line)
+		if err != nil {
+			return nil, fmt.Errorf("%s: line %d: %w", logp, x, err)
+		}
+		if stmt == nil {
+			continue
+		}
+		if stmt.kind == statementKindRequire {
+			requires[x] = stmt
+		} else {
+			stmts[x] = stmt
+		}
 	}
 
-	return s, nil
+	script = &Script{
+		stmts:    stmts,
+		requires: requires,
+		rawLines: rawLines,
+	}
+
+	return script, nil
 }
 
 //
-// ExecuteRequires run the #require: statements in the local.
+// ExecuteRequires run the "#require:" statements from line 0 until
+// the start argument in the local system.
 //
 func (scr *Script) ExecuteRequires(untilStart int) (err error) {
 	for x := 0; x < untilStart; x++ {
 		stmt := scr.requires[x]
-		if len(stmt) == 0 {
+		if stmt == nil {
 			continue
 		}
 
-		log.Printf("--- require %d: %s\n", x, stmt)
+		log.Printf("--- require %d: %v\n", x, stmt)
 
-		err = exec.Run(string(stmt), os.Stdout, os.Stderr)
+		err = stmt.ExecLocal()
 		if err != nil {
 			return err
 		}
 	}
-
 	return nil
 }
 
-func (s *Script) parseMagicRequire() {
-	s.requires = make([][]byte, len(s.statements))
-
-	for x, stmt := range s.statements {
-		if !bytes.HasPrefix(stmt, []byte(cmdMagicRequire)) {
-			continue
-		}
-		if len(s.statements) > x+1 {
-			s.requires[x+1] = bytes.TrimSpace(s.statements[x+1])
-		}
-	}
-}
-
+//
+// joinRequireStatements join the "#require:" statement into one line.
+// For example,
+//
+//	#require:
+//	a
+//	b
+//
+// will be transformed into
+//
+//	#require: a
+//	b
+// and
+//
+//	#require: a
+//	b
+//
+// will be leave as is.
+//
 func joinRequireStatements(in [][]byte) (out [][]byte) {
 	out = make([][]byte, len(in))
 	if len(in) > 0 {
@@ -160,6 +222,17 @@ func joinRequireStatements(in [][]byte) (out [][]byte) {
 //
 // joinStatements join multiline statements that ends with "\" into single
 // line.
+//
+// For example,
+//
+//	a\
+//	b
+//	c
+//
+// will become,
+//
+//	a b
+//	c
 //
 func joinStatements(in [][]byte) (out [][]byte) {
 	out = make([][]byte, len(in))

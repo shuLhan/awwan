@@ -10,7 +10,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/shuLhan/share/lib/os/exec"
 	"github.com/shuLhan/share/lib/ssh/config"
 )
 
@@ -81,12 +80,12 @@ func (aww *Awwan) Local(scriptPath string, startAt, endAt int) (err error) {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
 
-	script, err := NewScript(ses, scriptPath)
+	script, err := NewScriptForLocal(ses, scriptPath)
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
 
-	maxLines := len(script.statements)
+	maxLines := len(script.stmts)
 	if startAt >= maxLines {
 		return fmt.Errorf("%s: start index %d out of range %d", logp, startAt, maxLines)
 	}
@@ -95,10 +94,9 @@ func (aww *Awwan) Local(scriptPath string, startAt, endAt int) (err error) {
 	}
 
 	// Create temporary directory.
-	mkdirStmt := fmt.Sprintf("mkdir %s", ses.tmpDir)
-	err = exec.Run(mkdirStmt, os.Stdout, os.Stderr)
+	err = os.MkdirAll(ses.tmpDir, 0700)
 	if err != nil {
-		return fmt.Errorf("%s: %s: %w", logp, mkdirStmt, err)
+		return fmt.Errorf("%s: %s: %w", logp, ses.tmpDir, err)
 	}
 	defer func() {
 		err = os.RemoveAll(ses.tmpDir)
@@ -150,12 +148,12 @@ func (aww *Awwan) Play(scriptPath string, startAt, endAt int) (err error) {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
 
-	script, err := NewScript(ses, scriptPath)
+	script, err := NewScriptForRemote(ses, scriptPath)
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
 
-	maxLines := len(script.statements)
+	maxLines := len(script.stmts)
 	if startAt >= maxLines {
 		return fmt.Errorf("%s: start index %d out of range %d", logp, startAt, maxLines)
 	}

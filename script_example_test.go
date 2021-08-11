@@ -9,7 +9,7 @@ import (
 	"log"
 )
 
-func ExampleScript_join() {
+func ExampleParseScriptForLocal() {
 	envContent := `
 [section]
 key=value
@@ -26,12 +26,12 @@ end;
 		log.Fatal(err)
 	}
 
-	s, err := ParseScript(ses, []byte(scriptContent))
+	s, err := ParseScriptForLocal(ses, []byte(scriptContent))
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	for _, stmt := range s.statements {
+	for _, stmt := range s.rawLines {
 		fmt.Printf("%s\n", stmt)
 	}
 	// Output:

@@ -5,7 +5,6 @@
 package awwan
 
 import (
-	"bytes"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -18,7 +17,6 @@ import (
 	"github.com/shuLhan/share/lib/ascii"
 	"github.com/shuLhan/share/lib/ini"
 	libio "github.com/shuLhan/share/lib/io"
-	"github.com/shuLhan/share/lib/os/exec"
 	"github.com/shuLhan/share/lib/ssh"
 	"github.com/shuLhan/share/lib/ssh/config"
 	"github.com/shuLhan/share/lib/ssh/sftp"
@@ -100,147 +98,150 @@ func (ses *Session) Vals(keyPath string) []string {
 }
 
 //
-// Copy copy file in local system.
+// Copy file in local system.
 //
-func (ses *Session) Copy(stmt []byte) (err error) {
+func (ses *Session) Copy(stmt *Statement) (err error) {
 	logp := "Copy"
-
-	stmt = bytes.TrimSpace(stmt[5:])
-
-	paths := bytes.Fields(stmt)
-	if len(paths) != 2 {
-		return fmt.Errorf("%s: invalid statement: %q", logp, stmt)
+	if len(stmt.cmd) == 0 {
+		return fmt.Errorf("%s: missing source argument", logp)
+	}
+	if len(stmt.args) == 0 {
+		return fmt.Errorf("%s: missing destination argument", logp)
+	}
+	if len(stmt.args) > 1 {
+		return fmt.Errorf("%s: two or more destination arguments is given", logp)
 	}
 
-	src := os.ExpandEnv(string(paths[0]))
-
-	src, err = parseTemplate(ses, src)
+	src, err := parseTemplate(ses, stmt.cmd)
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
 
-	dest := os.ExpandEnv(string(paths[1]))
+	dest := stmt.args[0]
 
-	return libio.Copy(dest, src)
+	err = libio.Copy(dest, src)
+	if err != nil {
+		return fmt.Errorf("%s: %w", logp, err)
+	}
+	return nil
 }
 
 //
 // Get copy file from remote to local.
 //
-// Syntax,
-//
-//	#get: <remote> <local>
-//
-func (ses *Session) Get(stmt []byte) (err error) {
+func (ses *Session) Get(stmt *Statement) (err error) {
 	logp := "Get"
-
-	stmt = bytes.TrimSpace(stmt[5:])
-
-	paths := bytes.Fields(stmt)
-	if len(paths) != 2 {
-		err = fmt.Errorf("%s: invalid get statement %s", logp, stmt)
-		log.Println(err)
-		return err
+	if len(stmt.cmd) == 0 {
+		return fmt.Errorf("%s: missing source argument", logp)
+	}
+	if len(stmt.args) == 0 {
+		return fmt.Errorf("%s: missing destination argument", logp)
+	}
+	if len(stmt.args) > 1 {
+		return fmt.Errorf("%s: two or more destination arguments is given", logp)
 	}
 
-	remote := string(paths[0])
-	local := string(paths[1])
+	remote := stmt.cmd
+	local := stmt.args[0]
 
 	if ses.sftpc == nil {
-		return ses.sshClient.ScpGet(remote, local)
+		err = ses.sshClient.ScpGet(remote, local)
+	} else {
+		err = ses.sftpc.Get(remote, local)
 	}
-	return ses.sftpc.Get(remote, local)
+	if err != nil {
+		return fmt.Errorf("%s: %w", logp, err)
+	}
+	return nil
 }
 
 //
 // Put copy file from local to remote system.
 //
-// Syntax,
-//
-//	#put: <local> <remote>
-//
-func (ses *Session) Put(stmt []byte) (err error) {
+func (ses *Session) Put(stmt *Statement) (err error) {
 	logp := "Put"
-
-	stmt = bytes.TrimSpace(stmt[5:])
-
-	paths := bytes.Fields(stmt)
-	if len(paths) != 2 {
-		return fmt.Errorf("%s: invalid statement: %q", logp, stmt)
+	if len(stmt.cmd) == 0 {
+		return fmt.Errorf("%s: missing source argument", logp)
+	}
+	if len(stmt.args) == 0 {
+		return fmt.Errorf("%s: missing destination argument", logp)
+	}
+	if len(stmt.args) > 1 {
+		return fmt.Errorf("%s: two or more destination arguments is given", logp)
 	}
 
-	local, err := parseTemplate(ses, string(paths[0]))
+	local, err := parseTemplate(ses, stmt.cmd)
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
 
-	remote := string(paths[1])
+	remote := stmt.args[0]
 
 	if ses.sftpc == nil {
-		return ses.sshClient.ScpPut(local, remote)
+		err = ses.sshClient.ScpPut(local, remote)
+	} else {
+		err = ses.sftpc.Put(local, remote)
 	}
-	return ses.sftpc.Put(local, remote)
+	if err != nil {
+		return fmt.Errorf("%s: %w", logp, err)
+	}
+	return nil
 }
 
 //
 // SudoCopy copy file in local system using sudo.
 //
-func (ses *Session) SudoCopy(stmt []byte) (err error) {
+func (ses *Session) SudoCopy(stmt *Statement) (err error) {
 	logp := "SudoCopy"
-
-	stmt = bytes.TrimSpace(stmt[5:])
-
-	paths := bytes.Fields(stmt)
-	if len(paths) != 2 {
-		return fmt.Errorf("%s: invalid statement: %q", logp, stmt)
+	if len(stmt.cmd) == 0 {
+		return fmt.Errorf("%s: missing source argument", logp)
+	}
+	if len(stmt.args) == 0 {
+		return fmt.Errorf("%s: missing destination argument", logp)
+	}
+	if len(stmt.args) > 1 {
+		return fmt.Errorf("%s: two or more destination arguments is given", logp)
 	}
 
-	src := os.ExpandEnv(string(paths[0]))
-	baseName := filepath.Base(src)
-
-	local, err := parseTemplate(ses, src)
+	src, err := parseTemplate(ses, stmt.cmd)
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
 
-	tmp := filepath.Join(ses.tmpDir, baseName)
-	remote := os.ExpandEnv(string(paths[1]))
+	sudoCp := &Statement{
+		kind: statementKindDefault,
+		cmd:  "sudo",
+		args: []string{"cp", src, stmt.args[0]},
+	}
 
-	err = libio.Copy(tmp, local)
+	err = sudoCp.ExecLocal()
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
-
-	moveStmt := fmt.Sprintf("sudo mv %s %s", tmp, remote)
-
-	return exec.Run(moveStmt, os.Stdout, os.Stderr)
+	return nil
 }
 
 //
-// SudoGet copy file from remote that can be accessed by root, to
+// SudoGet copy file from remote that can be accessed by root on remote, to
 // local.
 //
-// Syntax,
-//
-//	#get! <remote> <local>
-//
-func (ses *Session) SudoGet(stmt []byte) (err error) {
+func (ses *Session) SudoGet(stmt *Statement) (err error) {
 	logp := "SudoGet"
-
-	stmt = bytes.TrimSpace(stmt[5:])
-
-	paths := bytes.Fields(stmt)
-	if len(paths) != 2 {
-		err = fmt.Errorf("%s: invalid statement: %q", logp, stmt)
-		log.Println(err)
-		return err
+	if len(stmt.cmd) == 0 {
+		return fmt.Errorf("%s: missing source argument", logp)
+	}
+	if len(stmt.args) == 0 {
+		return fmt.Errorf("%s: missing destination argument", logp)
+	}
+	if len(stmt.args) > 1 {
+		return fmt.Errorf("%s: two or more destination arguments is given", logp)
 	}
 
-	remoteSrc := string(paths[0])
+	// Copy file in the remote to temporary directory first, so user can
+	// read them.
+	remoteSrc := stmt.cmd
 	remoteBase := filepath.Base(remoteSrc)
 	remoteTmp := filepath.Join(ses.tmpDir, remoteBase)
-
-	local := string(paths[1])
 
 	cpRemoteToTmp := fmt.Sprintf("sudo cp -f %s %s", remoteSrc, remoteTmp)
 
@@ -256,39 +257,46 @@ func (ses *Session) SudoGet(stmt []byte) (err error) {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
 
+	// Get temporary file in the remote to local.
+	local := stmt.args[0]
 	if ses.sftpc == nil {
-		return ses.sshClient.ScpGet(remoteTmp, local)
+		err = ses.sshClient.ScpGet(remoteTmp, local)
+	} else {
+		err = ses.sftpc.Get(remoteTmp, local)
 	}
-	return ses.sshClient.ScpGet(remoteTmp, local)
+	if err != nil {
+		return fmt.Errorf("%s: %w", logp, err)
+	}
+	return nil
 }
 
 //
 // SudoPut copy file from local to remote using sudo.
 //
-// Syntax,
-//
-//	#put! <local> <remote>
-//
-func (ses *Session) SudoPut(stmt []byte) (err error) {
+func (ses *Session) SudoPut(stmt *Statement) (err error) {
 	logp := "SudoPut"
-
-	stmt = bytes.TrimSpace(stmt[5:])
-
-	paths := bytes.Fields(stmt)
-	if len(paths) != 2 {
-		return fmt.Errorf("%s: invalid statement: %q", logp, stmt)
+	if len(stmt.cmd) == 0 {
+		return fmt.Errorf("%s: missing source argument", logp)
+	}
+	if len(stmt.args) == 0 {
+		return fmt.Errorf("%s: missing destination argument", logp)
+	}
+	if len(stmt.args) > 1 {
+		return fmt.Errorf("%s: two or more destination arguments is given", logp)
 	}
 
-	src := string(paths[0])
-	baseName := filepath.Base(src)
-
-	local, err := parseTemplate(ses, src)
+	// Apply the session variables into local file to be copied first, and
+	// save them into cache directory.
+	local, err := parseTemplate(ses, stmt.cmd)
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
 
+	baseName := filepath.Base(stmt.cmd)
+
+	// Copy file from local to temporary directory first in remote.
 	tmp := filepath.Join(ses.tmpDir, baseName)
-	remote := string(paths[1])
+	remote := string(stmt.args[0])
 
 	if ses.sftpc == nil {
 		err = ses.sshClient.ScpPut(local, tmp)
@@ -299,65 +307,42 @@ func (ses *Session) SudoPut(stmt []byte) (err error) {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
 
+	// Finally, move the file from the temporary directory to original
+	// destination.
 	moveStmt := fmt.Sprintf("sudo mv -f %s %s", tmp, remote)
 
 	return ses.sshClient.Execute(moveStmt)
 }
 
 func (ses *Session) executeScriptOnLocal(script *Script, startAt, endAt int) {
+	var err error
+
 	for x := startAt; x <= endAt; x++ {
-		stmt := script.statements[x]
-
-		stmt = bytes.TrimSpace(stmt)
-		if len(stmt) == 0 {
+		stmt := script.stmts[x]
+		if stmt == nil {
+			continue
+		}
+		if stmt.kind == statementKindComment {
+			continue
+		}
+		if stmt.kind == statementKindRequire {
 			continue
 		}
 
-		if bytes.HasPrefix(stmt, cmdMagicPut) {
-			log.Printf("\n>>> %3d: %s\n", x, stmt)
-			err := ses.Copy(stmt)
-			if err != nil {
-				log.Printf("!!! %s\n", err)
-				break
-			}
-			continue
-		}
-		if bytes.HasPrefix(stmt, cmdMagicSudoPut) {
-			log.Printf("\n>>> %3d: %s\n", x, stmt)
-			err := ses.SudoCopy(stmt)
-			if err != nil {
-				log.Printf("!!! %s", err)
-				break
-			}
-			continue
-		}
-		if bytes.HasPrefix(stmt, cmdMagicGet) {
-			log.Printf("\n>>> %3d: %s", x, stmt)
-			err := ses.Copy(stmt)
-			if err != nil {
-				log.Printf("!!! %s", err)
-				break
-			}
-			continue
-		}
-		if bytes.HasPrefix(stmt, cmdMagicSudoGet) {
-			log.Printf("\n>>> %3d: %s\n", x, stmt)
-			err := ses.SudoCopy(stmt)
-			if err != nil {
-				log.Printf("!!! %s", err)
-				break
-			}
-			continue
-		}
-		if stmt[0] == '#' {
-			continue
-		}
+		log.Printf("\n>>> local: %3d: %s %s", x, stmt.cmd, stmt.args)
 
-		log.Printf("\n>>> %3d: %s\n", x, stmt)
-
-		stmts := os.ExpandEnv(string(stmt))
-
-		err := exec.Run(stmts, os.Stdout, os.Stderr)
+		switch stmt.kind {
+		case statementKindDefault:
+			err = stmt.ExecLocal()
+		case statementKindGet:
+			err = ses.Copy(stmt)
+		case statementKindPut:
+			err = ses.Copy(stmt)
+		case statementKindSudoGet:
+			err = ses.SudoCopy(stmt)
+		case statementKindSudoPut:
+			err = ses.SudoCopy(stmt)
+		}
 		if err != nil {
 			log.Printf("!!! %s", err)
 			break
@@ -366,61 +351,36 @@ func (ses *Session) executeScriptOnLocal(script *Script, startAt, endAt int) {
 }
 
 func (ses *Session) executeScriptOnRemote(script *Script, startAt, endAt int) {
-	logp := "executeScriptOnRemote"
+	var err error
 
 	for x := startAt; x <= endAt; x++ {
-		stmt := script.statements[x]
-
-		stmt = bytes.TrimSpace(stmt)
-
-		if len(stmt) == 0 {
+		stmt := script.stmts[x]
+		if stmt == nil {
 			continue
 		}
-		if bytes.HasPrefix(stmt, cmdMagicPut) {
-			log.Printf("\n>>> %s: %3d: %s\n", ses.sshClient, x, stmt)
-			err := ses.Put(stmt)
-			if err != nil {
-				log.Printf("%s\n", err)
-				break
-			}
+		if stmt.kind == statementKindComment {
 			continue
 		}
-		if bytes.HasPrefix(stmt, cmdMagicSudoPut) {
-			log.Printf("\n>>> %s: %3d: %s\n", ses.sshClient, x, stmt)
-			err := ses.SudoPut(stmt)
-			if err != nil {
-				log.Printf("%s\n", err)
-				break
-			}
-			continue
-		}
-		if bytes.HasPrefix(stmt, cmdMagicGet) {
-			log.Printf("\n>>> %s: %3d: %s\n", ses.sshClient, x, stmt)
-			err := ses.Get(stmt)
-			if err != nil {
-				log.Printf("%s\n", err)
-				break
-			}
-			continue
-		}
-		if bytes.HasPrefix(stmt, cmdMagicSudoGet) {
-			log.Printf("\n>>> %s: %3d: %s\n", ses.sshClient, x, stmt)
-			err := ses.SudoGet(stmt)
-			if err != nil {
-				log.Printf("%s\n", err)
-				break
-			}
-			continue
-		}
-		if stmt[0] == '#' {
+		if stmt.kind == statementKindRequire {
 			continue
 		}
 
-		log.Printf("\n>>> %s: %3d: %s\n", ses.sshClient, x, stmt)
+		log.Printf("\n>>> %s: %3d: %s %s", ses.sshClient, x, stmt.cmd, stmt.args)
 
-		err := ses.sshClient.Execute(string(stmt))
+		switch stmt.kind {
+		case statementKindDefault:
+			err = ses.sshClient.Execute(string(stmt.raw))
+		case statementKindGet:
+			err = ses.Get(stmt)
+		case statementKindPut:
+			err = ses.Put(stmt)
+		case statementKindSudoGet:
+			err = ses.SudoGet(stmt)
+		case statementKindSudoPut:
+			err = ses.SudoPut(stmt)
+		}
 		if err != nil {
-			log.Printf("%s: %s", logp, err.Error())
+			log.Printf("!!! %s", err)
 			break
 		}
 	}
@@ -472,10 +432,10 @@ func (ses *Session) initSSHClient(sshSection *config.Section) (err error) {
 		lastIdentFile = sshSection.IdentityFile[len(sshSection.IdentityFile)-1]
 	}
 
-	log.Printf("--- SSH Hostname: %s\n", sshSection.Hostname)
-	log.Printf("--- SSH Port: %s\n", sshSection.Port)
-	log.Printf("--- SSH User: %s\n", sshSection.User)
-	log.Printf("--- SSH IdentityFile %s\n", lastIdentFile)
+	log.Printf("--- SSH Hostname: %s", sshSection.Hostname)
+	log.Printf("--- SSH Port: %s", sshSection.Port)
+	log.Printf("--- SSH User: %s", sshSection.User)
+	log.Printf("--- SSH IdentityFile: %s", lastIdentFile)
 
 	ses.sshClient, err = ssh.NewClientFromConfig(sshSection)
 	if err != nil {
