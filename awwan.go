@@ -64,11 +64,16 @@ func New(baseDir string) (aww *Awwan, err error) {
 	return aww, nil
 }
 
-func (aww *Awwan) Local(scriptPath string, startAt, endAt int) (err error) {
+func (aww *Awwan) Local(req *Request) (err error) {
 	logp := "Local"
 
-	scriptPath = filepath.Clean(scriptPath)
-	sessionDir := filepath.Dir(scriptPath)
+	req.scriptPath = filepath.Clean(req.Script)
+	req.scriptPath, err = filepath.Abs(req.scriptPath)
+	if err != nil {
+		return fmt.Errorf("%s: %w", logp, err)
+	}
+
+	sessionDir := filepath.Dir(req.scriptPath)
 
 	ses, err := NewSession(aww.BaseDir, sessionDir)
 	if err != nil {
@@ -80,17 +85,18 @@ func (aww *Awwan) Local(scriptPath string, startAt, endAt int) (err error) {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
 
-	script, err := NewScriptForLocal(ses, scriptPath)
+	req.script, err = NewScriptForLocal(ses, req.scriptPath)
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
 
-	maxLines := len(script.stmts)
-	if startAt >= maxLines {
-		return fmt.Errorf("%s: start index %d out of range %d", logp, startAt, maxLines)
+	maxLines := len(req.script.stmts)
+	if req.BeginAt >= maxLines {
+		return fmt.Errorf("%s: start index %d out of range %d", logp,
+			req.BeginAt, maxLines)
 	}
-	if endAt > maxLines {
-		endAt = maxLines - 1
+	if req.EndAt > maxLines {
+		req.EndAt = maxLines - 1
 	}
 
 	// Create temporary directory.
@@ -105,21 +111,26 @@ func (aww *Awwan) Local(scriptPath string, startAt, endAt int) (err error) {
 		}
 	}()
 
-	err = script.ExecuteRequires(startAt)
+	err = ses.executeRequires(req)
 	if err != nil {
 		return fmt.Errorf("%s:%w", logp, err)
 	}
 
-	ses.executeScriptOnLocal(script, startAt, endAt)
+	ses.executeScriptOnLocal(req)
 
 	return nil
 }
 
-func (aww *Awwan) Play(scriptPath string, startAt, endAt int) (err error) {
+func (aww *Awwan) Play(req *Request) (err error) {
 	logp := "Play"
 
-	scriptPath = filepath.Clean(scriptPath)
-	sessionDir := filepath.Dir(scriptPath)
+	req.scriptPath = filepath.Clean(req.Script)
+	req.scriptPath, err = filepath.Abs(req.scriptPath)
+	if err != nil {
+		return fmt.Errorf("%s: %w", logp, err)
+	}
+
+	sessionDir := filepath.Dir(req.scriptPath)
 
 	ses, err := NewSession(aww.BaseDir, sessionDir)
 	if err != nil {
@@ -143,22 +154,24 @@ func (aww *Awwan) Play(scriptPath string, startAt, endAt int) (err error) {
 		return fmt.Errorf("%s: can not find Host %q in SSH config", logp, ses.hostname)
 	}
 
-	err = ses.initSSHClient(sshSection)
+	err = ses.initSSHClient(req, sshSection)
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
 
-	script, err := NewScriptForRemote(ses, scriptPath)
+	ses.sshClient.SetSessionOutputError(req.stdout, req.stderr)
+
+	req.script, err = NewScriptForRemote(ses, req.scriptPath)
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
 
-	maxLines := len(script.stmts)
-	if startAt >= maxLines {
-		return fmt.Errorf("%s: start index %d out of range %d", logp, startAt, maxLines)
+	maxLines := len(req.script.stmts)
+	if req.BeginAt >= maxLines {
+		return fmt.Errorf("%s: start index %d out of range %d", logp, req.BeginAt, maxLines)
 	}
-	if endAt > maxLines {
-		endAt = maxLines - 1
+	if req.EndAt > maxLines {
+		req.EndAt = maxLines - 1
 	}
 
 	// Create temporary directory ...
@@ -176,12 +189,12 @@ func (aww *Awwan) Play(scriptPath string, startAt, endAt int) (err error) {
 		}
 	}()
 
-	err = script.ExecuteRequires(startAt)
+	err = ses.executeRequires(req)
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
 
-	ses.executeScriptOnRemote(script, startAt, endAt)
+	ses.executeScriptOnRemote(req)
 
 	return nil
 }

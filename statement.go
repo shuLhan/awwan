@@ -7,8 +7,6 @@ package awwan
 import (
 	"bytes"
 	"fmt"
-	"os"
-	"os/exec"
 	"strings"
 
 	libexec "github.com/shuLhan/share/lib/os/exec"
@@ -128,17 +126,6 @@ func ParseStatement(raw []byte) (stmt *Statement, err error) {
 		raw:  raw,
 	}
 	return stmt, nil
-}
-
-//
-// ExecLocal execute the command with its arguments in local environment where
-// the output and error send to os.Stdout and os.Stderr respectively.
-//
-func (stmt *Statement) ExecLocal() (err error) {
-	cmd := exec.Command(stmt.cmd, stmt.args...)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	return cmd.Run()
 }
 
 func (stmt *Statement) String() string {

@@ -18,9 +18,7 @@ import (
 func main() {
 	var (
 		logp             = "awwan"
-		script           string
-		startAt          int
-		endAt            int
+		req              = awwan.NewRequest()
 		err              error
 		flagCommandLocal bool
 		flagCommandPlay  bool
@@ -64,21 +62,21 @@ func main() {
 			flag.Usage()
 		}
 
-		script = flag.Arg(1)
+		req.Script = flag.Arg(1)
 
-		startAt, err = parseArgScriptStart(flag.Arg(2))
+		req.BeginAt, err = parseArgScriptStart(flag.Arg(2))
 		if err != nil {
 			log.Fatalf("%s: %s", logp, err)
 		}
-		endAt = startAt
+		req.EndAt = req.BeginAt
 
 		if flag.NArg() >= 4 {
-			endAt, err = parseArgScriptEnd(flag.Arg(3))
+			req.EndAt, err = parseArgScriptEnd(flag.Arg(3))
 			if err != nil {
 				log.Fatalf("%s: %s", logp, err)
 			}
-			if endAt < startAt {
-				endAt = startAt
+			if req.EndAt < req.BeginAt {
+				req.EndAt = req.BeginAt
 			}
 		}
 	}

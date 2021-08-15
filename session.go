@@ -10,6 +10,7 @@ import (
 	"log"
 	"math/rand"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -191,7 +192,7 @@ func (ses *Session) Put(stmt *Statement) (err error) {
 //
 // SudoCopy copy file in local system using sudo.
 //
-func (ses *Session) SudoCopy(stmt *Statement) (err error) {
+func (ses *Session) SudoCopy(req *Request, stmt *Statement) (err error) {
 	logp := "SudoCopy"
 	if len(stmt.cmd) == 0 {
 		return fmt.Errorf("%s: missing source argument", logp)
@@ -214,7 +215,7 @@ func (ses *Session) SudoCopy(stmt *Statement) (err error) {
 		args: []string{"cp", src, stmt.args[0]},
 	}
 
-	err = sudoCp.ExecLocal()
+	err = ses.ExecLocal(req, sudoCp)
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
@@ -314,11 +315,43 @@ func (ses *Session) SudoPut(stmt *Statement) (err error) {
 	return ses.sshClient.Execute(moveStmt)
 }
 
-func (ses *Session) executeScriptOnLocal(script *Script, startAt, endAt int) {
+//
+// ExecLocal execute the command with its arguments in local environment where
+// the output and error send to os.Stdout and os.Stderr respectively.
+//
+func (ses *Session) ExecLocal(req *Request, stmt *Statement) (err error) {
+	cmd := exec.Command(stmt.cmd, stmt.args...)
+	cmd.Stdout = req.stdout
+	cmd.Stderr = req.stderr
+	return cmd.Run()
+}
+
+//
+// executeRequires run the "#require:" statements from line 0 until
+// the start argument in the local system.
+//
+func (ses *Session) executeRequires(req *Request) (err error) {
+	for x := 0; x < req.BeginAt; x++ {
+		stmt := req.script.requires[x]
+		if stmt == nil {
+			continue
+		}
+
+		log.Printf("--- require %d: %v\n", x, stmt)
+
+		err = ses.ExecLocal(req, stmt)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (ses *Session) executeScriptOnLocal(req *Request) {
 	var err error
 
-	for x := startAt; x <= endAt; x++ {
-		stmt := script.stmts[x]
+	for x := req.BeginAt; x <= req.EndAt; x++ {
+		stmt := req.script.stmts[x]
 		if stmt == nil {
 			continue
 		}
@@ -333,15 +366,15 @@ func (ses *Session) executeScriptOnLocal(script *Script, startAt, endAt int) {
 
 		switch stmt.kind {
 		case statementKindDefault:
-			err = stmt.ExecLocal()
+			err = ses.ExecLocal(req, stmt)
 		case statementKindGet:
 			err = ses.Copy(stmt)
 		case statementKindPut:
 			err = ses.Copy(stmt)
 		case statementKindSudoGet:
-			err = ses.SudoCopy(stmt)
+			err = ses.SudoCopy(req, stmt)
 		case statementKindSudoPut:
-			err = ses.SudoCopy(stmt)
+			err = ses.SudoCopy(req, stmt)
 		}
 		if err != nil {
 			log.Printf("!!! %s", err)
@@ -350,11 +383,11 @@ func (ses *Session) executeScriptOnLocal(script *Script, startAt, endAt int) {
 	}
 }
 
-func (ses *Session) executeScriptOnRemote(script *Script, startAt, endAt int) {
+func (ses *Session) executeScriptOnRemote(req *Request) {
 	var err error
 
-	for x := startAt; x <= endAt; x++ {
-		stmt := script.stmts[x]
+	for x := req.BeginAt; x <= req.EndAt; x++ {
+		stmt := req.script.stmts[x]
 		if stmt == nil {
 			continue
 		}
@@ -422,7 +455,7 @@ func (ses *Session) generatePaths() (err error) {
 	return nil
 }
 
-func (ses *Session) initSSHClient(sshSection *config.Section) (err error) {
+func (ses *Session) initSSHClient(req *Request, sshSection *config.Section) (err error) {
 	var (
 		logp          = "initSSHClient"
 		lastIdentFile string

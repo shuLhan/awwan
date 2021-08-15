@@ -8,7 +8,6 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"text/template"
 )
@@ -141,27 +140,6 @@ func parseScript(ses *Session, content []byte, isLocal bool) (script *Script, er
 	}
 
 	return script, nil
-}
-
-//
-// ExecuteRequires run the "#require:" statements from line 0 until
-// the start argument in the local system.
-//
-func (scr *Script) ExecuteRequires(untilStart int) (err error) {
-	for x := 0; x < untilStart; x++ {
-		stmt := scr.requires[x]
-		if stmt == nil {
-			continue
-		}
-
-		log.Printf("--- require %d: %v\n", x, stmt)
-
-		err = stmt.ExecLocal()
-		if err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 //
