@@ -12,7 +12,8 @@ all: test lint
 	go build ./cmd/awwan
 
 test:
-	go test -race ./...
+	go tool cover -html=cover.out -o cover.html
+	go test -race -coverprofile=cover.out ./...
 
 lint:
 	golangci-lint run ./...
