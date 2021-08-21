@@ -7,7 +7,6 @@ package awwan
 import (
 	"fmt"
 	"io/ioutil"
-	"log"
 	"math/rand"
 	"os"
 	"os/exec"
@@ -65,7 +64,7 @@ func NewSession(baseDir, sessionDir string) (ses *Session, err error) {
 
 	rand.Seed(time.Now().Unix())
 	randomString := string(ascii.Random([]byte(ascii.LettersNumber), 16))
-	ses.tmpDir = filepath.Join("/tmp", randomString)
+	ses.tmpDir = filepath.Join(defTmpDir, randomString)
 
 	return ses, nil
 }
@@ -337,7 +336,7 @@ func (ses *Session) executeRequires(req *Request) (err error) {
 			continue
 		}
 
-		log.Printf("--- require %d: %v\n", x, stmt)
+		fmt.Fprintf(req.stdout, "--- require %d: %v\n", x, stmt)
 
 		err = ses.ExecLocal(req, stmt)
 		if err != nil {
@@ -362,7 +361,7 @@ func (ses *Session) executeScriptOnLocal(req *Request) {
 			continue
 		}
 
-		log.Printf("\n>>> local: %3d: %s %s", x, stmt.cmd, stmt.args)
+		fmt.Fprintf(req.stdout, "\n>>> local: %3d: %s %s\n", x, stmt.cmd, stmt.args)
 
 		switch stmt.kind {
 		case statementKindDefault:
@@ -377,7 +376,7 @@ func (ses *Session) executeScriptOnLocal(req *Request) {
 			err = ses.SudoCopy(req, stmt)
 		}
 		if err != nil {
-			log.Printf("!!! %s", err)
+			fmt.Fprintf(req.stderr, "!!! %s\n", err)
 			break
 		}
 	}
@@ -398,7 +397,8 @@ func (ses *Session) executeScriptOnRemote(req *Request) {
 			continue
 		}
 
-		log.Printf("\n>>> %s: %3d: %s %s", ses.sshClient, x, stmt.cmd, stmt.args)
+		fmt.Fprintf(req.stdout, "\n>>> %s: %3d: %s %s\n",
+			ses.sshClient, x, stmt.cmd, stmt.args)
 
 		switch stmt.kind {
 		case statementKindDefault:
@@ -413,7 +413,7 @@ func (ses *Session) executeScriptOnRemote(req *Request) {
 			err = ses.SudoPut(stmt)
 		}
 		if err != nil {
-			log.Printf("!!! %s", err)
+			fmt.Fprintf(req.stderr, "!!! %s\n", err)
 			break
 		}
 	}
@@ -465,10 +465,9 @@ func (ses *Session) initSSHClient(req *Request, sshSection *config.Section) (err
 		lastIdentFile = sshSection.IdentityFile[len(sshSection.IdentityFile)-1]
 	}
 
-	log.Printf("--- SSH Hostname: %s", sshSection.Hostname)
-	log.Printf("--- SSH Port: %s", sshSection.Port)
-	log.Printf("--- SSH User: %s", sshSection.User)
-	log.Printf("--- SSH IdentityFile: %s", lastIdentFile)
+	fmt.Fprintf(req.stdout, "--- SSH connection: %s@%s:%s\n",
+		sshSection.User, sshSection.Hostname, sshSection.Port)
+	fmt.Fprintf(req.stdout, "--- SSH identity file: %s\n", lastIdentFile)
 
 	ses.sshClient, err = ssh.NewClientFromConfig(sshSection)
 	if err != nil {
@@ -478,8 +477,10 @@ func (ses *Session) initSSHClient(req *Request, sshSection *config.Section) (err
 	// Try initialize the sftp client.
 	ses.sftpc, err = sftp.NewClient(ses.sshClient.Client)
 	if err != nil {
-		log.Printf("%s: %s\n", logp, err)
+		fmt.Fprintf(req.stderr, "%s: %s\n", logp, err)
 	}
+
+	ses.sshClient.SetSessionOutputError(req.stdout, req.stderr)
 
 	ses.SSHKey = lastIdentFile
 	ses.SSHUser = sshSection.User

@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8" />
+		<title>awwan</title>
+		<style>
+			.awwan {
+				display: flex;
+			}
+			.awwan_nav_left {
+				font-family: monospace;
+				height: 98vh;
+				overflow-y: auto;
+				width: 20em;
+			}
+			.awwan_content {
+				margin: 0 1em;
+				width: calc(100% - 20em);
+			}
+			#vfs_path {
+				margin-right: 1em;
+			}
+			#editor {
+				width: 100%;
+				height: 40em;
+				border: 1px solid black;
+			}
+			.editor_action {
+				margin: 1em 0;
+			}
+			#stdout,
+			#stderr {
+				font-family: monospace;
+				max-height: 20em;
+				min-height: 2em;
+				overflow: auto;
+				padding: 1em;
+				white-space: pre;
+			}
+			#stdout {
+				background-color: lavender;
+			}
+			#stderr {
+				background-color: lavenderblush;
+			}
+			@media (max-width: 900px) {
+				.awwan {
+					display: block;
+				}
+				.awwan_nav_left {
+					width: calc(100% - 1em);
+				}
+				.awwan_content {
+					margin: 0;
+					width: calc(100% - 1em);
+				}
+				#editor {
+					height: 20em;
+				}
+			}
+		</style>
+	</head>
+	<body onload="main()">
+		<div class="awwan">
+			<div class="awwan_nav_left">
+				<div id="vfs"></div>
+			</div>
+			<div class="awwan_content">
+				<div class="editor_action">
+					File: <span id="vfs_path">-</span>
+					<button onclick="execLocal()">Local</button>
+					<button onclick="execRemote()">Remote</button>
+				</div>
+				<div id="editor"></div>
+				<p>
+				Hints:
+				<ul>
+					<li>Click and drag on the line numbers to select the specific line to be executed.</li>
+					<li>Press ESC to clear selection.</li>
+				</ul>
+				</p>
+				<p>Standard output:</p>
+				<div id="stdout"></div>
+				<p>Standard error:</p>
+				<div id="stderr"></div>
+			</div>
+		</div>
+		<script>
+			var exports = {}
+			var comVfsPath = document.getElementById("vfs_path")
+			var comEditor
+			var comStdout
+			var comStderr
+			var request = {
+				script: "",
+				content: "",
+				begin_at: 0,
+				end_at: 0,
+			}
+		</script>
+		<script src="/vfs.js"></script>
+		<script src="/editor.js"></script>
+		<script>
+			function main() {
+				let opts = {
+					id: "vfs",
+					ListNodes: ListNodes,
+					OnClickNode: OnClickNode,
+				}
+
+				let vfs = new Vfs(opts)
+				vfs.init()
+
+				let editorOpts = {
+					id: "editor",
+					is_editable: true,
+					OpenFile: editorOpenFile,
+					OnSelection: editorOnSelection,
+				}
+				comEditor = new Editor(editorOpts)
+
+				comStdout = document.getElementById("stdout")
+				comStderr = document.getElementById("stderr")
+			}
+
+			// ListNodes fetch the list of files from remote server.
+			async function ListNodes() {
+				let httpRes = await fetch("/awwan/api/fs")
+				if (httpRes.status != 200) {
+					console.error("ListNodes:", httpRes)
+					return nil
+				}
+				let res = await httpRes.json()
+				if (res.code != 200) {
+					console.error(res.message)
+					return nil
+				}
+				return res.data
+			}
+
+			async function OnClickNode(path) {
+				comEditor.OpenFile(path)
+			}
+
+			async function editorOpenFile(path) {
+				let httpRes = await fetch("/awwan/api/fs?path=" + path)
+				if (httpRes.status != 200) {
+					console.error("OnClickNode:", httpRes)
+					return null
+				}
+				let res = await httpRes.json()
+				if (res.code == 200) {
+					comVfsPath.innerText = path
+					request.script = path
+				}
+				return res
+			}
+
+			function editorOnSelection(begin, end) {
+				let stmts = comEditor.lines.slice(begin, end + 1)
+				for (const stmt of stmts) {
+					console.log("stmt:", stmt.x, stmt.text)
+				}
+			}
+
+			// execLocal request to execute the selected script on local system.
+			function execLocal() {
+				if (request.script == "") {
+					console.log("no file selected")
+					return
+				}
+				httpApiExecute("local")
+			}
+
+			// execRemote request to execute the selected script on remote system.
+			function execRemote() {
+				if (request.script == "") {
+					console.log("no file selected")
+					return
+				}
+				httpApiExecute("remote")
+			}
+
+			async function httpApiExecute(mode) {
+				let selectionRange = comEditor.GetSelectionRange()
+				if (selectionRange.BeginAt < 0) {
+					request.begin_at = 0
+				} else {
+					request.begin_at = selectionRange.BeginAt + 1
+				}
+				if (selectionRange.EndAt < 0) {
+					request.end_at = 0
+				} else {
+					request.end_at = selectionRange.EndAt + 1
+				}
+
+				request.mode = mode
+				request.content = btoa(comEditor.GetContent())
+
+				let httpRes = await fetch("/awwan/api/execute", {
+					method: "POST",
+					headers: {
+						Accept: "application/json",
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify(request),
+				})
+
+				let res = await httpRes.json()
+				if (res.code != 200) {
+					console.log(res)
+					return
+				}
+
+				comStdout.innerText = atob(res.data.stdout)
+				if (res.data.stderr) {
+					comStderr.innerText = atob(res.data.stderr)
+				}
+			}
+		</script>
+	</body>
+</html>

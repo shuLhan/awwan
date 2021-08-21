@@ -5,11 +5,14 @@
 package awwan
 
 import (
+	"bytes"
 	"fmt"
 	"log"
 	"os"
 	"path/filepath"
 
+	"github.com/shuLhan/share/lib/http"
+	"github.com/shuLhan/share/lib/memfs"
 	"github.com/shuLhan/share/lib/ssh/config"
 )
 
@@ -18,12 +21,16 @@ const (
 
 	CommandModeLocal = "local"
 	CommandModePlay  = "play"
+	CommandModeServe = "serve"
 
-	defEnvFileName = "awwan.env" // The default awwan environment file name.
-	defCacheDir    = ".cache"
-	defSshConfig   = "config" // The default SSH config file name.
-	defSshDir      = ".ssh"   // The default SSH config directory name.
-	defTmpDir      = "/tmp"
+	defCacheDir      = ".cache"
+	defEnvFileName   = "awwan.env" // The default awwan environment file name.
+	defListenAddress = "127.0.0.1:17600"
+	defSshConfig     = "config" // The default SSH config file name.
+	defSshDir        = ".ssh"   // The default SSH config directory name.
+	defTmpDir        = "/tmp"
+
+	envDevelopment = "AWWAN_DEVELOPMENT"
 )
 
 var (
@@ -33,6 +40,10 @@ var (
 	cmdMagicSudoPut = []byte("#put!")
 	cmdMagicRequire = []byte("#require:")
 	newLine         = []byte("\n")
+
+	// The embedded _www for web-user interface.
+	// This variable will initialize by internal/cmd/memfs_www.
+	memfsWww *memfs.MemFS
 )
 
 //
@@ -44,6 +55,12 @@ type Awwan struct {
 
 	// All the Host values from SSH config files.
 	sshConfig *config.Config
+
+	httpd     *http.Server // The HTTP server.
+	memfsBase *memfs.MemFS // The files caches.
+
+	bufout bytes.Buffer
+	buferr bytes.Buffer
 }
 
 //
@@ -56,10 +73,19 @@ func New(baseDir string) (aww *Awwan, err error) {
 
 	aww = &Awwan{}
 
+	if len(baseDir) > 0 {
+		baseDir, err = filepath.Abs(baseDir)
+		if err != nil {
+			return nil, fmt.Errorf("%s: %w", logp, err)
+		}
+	}
+
 	aww.BaseDir, err = lookupBaseDir(baseDir)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", logp, err)
 	}
+
+	fmt.Printf("--- BaseDir: %s\n", aww.BaseDir)
 
 	return aww, nil
 }
@@ -85,7 +111,11 @@ func (aww *Awwan) Local(req *Request) (err error) {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
 
-	req.script, err = NewScriptForLocal(ses, req.scriptPath)
+	if len(req.Content) == 0 {
+		req.script, err = NewScriptForLocal(ses, req.scriptPath)
+	} else {
+		req.script, err = ParseScriptForLocal(ses, req.Content)
+	}
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
@@ -159,9 +189,11 @@ func (aww *Awwan) Play(req *Request) (err error) {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
 
-	ses.sshClient.SetSessionOutputError(req.stdout, req.stderr)
-
-	req.script, err = NewScriptForRemote(ses, req.scriptPath)
+	if len(req.Content) == 0 {
+		req.script, err = NewScriptForRemote(ses, req.scriptPath)
+	} else {
+		req.script, err = ParseScriptForRemote(ses, req.Content)
+	}
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
@@ -197,6 +229,59 @@ func (aww *Awwan) Play(req *Request) (err error) {
 	ses.executeScriptOnRemote(req)
 
 	return nil
+}
+
+//
+// Serve start the web-user interface that serve awwan actions through HTTP.
+//
+func (aww *Awwan) Serve() (err error) {
+	logp := "Serve"
+
+	envDev := os.Getenv(envDevelopment)
+
+	memfsBaseOpts := &memfs.Options{
+		Root: aww.BaseDir,
+		Excludes: []string{
+			`.*/\.git`,
+			"node_modules",
+			"vendor",
+			`.*\.(bz|bz2|gz|iso|jar|tar|xz|zip)`,
+		},
+		Development: true, // Only store the file structures in the memory.
+	}
+	aww.memfsBase, err = memfs.New(memfsBaseOpts)
+	if err != nil {
+		return fmt.Errorf("%s: %w", logp, err)
+	}
+
+	if len(envDev) > 0 || memfsWww == nil {
+		memfsWwwOpts := &memfs.Options{
+			Root:        "_www",
+			Development: true,
+		}
+		memfsWww, err = memfs.New(memfsWwwOpts)
+		if err != nil {
+			return fmt.Errorf("%s: %w", logp, err)
+		}
+	}
+
+	serverOpts := &http.ServerOptions{
+		Memfs:   memfsWww,
+		Address: defListenAddress,
+	}
+	aww.httpd, err = http.NewServer(serverOpts)
+	if err != nil {
+		return fmt.Errorf("%s: %w", logp, err)
+	}
+
+	err = aww.registerHttpApis()
+	if err != nil {
+		return fmt.Errorf("%s: %w", logp, err)
+	}
+
+	fmt.Printf("--- Starting HTTP server at %s\n", serverOpts.Address)
+
+	return aww.httpd.Start()
 }
 
 //
@@ -242,7 +327,7 @@ func lookupBaseDir(baseDir string) (dir string, err error) {
 	)
 
 	if len(baseDir) > 0 {
-		_, err = os.Stat(filepath.Join(dir, defSshDir))
+		_, err = os.Stat(filepath.Join(baseDir, defSshDir))
 		if err != nil {
 			return "", fmt.Errorf("%s: cannot find .ssh directory on %s", logp, baseDir)
 		}

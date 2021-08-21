@@ -15,7 +15,11 @@ directory layout.
 
 ==  SYNOPSIS
 
-awwan <command> <script> <line-start> [line-end | "-"]
+awwan <command> <arguments>
+
+command = "local" | "play" | "serve"
+
+arguments = <script> <start> [end] | <workspace>
 
 
 ==  DESCRIPTION
@@ -36,25 +40,36 @@ If yes, awwan is the right tools for you.
 
 ==  THE COMMAND
 
-The awwan tool only need four arguments.
+The awwan tool have three command: local, play, or serve.
 
-The first argument is mode: "local" or "play".
-The "local" mode execute the script in local environment, your own machine,
-without using SSH.
-The "play" mode execute the script in remote environment, your SSH server.
+The "local" command execute the script in local environment, your host
+machine, without using SSH.
+The "play" command execute the script in remote environment using SSH.
+The "serve" command run the web-user interface using <workspace> directory as
+base directory.
 
-The second argument is the path to the awwan script file.
+The "local" and "play" command has the same arguments,
 
-The third argument is line start number.
+	(local | play) <script> <start> [end]
+
+The <script> argument is the path to the awwan script file.
+
+The <start> argument is line start number.
 Its define the line number in the script where awwan will start
 execution.
 
-The fourth argument define the line number in the script where awwan will stop
+The <end> argument define the line number in the script where awwan will stop
 executing the script, or "-" to set to the last line.
 If not defined then it will be equal to the line start, which means awwan will
 execute only single line.
-Another value for this argument is "-", its means execute the script from
-line-start until the last line.
+
+The "serve" command have only single argument,
+
+    serve <workspace>
+
+The <workspace> argument is the awwan workspace directory that contains the
+.ssh directory.
+
 
 Here is some examples of how to execute script,
 
@@ -78,6 +93,13 @@ $ awwan play myserver/script.aww 5 10
 $ awwan play cloud/myserver/script.aww 5 -
 ----
 
+* Serve the directory "work" as base directory for awwan workspace,
++
+----
+$ awwan serve ./work
+--- BaseDir: ./work
+--- Starting HTTP server at 127.0.0.1:17600
+----
 
 ==  THE SCRIPT
 
@@ -146,8 +168,8 @@ Example,
 #put! /etc/locale.conf /etc/locale.conf
 ----
 
-One thing that script can't do is piping, for example "echo a > b" does not
-work, yet.
+One thing that script can't do is piping, for example "echo a > b".
+The workaround for this is using "sh -c 'echo a > b'".
 
 Here is an example of script that install Nginx on remote Arch Linux server
 using configuration from your local computer,

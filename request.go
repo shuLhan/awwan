@@ -18,7 +18,9 @@ import (
 // written.  If its nil, it will default to os.Stdout and os.Stderr.
 //
 type Request struct {
+	Mode    string `json:"mode"`
 	Script  string `json:"script"`
+	Content []byte `json:"content"`
 	BeginAt int    `json:"begin_at"`
 	EndAt   int    `json:"end_at"`
 
