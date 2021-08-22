@@ -22,6 +22,12 @@ const (
 	paramNamePath = "path"
 )
 
+type fsRequest struct {
+	Path    string `json:"path"`
+	Content []byte `json:"content"`
+	IsDir   bool   `json:"is_dir"`
+}
+
 func (aww *Awwan) registerHttpApis() (err error) {
 	logp := "registerHttpApis"
 
@@ -31,6 +37,17 @@ func (aww *Awwan) registerHttpApis() (err error) {
 		RequestType:  libhttp.RequestTypeQuery,
 		ResponseType: libhttp.ResponseTypeJSON,
 		Call:         aww.httpApiFs,
+	})
+	if err != nil {
+		return fmt.Errorf("%s: %w", logp, err)
+	}
+
+	err = aww.httpd.RegisterEndpoint(&libhttp.Endpoint{
+		Method:       libhttp.RequestMethodPut,
+		Path:         httpApiFs,
+		RequestType:  libhttp.RequestTypeJSON,
+		ResponseType: libhttp.ResponseTypeJSON,
+		Call:         aww.httpApiFsPut,
 	})
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
@@ -71,6 +88,43 @@ func (aww *Awwan) httpApiFs(epr *libhttp.EndpointRequest) ([]byte, error) {
 
 	res.Code = http.StatusOK
 	res.Data = node
+	return json.Marshal(res)
+}
+
+//
+// httpApiFsPut save the content of file.
+//
+func (aww *Awwan) httpApiFsPut(epr *libhttp.EndpointRequest) (rawBody []byte, err error) {
+	var (
+		logp = "httpApiFsPut"
+		res  = &libhttp.EndpointResponse{}
+		req  = &fsRequest{}
+	)
+
+	res.Code = http.StatusInternalServerError
+
+	err = json.Unmarshal(epr.RequestBody, req)
+	if err != nil {
+		res.Message = fmt.Sprintf("%s: %s", logp, err)
+		return nil, res
+	}
+
+	node := aww.memfsBase.PathNodes.Get(req.Path)
+	if node == nil {
+		res.Code = http.StatusNotFound
+		res.Message = fmt.Sprintf("%s: invalid or empty path %s", logp, req.Path)
+		return nil, res
+	}
+
+	err = node.Save(req.Content)
+	if err != nil {
+		res.Message = fmt.Sprintf("%s: %s", logp, err)
+		return nil, res
+	}
+
+	res.Code = http.StatusOK
+	res.Data = node
+
 	return json.Marshal(res)
 }
 

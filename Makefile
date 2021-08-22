@@ -6,10 +6,13 @@ RELEASE_BINARIES=\
 	_bin/awwan-linux-amd64 \
 	_bin/awwan-darwin-amd64
 
-.PHONY: all embed test serve-doc dev-serve release
+.PHONY: all install embed test serve-doc dev-serve release
 
 all: embed test lint
 	go build ./cmd/awwan
+
+install: embed
+	go install ./cmd/awwan
 
 embed:
 	go run ./internal/cmd/memfs_www
