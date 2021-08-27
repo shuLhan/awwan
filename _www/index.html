@@ -11,18 +11,18 @@
 				font-family: monospace;
 				height: 98vh;
 				overflow-y: auto;
-				width: 20em;
+				width: 300px;
 			}
 			.awwan_content {
-				margin: 0 1em;
-				width: calc(100% - 20em);
+				margin: 0 10px;
+				width: calc(100% - 330px);
 			}
 			#vfs_path {
-				margin-right: 1em;
+				margin-right: 10px;
 			}
 			#editor {
 				width: 100%;
-				height: 40em;
+				height: 600px;
 				border: 1px solid silver;
 			}
 			.editor_action {
@@ -30,20 +30,19 @@
 				padding: 10px;
 			}
 			.execute_action {
-				margin: 1em 0;
-			}
-			#stdout,
-			#stderr {
-				font-family: monospace;
-				max-height: 20em;
-				min-height: 2em;
-				overflow: auto;
-				padding: 1em;
-				white-space: pre;
+				margin: 10px 0;
 			}
 			.boxheader {
 				padding: 10px;
 				border: 1px solid silver;
+			}
+			#stdout,
+			#stderr {
+				font-family: monospace;
+				min-height: 200px;
+				overflow: auto;
+				padding: 10px;
+				white-space: pre;
 			}
 			#stdout {
 				background-color: lavender;
@@ -58,18 +57,19 @@
 					display: block;
 				}
 				.awwan_nav_left {
-					height: auto;
-					width: calc(100% - 1em);
+					min-height: 400px;
+					max-height: 400px;
+					width: calc(100% - 10px);
 				}
 				.awwan_content {
 					margin: 0;
-					width: calc(100% - 1em);
+					width: calc(100% - 10px);
 				}
 				.editor_action {
-					margin: 1em 0;
+					margin: 10px 0;
 				}
 				#editor {
-					height: 20em;
+					height: 400px;
 				}
 			}
 		</style>
@@ -107,10 +107,11 @@
 		</div>
 		<script>
 			var exports = {}
-			var comVfsPath = document.getElementById("vfs_path")
 			var comEditor
+			var comFilePath = document.getElementById("vfs_path")
 			var comStdout
 			var comStderr
+			var comVfs
 			var request = {
 				script: "",
 				content: "",
@@ -122,21 +123,20 @@
 		<script src="/editor.js"></script>
 		<script>
 			function main() {
-				let opts = {
+				let comVfsOpts = {
 					id: "vfs",
 					ListNodes: ListNodes,
 					OnClickNode: OnClickNode,
 				}
-
-				let vfs = new Vfs(opts)
-				vfs.init()
+				comVfs = new Vfs(comVfsOpts)
+				comVfs.init()
 
 				let editorOpts = {
 					id: "editor",
 					is_editable: true,
 					OpenFile: editorOpenFile,
-					SaveFile: editorSaveFile,
 					OnSelection: editorOnSelection,
+					OnSave: editorOnSave,
 				}
 				comEditor = new Editor(editorOpts)
 
@@ -159,8 +159,16 @@
 				return res.data
 			}
 
-			function OnClickNode(path) {
-				comEditor.OpenFile(path)
+			function OnClickNode(path, is_dir) {
+				if (!is_dir) {
+					comEditor.OpenFile(path)
+				}
+				let hash = "#" + path
+				if (history.pushState) {
+					history.pushState(null, null, hash)
+				} else {
+					window.location.hash = hash
+				}
 			}
 
 			function onClickSave() {
@@ -172,8 +180,12 @@
 				if (l > 0 && content[l - 1] != "\n") {
 					content += "\n"
 				}
-				request.content = btoa(content)
-				this.editorSaveFile(request.script, request.content)
+				request.content = content
+				doSaveFile(request.script, request.content)
+			}
+
+			function editorOnSave(content) {
+				doSaveFile(request.script, content)
 			}
 
 			async function editorOpenFile(path) {
@@ -184,16 +196,16 @@
 				}
 				let res = await httpRes.json()
 				if (res.code == 200) {
-					comVfsPath.innerText = path
+					comFilePath.innerText = path
 					request.script = path
 				}
 				return res
 			}
 
-			async function editorSaveFile(path, content) {
+			async function doSaveFile(path, content) {
 				let req = {
 					path: path,
-					content: content,
+					content: btoa(content),
 				}
 				let httpRes = await fetch("/awwan/api/fs", {
 					method: "PUT",
@@ -204,12 +216,12 @@
 					body: JSON.stringify(req),
 				})
 				if (httpRes.status != 200) {
-					console.error("editorSaveFile:", httpRes)
+					console.error("doSaveFile:", httpRes)
 					return null
 				}
 				let res = await httpRes.json()
 				if (res.code != 200) {
-					console.error("editorSaveFile:", httpRes)
+					console.error("doSaveFile:", httpRes)
 					return null
 				}
 				return res
