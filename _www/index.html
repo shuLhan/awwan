@@ -122,14 +122,14 @@
 		<script src="/vfs.js"></script>
 		<script src="/editor.js"></script>
 		<script>
-			function main() {
+			async function main() {
 				let comVfsOpts = {
 					id: "vfs",
 					ListNodes: ListNodes,
 					OnClickNode: OnClickNode,
 				}
 				comVfs = new Vfs(comVfsOpts)
-				comVfs.init()
+				await comVfs.init()
 
 				let editorOpts = {
 					id: "editor",
@@ -142,6 +142,28 @@
 
 				comStdout = document.getElementById("stdout")
 				comStderr = document.getElementById("stderr")
+
+				window.onhashchange = function (e) {
+					let url = new URL(e.newURL)
+					this.onHashChange(url.hash)
+				}
+
+				this.onHashChange(window.location.hash)
+			}
+
+			function onHashChange(hash) {
+				if (hash === "") {
+					let hash = "#/"
+					if (history.pushState) {
+						history.pushState({}, "", hash)
+					} else {
+						window.location.hash = hash
+					}
+					return true
+				}
+				hash = hash.substring(1)
+				console.log("onhashchange:", hash)
+				comVfs.OpenPath(hash)
 			}
 
 			// ListNodes fetch the list of files from remote server.
@@ -162,10 +184,11 @@
 			function OnClickNode(path, is_dir) {
 				if (!is_dir) {
 					comEditor.OpenFile(path)
+					return
 				}
 				let hash = "#" + path
 				if (history.pushState) {
-					history.pushState(null, null, hash)
+					history.pushState({}, "", hash)
 				} else {
 					window.location.hash = hash
 				}
