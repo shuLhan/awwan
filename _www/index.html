@@ -107,98 +107,82 @@
 		</div>
 		<script>
 			var exports = {}
-			var comEditor
-			var comFilePath = document.getElementById("vfs_path")
-			var comStdout
-			var comStderr
-			var comVfs
+			var com_file_path = document.getElementById("vfs_path")
+			var com_stdout
+			var com_stderr
 			var request = {
 				script: "",
 				content: "",
 				begin_at: 0,
 				end_at: 0,
 			}
+			var wui_editor
+			var wui_vfs
 		</script>
 		<script src="/vfs.js"></script>
 		<script src="/editor.js"></script>
 		<script>
-			async function main() {
-				let comVfsOpts = {
+			function main() {
+				let wui_vfs_opts = {
 					id: "vfs",
-					ListNodes: ListNodes,
-					OnClickNode: OnClickNode,
+					Open: Open,
 				}
-				comVfs = new Vfs(comVfsOpts)
-				await comVfs.init()
+				wui_vfs = new WuiVfs(wui_vfs_opts)
 
-				let editorOpts = {
+				let editor_opts = {
 					id: "editor",
 					is_editable: true,
-					OpenFile: editorOpenFile,
 					OnSelection: editorOnSelection,
 					OnSave: editorOnSave,
 				}
-				comEditor = new Editor(editorOpts)
+				wui_editor = new WuiEditor(editor_opts)
 
-				comStdout = document.getElementById("stdout")
-				comStderr = document.getElementById("stderr")
+				com_stdout = document.getElementById("stdout")
+				com_stderr = document.getElementById("stderr")
 
-				window.onhashchange = function (e) {
-					let url = new URL(e.newURL)
-					this.onHashChange(url.hash)
+				window.onhashchange = function (ev) {
+					ev.preventDefault()
+					let url = new URL(ev.newURL)
+					onHashChange(url.hash)
 				}
 
-				this.onHashChange(window.location.hash)
+				// Open path based on hash.
+				onHashChange(window.location.hash)
 			}
 
 			function onHashChange(hash) {
 				if (hash === "") {
-					let hash = "#/"
-					if (history.pushState) {
-						history.pushState({}, "", hash)
-					} else {
-						window.location.hash = hash
-					}
-					return true
+					hash = "#/"
 				}
+
 				hash = hash.substring(1)
-				console.log("onhashchange:", hash)
-				comVfs.OpenPath(hash)
+				wui_vfs.OpenDir(hash)
 			}
 
-			// ListNodes fetch the list of files from remote server.
-			async function ListNodes() {
-				let httpRes = await fetch("/awwan/api/fs")
-				if (httpRes.status != 200) {
-					console.error("ListNodes:", httpRes)
-					return nil
-				}
-				let res = await httpRes.json()
+			// Open fetch the node content from remote server.
+			async function Open(path, is_dir) {
+				let http_res = await fetch("/awwan/api/fs?path=" + path)
+				let res = await http_res.json()
 				if (res.code != 200) {
 					console.error(res.message)
-					return nil
+					return res
 				}
-				return res.data
-			}
 
-			function OnClickNode(path, is_dir) {
-				if (!is_dir) {
-					comEditor.OpenFile(path)
-					return
-				}
-				let hash = "#" + path
-				if (history.pushState) {
-					history.pushState({}, "", hash)
+				if (is_dir) {
+					window.location.hash = "#"+ path
 				} else {
-					window.location.hash = hash
+					com_file_path.innerText = path
+					request.script = path
+					wui_editor.Open(res.data)
 				}
+				return res
 			}
 
 			function onClickSave() {
 				if (request.script == "") {
 					return
 				}
-				let content = comEditor.GetContent()
+				let content = wui_editor.GetContent()
 				let l = content.length
 				if (l > 0 && content[l - 1] != "\n") {
 					content += "\n"
@@ -211,26 +195,12 @@
 				doSaveFile(request.script, content)
 			}
 
-			async function editorOpenFile(path) {
-				let httpRes = await fetch("/awwan/api/fs?path=" + path)
-				if (httpRes.status != 200) {
-					console.error("OnClickNode:", httpRes)
-					return null
-				}
-				let res = await httpRes.json()
-				if (res.code == 200) {
-					comFilePath.innerText = path
-					request.script = path
-				}
-				return res
-			}
-
 			async function doSaveFile(path, content) {
 				let req = {
 					path: path,
 					content: btoa(content),
 				}
-				let httpRes = await fetch("/awwan/api/fs", {
+				let http_res = await fetch("/awwan/api/fs", {
 					method: "PUT",
 					headers: {
 						Accept: "application/json",
@@ -238,20 +208,20 @@
 					},
 					body: JSON.stringify(req),
 				})
-				if (httpRes.status != 200) {
-					console.error("doSaveFile:", httpRes)
+				if (http_res.status != 200) {
+					console.error("doSaveFile:", http_res)
 					return null
 				}
-				let res = await httpRes.json()
+				let res = await http_res.json()
 				if (res.code != 200) {
-					console.error("doSaveFile:", httpRes)
+					console.error("doSaveFile:", http_res)
 					return null
 				}
 				return res
 			}
 
 			function editorOnSelection(begin, end) {
-				let stmts = comEditor.lines.slice(begin, end + 1)
+				let stmts = wui_editor.lines.slice(begin, end + 1)
 				for (const stmt of stmts) {
 					console.log("stmt:", stmt.x, stmt.text)
 				}
@@ -276,22 +246,22 @@
 			}
 
 			async function httpApiExecute(mode) {
-				let selectionRange = comEditor.GetSelectionRange()
-				if (selectionRange.BeginAt < 0) {
+				let selection_range = wui_editor.GetSelectionRange()
+				if (selection_range.begin_at < 0) {
 					request.begin_at = 0
 				} else {
-					request.begin_at = selectionRange.BeginAt + 1
+					request.begin_at = selection_range.begin_at + 1
 				}
-				if (selectionRange.EndAt < 0) {
+				if (selection_range.end_at < 0) {
 					request.end_at = 0
 				} else {
-					request.end_at = selectionRange.EndAt + 1
+					request.end_at = selection_range.end_at + 1
 				}
 
 				request.mode = mode
-				request.content = btoa(comEditor.GetContent())
+				request.content = btoa(wui_editor.GetContent())
 
-				let httpRes = await fetch("/awwan/api/execute", {
+				let http_res = await fetch("/awwan/api/execute", {
 					method: "POST",
 					headers: {
 						Accept: "application/json",
@@ -300,15 +270,15 @@
 					body: JSON.stringify(request),
 				})
 
-				let res = await httpRes.json()
+				let res = await http_res.json()
 				if (res.code != 200) {
 					console.error(res)
 					return
 				}
 
-				comStdout.innerText = atob(res.data.stdout)
+				com_stdout.innerText = atob(res.data.stdout)
 				if (res.data.stderr) {
-					comStderr.innerText = atob(res.data.stderr)
+					com_stderr.innerText = atob(res.data.stderr)
 				}
 			}
 		</script>
