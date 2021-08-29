@@ -4,6 +4,18 @@
 		<meta charset="UTF-8" />
 		<title>awwan</title>
 		<style>
+			.header {
+				height: 24px;
+				margin: 0px 0px 1em 1em;
+			}
+			.header > .logo {
+				width: 20px;
+				margin: 0px;
+			}
+			.header > .menu {
+				border-left: 1px solid cornflowerblue;
+				padding-left: 1em;
+			}
 			.awwan {
 				display: flex;
 			}
@@ -75,5 +87,14 @@
 		<script data-main="main" src="/require.js"></script>
 	</head>
 	<body>
+		<div class="header">
+			A
+			<image class="logo" src="/favicon.ico"></image>
+			<image class="logo" src="/favicon.ico"></image>
+			an &nbsp;
+			<span class="menu">
+				<a href="/doc/" target="_blank">Documentation</a>
+			</span>
+		</div>
 	</body>
 </html>

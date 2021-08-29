@@ -26,7 +26,7 @@ lint:
 	golangci-lint run ./...
 
 serve-doc:
-	ciigo serve .
+	ciigo serve _www/
 
 serve-dev:
 	tsc --project _www --watch &

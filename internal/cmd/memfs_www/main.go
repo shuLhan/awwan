@@ -13,6 +13,7 @@ func main() {
 	memfsWwwOpts := &memfs.Options{
 		Root: "_www",
 		Excludes: []string{
+			`.*\.adoc`,
 			`.*\.json`,
 			`.*\.ts`,
 			`/wui`,

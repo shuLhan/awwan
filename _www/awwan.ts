@@ -82,17 +82,23 @@ export class Awwan {
 		let el = document.getElementById(ID_BTN_LOCAL)
 		if (el) {
 			this.com_btn_local = el
-			this.com_btn_local.onclick = () => { this.execLocal() }
+			this.com_btn_local.onclick = () => {
+				this.execLocal()
+			}
 		}
 		el = document.getElementById(ID_BTN_REMOTE)
 		if (el) {
 			this.com_btn_remote = el
-			this.com_btn_remote.onclick = () => { this.execRemote() }
+			this.com_btn_remote.onclick = () => {
+				this.execRemote()
+			}
 		}
 		el = document.getElementById(ID_BTN_SAVE)
 		if (el) {
 			this.com_btn_save = el
-			this.com_btn_save.onclick = () => { this.onClickSave() }
+			this.com_btn_save.onclick = () => {
+				this.onClickSave()
+			}
 		}
 		el = document.getElementById(ID_VFS_PATH)
 		if (el) {
@@ -121,10 +127,15 @@ export class Awwan {
 
 		let wui_vfs_opts: WuiVfsOptions = {
 			id: "vfs",
-			Open: (path: string, is_dir: boolean): Promise<WuiResponseInterface> => {
+			Open: (
+				path: string,
+				is_dir: boolean,
+			): Promise<WuiResponseInterface> => {
 				return this.Open(path, is_dir)
 			},
-			OpenNode: (node: WuiVfsNode): Promise<WuiResponseInterface> => {
+			OpenNode: (
+				node: WuiVfsNode,
+			): Promise<WuiResponseInterface> => {
 				return this.OpenNode(node)
 			},
 		}
