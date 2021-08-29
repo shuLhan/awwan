@@ -57,8 +57,7 @@
 					display: block;
 				}
 				.awwan_nav_left {
-					min-height: 400px;
-					max-height: 400px;
+					height: 400px;
 					width: calc(100% - 10px);
 				}
 				.awwan_content {
@@ -106,6 +105,7 @@
 			</div>
 		</div>
 		<script>
+			var MAX_FILE_SIZE = 3000000
 			var exports = {}
 			var com_file_path = document.getElementById("vfs_path")
 			var com_stdout
@@ -138,6 +138,7 @@
 				let wui_vfs_opts = {
 					id: "vfs",
 					Open: Open,
+					OpenNode: OpenNode,
 				}
 				wui_vfs = new WuiVfs(wui_vfs_opts)
 
@@ -171,14 +172,61 @@
 					wui_notif.Error(`Failed to open ${path}: ${res.message}`)
 					return res
 				}
-
 				if (is_dir) {
-					window.location.hash = "#"+ path
-				} else {
-					com_file_path.innerText = path
-					request.script = path
-					wui_editor.Open(res.data)
+					window.location.hash = "#" + path
+					return res
 				}
+
+				let resAllow = isEditAllowed(res.data)
+				if (resAllow.code != 200) {
+					wui_notif.Error(resAllow.message)
+					return resAllow
+				}
+
+				com_file_path.innerText = path
+				request.script = path
+				wui_editor.Open(res.data)
+				return res
+			}
+
+			// OpenNode is an handler that will called when user click on of the
+			// item in the list.
+			async function OpenNode(node) {
+				let resAllow = isEditAllowed(node)
+				if (resAllow.code != 200) {
+					wui_notif.Error(resAllow.message)
+					return resAllow
+				}
+
+				return await Open(node.path, node.is_dir)
+			}
+
+			function isEditAllowed(node) {
+				let res = {
+					code: 412,
+				}
+
+				let is_type_allowed = false
+				if (
+					node.content_type.includes("json") ||
+					node.content_type.includes("message") ||
+					node.content_type.includes("script") ||
+					node.content_type.includes("text") ||
+					node.content_type.includes("xml")
+				) {
+					is_type_allowed = true
+				}
+				if (!is_type_allowed) {
+					res.message = `The file "${node.name}" with content type "${node.content_type}" is not allowed to be opened`
+					return res
+				}
+				if (node.size > MAX_FILE_SIZE) {
+					res.message = `The file "${node.name}" with size ${
+						node.size / 1000000
+					}MB is greater than maximum ${MAX_FILE_SIZE / 1000000}MB.`
+					return res
+				}
+				res.code = 200
 				return res
 			}
 
