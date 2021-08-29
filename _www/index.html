@@ -117,18 +117,14 @@
 				end_at: 0,
 			}
 			var wui_editor
+			var wui_notif
 			var wui_vfs
 		</script>
-		<script src="/vfs.js"></script>
 		<script src="/editor.js"></script>
+		<script src="/notif.js"></script>
+		<script src="/vfs.js"></script>
 		<script>
 			function main() {
-				let wui_vfs_opts = {
-					id: "vfs",
-					Open: Open,
-				}
-				wui_vfs = new WuiVfs(wui_vfs_opts)
-
 				let editor_opts = {
 					id: "editor",
 					is_editable: true,
@@ -136,6 +132,14 @@
 					OnSave: editorOnSave,
 				}
 				wui_editor = new WuiEditor(editor_opts)
+
+				wui_notif = new WuiNotif()
+
+				let wui_vfs_opts = {
+					id: "vfs",
+					Open: Open,
+				}
+				wui_vfs = new WuiVfs(wui_vfs_opts)
 
 				com_stdout = document.getElementById("stdout")
 				com_stderr = document.getElementById("stderr")
@@ -164,7 +168,7 @@
 				let http_res = await fetch("/awwan/api/fs?path=" + path)
 				let res = await http_res.json()
 				if (res.code != 200) {
-					console.error(res.message)
+					wui_notif.Error(`Failed to open ${path}: ${res.message}`)
 					return res
 				}
 
@@ -208,15 +212,13 @@
 					},
 					body: JSON.stringify(req),
 				})
-				if (http_res.status != 200) {
-					console.error("doSaveFile:", http_res)
-					return null
-				}
 				let res = await http_res.json()
 				if (res.code != 200) {
-					console.error("doSaveFile:", http_res)
+					wui_notif.Error(`Failed to save file ${path}: ${res.message}`)
 					return null
 				}
+
+				wui_notif.Info(`File ${path} has been saved.`)
 				return res
 			}
 
@@ -230,7 +232,7 @@
 			// execLocal request to execute the selected script on local system.
 			function execLocal() {
 				if (request.script == "") {
-					console.log("no file selected")
+					wui_notif.Error(`Execute on local: no file selected`)
 					return
 				}
 				httpApiExecute("local")
@@ -239,7 +241,7 @@
 			// execRemote request to execute the selected script on remote system.
 			function execRemote() {
 				if (request.script == "") {
-					console.log("no file selected")
+					wui_notif.Error(`Execute on remote: no file selected`)
 					return
 				}
 				httpApiExecute("remote")
@@ -272,7 +274,7 @@
 
 				let res = await http_res.json()
 				if (res.code != 200) {
-					console.error(res)
+					wui_notif.Error(`Execute failed: ${res.message}`)
 					return
 				}
 
@@ -280,6 +282,8 @@
 				if (res.data.stderr) {
 					com_stderr.innerText = atob(res.data.stderr)
 				}
+
+				wui_notif.Info(`Successfully execute ${request.script} on ${mode}.`)
 			}
 		</script>
 	</body>
