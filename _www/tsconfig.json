@@ -1,0 +1,18 @@
+{
+	"$schema": "https://json.schemastore.org/tsconfig",
+	"compilerOptions": {
+		"declaration": true,
+		"forceConsistentCasingInFileNames": true,
+		"inlineSourceMap": true,
+		"lib": ["es2015", "dom", "es2015"],
+		"module": "amd",
+		"noImplicitAny": true,
+		"outFile": "./main.js",
+		"strict": true,
+		"target": "es5"
+	},
+	"display": "Recommended",
+	"files": [
+		"main.ts"
+	]
+}

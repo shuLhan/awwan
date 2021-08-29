@@ -12,6 +12,11 @@ func main() {
 
 	memfsWwwOpts := &memfs.Options{
 		Root: "_www",
+		Excludes: []string{
+			`.*\.json`,
+			`.*\.ts`,
+			`/wui`,
+		},
 	}
 
 	memfsWww, err := memfs.New(memfsWwwOpts)
