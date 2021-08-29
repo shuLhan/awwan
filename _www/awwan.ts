@@ -34,14 +34,14 @@ export function renderHtml() {
 			<div class="awwan_content">
 				<div class="editor_action">
 					File: <span id="${ID_VFS_PATH}">-</span>
-					<button id="${ID_BTN_SAVE}">Save</button>
+					<button id="${ID_BTN_SAVE}" disabled="true">Save</button>
 				</div>
 				<div id="editor"></div>
 				<div class="execute_action">
 					Execute script on
-					<button id="${ID_BTN_LOCAL}">Local</button>
+					<button id="${ID_BTN_LOCAL}" disabled="true">Local</button>
 					or
-					<button id="${ID_BTN_REMOTE}">Remote</button>
+					<button id="${ID_BTN_REMOTE}" disabled="true">Remote</button>
 				</div>
 				<p>Hints:</p>
 				<ul>
@@ -61,9 +61,9 @@ export function renderHtml() {
 }
 
 export class Awwan {
-	private com_btn_local!: HTMLElement
-	private com_btn_remote!: HTMLElement
-	private com_btn_save!: HTMLElement
+	private com_btn_local!: HTMLButtonElement
+	private com_btn_remote!: HTMLButtonElement
+	private com_btn_save!: HTMLButtonElement
 	private com_file_path!: HTMLElement
 	private com_stdout!: HTMLElement
 	private com_stderr!: HTMLElement
@@ -81,21 +81,21 @@ export class Awwan {
 	constructor() {
 		let el = document.getElementById(ID_BTN_LOCAL)
 		if (el) {
-			this.com_btn_local = el
+			this.com_btn_local = el as HTMLButtonElement
 			this.com_btn_local.onclick = () => {
 				this.execLocal()
 			}
 		}
 		el = document.getElementById(ID_BTN_REMOTE)
 		if (el) {
-			this.com_btn_remote = el
+			this.com_btn_remote = el as HTMLButtonElement
 			this.com_btn_remote.onclick = () => {
 				this.execRemote()
 			}
 		}
 		el = document.getElementById(ID_BTN_SAVE)
 		if (el) {
-			this.com_btn_save = el
+			this.com_btn_save = el as HTMLButtonElement
 			this.com_btn_save.onclick = () => {
 				this.onClickSave()
 			}
@@ -187,7 +187,12 @@ export class Awwan {
 
 		this.com_file_path.innerText = path
 		this.request.script = path
+
 		this.wui_editor.Open(res.data)
+		this.com_btn_local.disabled = false
+		this.com_btn_remote.disabled = false
+		this.com_btn_save.disabled = false
+
 		return res
 	}
 
