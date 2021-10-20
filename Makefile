@@ -6,17 +6,16 @@ RELEASE_BINARIES=\
 	_bin/awwan-linux-amd64 \
 	_bin/awwan-darwin-amd64
 
-.PHONY: all install embed test serve-doc serve-dev release
+AWWAN_WORKSPACE ?= _example
 
-all: embed test lint
+.PHONY: build install embed test serve-doc dev release
+
+build: test lint
+	go run ./cmd/awwan build
 	go build ./cmd/awwan
 
-install: embed
+install: build
 	go install ./cmd/awwan
-
-embed:
-	tsc --project _www
-	go run ./internal/cmd/memfs_www
 
 test:
 	go tool cover -html=cover.out -o cover.html
@@ -28,9 +27,8 @@ lint:
 serve-doc:
 	ciigo serve _www/
 
-serve-dev:
-	tsc --project _www --watch &
-	AWWAN_DEVELOPMENT=1 go run ./cmd/awwan serve _example
+dev:
+	AWWAN_DEVELOPMENT=1 go run ./cmd/awwan serve $(AWWAN_WORKSPACE)
 
 ##
 ## Build for releases

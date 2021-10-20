@@ -53,6 +53,7 @@ func main() {
 
 	// Check for valid command and flags.
 	switch cmdMode {
+	case awwan.CommandModeBuild:
 	case awwan.CommandModeLocal:
 		req, err = parseArgScriptStartEnd(cmdMode)
 	case awwan.CommandModePlay:
@@ -79,6 +80,8 @@ func main() {
 	}
 
 	switch cmdMode {
+	case awwan.CommandModeBuild:
+		err = aww.Build()
 	case awwan.CommandModeLocal:
 		err = aww.Local(req)
 	case awwan.CommandModePlay:
