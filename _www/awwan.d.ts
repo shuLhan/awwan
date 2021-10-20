@@ -2,6 +2,7 @@ import { WuiResponseInterface } from "./wui/response.js";
 import { WuiVfsNodeInterface } from "./wui/vfs/vfs.js";
 export declare function renderHtml(): void;
 export declare class Awwan {
+    private com_btn_clear;
     private com_btn_local;
     private com_btn_new_dir;
     private com_btn_new_file;

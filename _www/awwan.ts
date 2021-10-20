@@ -3,12 +3,16 @@ import { WuiNotif } from "./wui/notif/notif.js"
 import { WuiResponseInterface } from "./wui/response.js"
 import { WuiVfs, WuiVfsOptions, WuiVfsNodeInterface } from "./wui/vfs/vfs.js"
 
+const CLASS_EDITOR_ACTION = "editor_action"
+const ID_BTN_CLEAR_SELECTION = "com_btn_clear_selection"
 const ID_BTN_EXEC_LOCAL = "com_btn_local"
 const ID_BTN_EXEC_REMOTE = "com_btn_remote"
 const ID_BTN_NEW_DIR = "com_btn_new_dir"
 const ID_BTN_NEW_FILE = "com_btn_new_file"
 const ID_BTN_SAVE = "com_btn_save"
+const ID_EDITOR = "com_editor"
 const ID_INP_VFS_NEW = "com_inp_vfs_new"
+const ID_VFS = "com_vfs"
 const ID_VFS_PATH = "vfs_path"
 const ID_STDOUT = "stdout"
 const ID_STDERR = "stderr"
@@ -27,7 +31,7 @@ export function renderHtml() {
 	el.classList.add("awwan")
 	el.innerHTML = `
 			<div class="awwan_nav_left">
-				<div id="vfs"></div>
+				<div id="${ID_VFS}"></div>
 
 				<br/>
 				<div class="${ID_INP_VFS_NEW}">
@@ -37,16 +41,21 @@ export function renderHtml() {
 				<button id="${ID_BTN_NEW_FILE}">New file</button>
 			</div>
 			<div class="awwan_content">
-				<div class="editor_action">
+				<div class="editor_file">
 					File: <span id="${ID_VFS_PATH}">-</span>
 					<button id="${ID_BTN_SAVE}" disabled="true">Save</button>
 				</div>
-				<div id="editor"></div>
-				<div class="execute_action">
-					Execute script on
-					<button id="${ID_BTN_EXEC_LOCAL}" disabled="true">Local</button>
-					or
-					<button id="${ID_BTN_EXEC_REMOTE}" disabled="true">Remote</button>
+				<div id="${ID_EDITOR}"></div>
+				<div>
+					<div class="${CLASS_EDITOR_ACTION}">
+						<button id="${ID_BTN_CLEAR_SELECTION}">Clear selection</button>
+					</div>
+					<div class="${CLASS_EDITOR_ACTION}">
+						Execute script on
+						<button id="${ID_BTN_EXEC_LOCAL}" disabled="true">Local</button>
+						or
+						<button id="${ID_BTN_EXEC_REMOTE}" disabled="true">Remote</button>
+					</div>
 				</div>
 				<p>Hints:</p>
 				<ul>
@@ -66,6 +75,7 @@ export function renderHtml() {
 }
 
 export class Awwan {
+	private com_btn_clear!: HTMLButtonElement
 	private com_btn_local!: HTMLButtonElement
 	private com_btn_new_dir!: HTMLButtonElement
 	private com_btn_new_file!: HTMLButtonElement
@@ -88,7 +98,15 @@ export class Awwan {
 	private wui_vfs: WuiVfs
 
 	constructor() {
-		let el = document.getElementById(ID_BTN_EXEC_LOCAL)
+		let el = document.getElementById(ID_BTN_CLEAR_SELECTION)
+		if (el) {
+			this.com_btn_clear = el as HTMLButtonElement
+			this.com_btn_clear.onclick = () => {
+				this.wui_editor.ClearSelection()
+			}
+		}
+
+		el = document.getElementById(ID_BTN_EXEC_LOCAL)
 		if (el) {
 			this.com_btn_local = el as HTMLButtonElement
 			this.com_btn_local.onclick = () => {
@@ -145,7 +163,7 @@ export class Awwan {
 		}
 
 		let editor_opts: WuiEditorOptions = {
-			id: "editor",
+			id: ID_EDITOR,
 			is_editable: true,
 			OnSelection: (begin_at: number, end_at: number) => {
 				this.editorOnSelection(begin_at, end_at)
@@ -157,7 +175,7 @@ export class Awwan {
 		this.wui_notif = new WuiNotif()
 
 		let wui_vfs_opts: WuiVfsOptions = {
-			id: "vfs",
+			id: ID_VFS,
 			Open: (
 				path: string,
 				is_dir: boolean,
@@ -363,6 +381,9 @@ export class Awwan {
 		} else {
 			this.request.end_at = selection_range.end_at + 1
 		}
+
+		this.com_stdout.innerText = ""
+		this.com_stderr.innerText = ""
 
 		this.request.mode = mode
 		this.request.content = btoa(this.wui_editor.GetContent())

@@ -16,22 +16,33 @@
 				border-left: 1px solid cornflowerblue;
 				padding-left: 1em;
 			}
-			.awwan {
-				display: flex;
-			}
+
 			.awwan_nav_left {
 				font-family: monospace;
-				height: 98vh;
-				overflow-y: auto;
+				position: fixed;
+				height: calc(100% - 54px);
 				width: 300px;
+			}
+			#com_vfs {
+				height: calc(100% - 94px);
+			}
+			.wui_vfs_list {
+				height: calc(100% - 32px);
+				overflow: auto;
 			}
 			#com_inp_vfs_new {
 				width: calc(100% - 10px);
 				margin: 10px 0;
 			}
+
 			.awwan_content {
+				height: calc(100% - 64px);
+				left: 310px;
 				margin: 0 10px;
-				width: calc(100% - 330px);
+				overflow-y: scroll;
+				padding: 0 10px;
+				position: fixed;
+				width: calc(100% - 340px);
 			}
 			#vfs_path {
 				margin-right: 10px;
@@ -41,11 +52,11 @@
 				height: 600px;
 				border: 1px solid silver;
 			}
-			.editor_action {
+			.editor_file {
 				border: 1px solid silver;
 				padding: 10px;
 			}
-			.execute_action {
+			.editor_action {
 				margin: 10px 0;
 			}
 			.boxheader {
@@ -68,19 +79,22 @@
 				background-color: lavenderblush;
 				border: 1px solid silver;
 			}
-			@media (max-width: 900px) {
-				.awwan {
-					display: block;
-				}
+			@media (max-width: 700px) {
 				.awwan_nav_left {
-					height: 400px;
+					position: unset;
 					width: calc(100% - 10px);
+				}
+				.awwan_nav_left .wui_vfs_list {
+					height: 100%;
 				}
 				.awwan_content {
-					margin: 0;
+					margin: 20px 0 0 0;
+					overflow: unset;
+					padding: 0;
+					position: unset;
 					width: calc(100% - 10px);
 				}
-				.editor_action {
+				.editor_file {
 					margin: 10px 0;
 				}
 				#editor {

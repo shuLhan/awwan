@@ -366,6 +366,10 @@ func (aww *Awwan) workerBuild() {
 				`.*\.(js|html|ts)$`,
 				`/tsconfig.json$`,
 			},
+			Excludes: []string{
+				`/wui.bak`,
+				`/wui.local`,
+			},
 		},
 		Callback: func(ns *io.NodeState) {
 			changesq <- ns
@@ -377,7 +381,7 @@ func (aww *Awwan) workerBuild() {
 		log.Fatalf("%s: %s", logp, err)
 	}
 
-	buildTicker := time.NewTicker(5 * time.Second)
+	buildTicker := time.NewTicker(3 * time.Second)
 	for {
 		select {
 		case ns := <-changesq:
@@ -422,12 +426,12 @@ func (aww *Awwan) workerBuild() {
 }
 
 func doGoEmbed() (err error) {
-	mlog.Outf("doGoEmbed: %s\n", embedFileName)
 	err = mfsWww.GoEmbed(embedPackageName, embedVarName, embedFileName, "")
 	if err != nil {
 		mlog.Errf("doGoEmbed: %s", err)
 		return err
 	}
+	mlog.Outf("doGoEmbed: %s\n", embedFileName)
 	return nil
 }
 
