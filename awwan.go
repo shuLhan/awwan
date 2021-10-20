@@ -364,6 +364,7 @@ func (aww *Awwan) workerBuild() {
 			Root: "_www",
 			Includes: []string{
 				`.*\.(js|html|ts)$`,
+				`/tsconfig.json$`,
 			},
 		},
 		Callback: func(ns *io.NodeState) {
@@ -380,7 +381,8 @@ func (aww *Awwan) workerBuild() {
 	for {
 		select {
 		case ns := <-changesq:
-			if strings.HasSuffix(ns.Node.SysPath, ".ts") {
+			if strings.HasSuffix(ns.Node.SysPath, ".ts") ||
+				strings.HasSuffix(ns.Node.SysPath, "tsconfig.json") {
 				mlog.Outf("%s: update %s\n", logp, ns.Node.SysPath)
 				tsCount++
 			} else if strings.HasSuffix(ns.Node.SysPath, ".js") ||
