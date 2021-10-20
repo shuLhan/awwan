@@ -9,7 +9,10 @@ import (
 	"fmt"
 	"math"
 	"net/http"
+	"os"
+	"path"
 	"path/filepath"
+	"strings"
 
 	libbytes "github.com/shuLhan/share/lib/bytes"
 	libhttp "github.com/shuLhan/share/lib/http"
@@ -37,6 +40,17 @@ func (aww *Awwan) registerHttpApis() (err error) {
 		RequestType:  libhttp.RequestTypeQuery,
 		ResponseType: libhttp.ResponseTypeJSON,
 		Call:         aww.httpApiFs,
+	})
+	if err != nil {
+		return fmt.Errorf("%s: %w", logp, err)
+	}
+
+	err = aww.httpd.RegisterEndpoint(&libhttp.Endpoint{
+		Method:       libhttp.RequestMethodPost,
+		Path:         httpApiFs,
+		RequestType:  libhttp.RequestTypeJSON,
+		ResponseType: libhttp.ResponseTypeJSON,
+		Call:         aww.httpApiFsPost,
 	})
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
@@ -88,6 +102,86 @@ func (aww *Awwan) httpApiFs(epr *libhttp.EndpointRequest) ([]byte, error) {
 
 	res.Code = http.StatusOK
 	res.Data = node
+	return json.Marshal(res)
+}
+
+//
+// httpApiFsPost create new directory or file.
+//
+// Request
+//
+//	POST /awwan/api/fs
+//	Content-Type: application/json
+//
+//	{
+//		"path": <string>, the path to new directory or file.
+//		"is_dir": <boolean>, true if its directory.
+//	}
+//
+func (aww *Awwan) httpApiFsPost(epr *libhttp.EndpointRequest) (rawBody []byte, err error) {
+	var (
+		logp = "httpApiFsPost"
+		res  = &libhttp.EndpointResponse{}
+		req  = &fsRequest{}
+	)
+
+	res.Code = http.StatusBadRequest
+
+	err = json.Unmarshal(epr.RequestBody, req)
+	if err != nil {
+		res.Message = fmt.Sprintf("%s: %s", logp, err)
+		return nil, res
+	}
+
+	parentPath := path.Dir(req.Path)
+	nodeParent := aww.memfsBase.PathNodes.Get(parentPath)
+	if nodeParent == nil {
+		res.Message = fmt.Sprintf("%s: invalid path %s", logp, req.Path)
+		return nil, res
+	}
+	node := aww.memfsBase.PathNodes.Get(req.Path)
+	if node != nil {
+		res.Message = fmt.Sprintf("%s: file exist", logp)
+		return nil, res
+	}
+
+	res.Code = http.StatusInternalServerError
+
+	path := filepath.Join(nodeParent.SysPath, path.Base(req.Path))
+	path, err = filepath.Abs(path)
+	if err != nil {
+		res.Message = fmt.Sprintf("%s: %s", logp, err)
+		return nil, res
+	}
+	if !strings.HasPrefix(path, aww.memfsBase.Opts.Root) {
+		res.Message = fmt.Sprintf("%s: invalid path %q", logp, path)
+		return nil, res
+	}
+	if req.IsDir {
+		err = os.Mkdir(path, 0700)
+	} else {
+		err = os.WriteFile(path, nil, 0600)
+	}
+	if err != nil {
+		res.Message = fmt.Sprintf("%s: %s", logp, err)
+		return nil, res
+	}
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		res.Message = fmt.Sprintf("%s: %s", logp, err)
+		return nil, res
+	}
+
+	node, err = aww.memfsBase.AddChild(nodeParent, fi)
+	if err != nil {
+		res.Message = fmt.Sprintf("%s: %s", logp, err)
+		return nil, res
+	}
+
+	res.Code = http.StatusOK
+	res.Data = node
+
 	return json.Marshal(res)
 }
 

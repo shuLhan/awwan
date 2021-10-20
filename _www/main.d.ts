@@ -10,18 +10,18 @@ declare module "wui/vfs/vfs" {
     export interface WuiVfsNodeInterface {
         name: string;
         path: string;
-        is_dir?: boolean;
-        content_type?: string;
-        mod_time?: number;
-        size?: number;
-        mode?: string;
-        childs?: WuiVfsNodeInterface[];
-        content?: string;
+        is_dir: boolean;
+        content_type: string;
+        mod_time: number;
+        size: number;
+        mode: string;
+        childs: WuiVfsNodeInterface[];
+        content: string;
     }
     export interface WuiVfsOptions {
         id: string;
         Open(path: string, is_dir: boolean): Promise<WuiResponseInterface>;
-        OpenNode(node: WuiVfsNode): Promise<WuiResponseInterface>;
+        OpenNode(node: WuiVfsNodeInterface): Promise<WuiResponseInterface>;
     }
     export class WuiVfs {
         opts: WuiVfsOptions;
@@ -29,19 +29,9 @@ declare module "wui/vfs/vfs" {
         private com_path;
         private com_list;
         constructor(opts: WuiVfsOptions);
-        OpenNode(node: WuiVfsNode): void;
+        OpenNode(node: WuiVfsNodeInterface): void;
         OpenDir(path: string): Promise<void>;
-    }
-    export class WuiVfsNode implements WuiVfsNodeInterface {
-        path: string;
-        name: string;
-        content_type: string;
-        mod_time: number;
-        size: number;
-        mode: string;
-        is_dir: boolean;
-        childs: WuiVfsNode[];
-        constructor(opts: WuiVfsNodeInterface);
+        Set(node: WuiVfsNodeInterface): void;
     }
 }
 declare module "wui/editor/editor" {
@@ -120,15 +110,19 @@ declare module "wui/notif/notif" {
 }
 declare module "awwan" {
     import { WuiResponseInterface } from "wui/response";
-    import { WuiVfsNode } from "wui/vfs/vfs";
+    import { WuiVfsNodeInterface } from "wui/vfs/vfs";
     export function renderHtml(): void;
     export class Awwan {
         private com_btn_local;
+        private com_btn_new_dir;
+        private com_btn_new_file;
         private com_btn_remote;
         private com_btn_save;
         private com_file_path;
+        private com_inp_vfs_new;
         private com_stdout;
         private com_stderr;
+        private current_node;
         private request;
         private wui_editor;
         private wui_notif;
@@ -136,8 +130,8 @@ declare module "awwan" {
         constructor();
         onHashChange(hash: string): void;
         Open(path: string, is_dir: boolean): Promise<WuiResponseInterface>;
-        OpenNode(node: WuiVfsNode): Promise<WuiResponseInterface>;
-        isEditAllowed(node: WuiVfsNode): WuiResponseInterface;
+        OpenNode(node: WuiVfsNodeInterface): Promise<WuiResponseInterface>;
+        isEditAllowed(node: WuiVfsNodeInterface): WuiResponseInterface;
         onClickSave(): void;
         editorOnSave(content: string): void;
         doSaveFile(path: string, content: string): Promise<any>;
@@ -145,6 +139,7 @@ declare module "awwan" {
         execLocal(): void;
         execRemote(): void;
         httpApiExecute(mode: string): Promise<void>;
+        private newNode;
     }
 }
 declare module "main" { }

@@ -1,16 +1,14 @@
 import { WuiEditor, WuiEditorOptions } from "./wui/editor/editor"
 import { WuiNotif } from "./wui/notif/notif"
 import { WuiResponseInterface } from "./wui/response"
-import {
-	WuiVfs,
-	WuiVfsOptions,
-	WuiVfsNode,
-	WuiVfsNodeInterface,
-} from "./wui/vfs/vfs"
+import { WuiVfs, WuiVfsOptions, WuiVfsNodeInterface } from "./wui/vfs/vfs"
 
-const ID_BTN_LOCAL = "com_btn_local"
-const ID_BTN_REMOTE = "com_btn_remote"
+const ID_BTN_EXEC_LOCAL = "com_btn_local"
+const ID_BTN_EXEC_REMOTE = "com_btn_remote"
+const ID_BTN_NEW_DIR = "com_btn_new_dir"
+const ID_BTN_NEW_FILE = "com_btn_new_file"
 const ID_BTN_SAVE = "com_btn_save"
+const ID_INP_VFS_NEW = "com_inp_vfs_new"
 const ID_VFS_PATH = "vfs_path"
 const ID_STDOUT = "stdout"
 const ID_STDERR = "stderr"
@@ -30,6 +28,13 @@ export function renderHtml() {
 	el.innerHTML = `
 			<div class="awwan_nav_left">
 				<div id="vfs"></div>
+
+				<br/>
+				<div class="${ID_INP_VFS_NEW}">
+					<input id="${ID_INP_VFS_NEW}" />
+				</div>
+				<button id="${ID_BTN_NEW_DIR}">New directory</button>
+				<button id="${ID_BTN_NEW_FILE}">New file</button>
 			</div>
 			<div class="awwan_content">
 				<div class="editor_action">
@@ -39,9 +44,9 @@ export function renderHtml() {
 				<div id="editor"></div>
 				<div class="execute_action">
 					Execute script on
-					<button id="${ID_BTN_LOCAL}" disabled="true">Local</button>
+					<button id="${ID_BTN_EXEC_LOCAL}" disabled="true">Local</button>
 					or
-					<button id="${ID_BTN_REMOTE}" disabled="true">Remote</button>
+					<button id="${ID_BTN_EXEC_REMOTE}" disabled="true">Remote</button>
 				</div>
 				<p>Hints:</p>
 				<ul>
@@ -62,11 +67,15 @@ export function renderHtml() {
 
 export class Awwan {
 	private com_btn_local!: HTMLButtonElement
+	private com_btn_new_dir!: HTMLButtonElement
+	private com_btn_new_file!: HTMLButtonElement
 	private com_btn_remote!: HTMLButtonElement
 	private com_btn_save!: HTMLButtonElement
 	private com_file_path!: HTMLElement
+	private com_inp_vfs_new!: HTMLInputElement
 	private com_stdout!: HTMLElement
 	private com_stderr!: HTMLElement
+	private current_node: WuiVfsNodeInterface | null = null
 	private request: RequestInterface = {
 		mode: "local",
 		script: "",
@@ -79,20 +88,36 @@ export class Awwan {
 	private wui_vfs: WuiVfs
 
 	constructor() {
-		let el = document.getElementById(ID_BTN_LOCAL)
+		let el = document.getElementById(ID_BTN_EXEC_LOCAL)
 		if (el) {
 			this.com_btn_local = el as HTMLButtonElement
 			this.com_btn_local.onclick = () => {
 				this.execLocal()
 			}
 		}
-		el = document.getElementById(ID_BTN_REMOTE)
+		el = document.getElementById(ID_BTN_EXEC_REMOTE)
 		if (el) {
 			this.com_btn_remote = el as HTMLButtonElement
 			this.com_btn_remote.onclick = () => {
 				this.execRemote()
 			}
 		}
+
+		el = document.getElementById(ID_BTN_NEW_DIR)
+		if (el) {
+			this.com_btn_new_dir = el as HTMLButtonElement
+			this.com_btn_new_dir.onclick = () => {
+				this.newNode(true)
+			}
+		}
+		el = document.getElementById(ID_BTN_NEW_FILE)
+		if (el) {
+			this.com_btn_new_file = el as HTMLButtonElement
+			this.com_btn_new_file.onclick = () => {
+				this.newNode(false)
+			}
+		}
+
 		el = document.getElementById(ID_BTN_SAVE)
 		if (el) {
 			this.com_btn_save = el as HTMLButtonElement
@@ -100,6 +125,12 @@ export class Awwan {
 				this.onClickSave()
 			}
 		}
+
+		el = document.getElementById(ID_INP_VFS_NEW)
+		if (el) {
+			this.com_inp_vfs_new = el as HTMLInputElement
+		}
+
 		el = document.getElementById(ID_VFS_PATH)
 		if (el) {
 			this.com_file_path = el
@@ -134,7 +165,7 @@ export class Awwan {
 				return this.Open(path, is_dir)
 			},
 			OpenNode: (
-				node: WuiVfsNode,
+				node: WuiVfsNodeInterface,
 			): Promise<WuiResponseInterface> => {
 				return this.OpenNode(node)
 			},
@@ -174,12 +205,17 @@ export class Awwan {
 			)
 			return res
 		}
+
+		let node = res.data as WuiVfsNodeInterface
+		this.com_inp_vfs_new.value = node.name
+
 		if (is_dir) {
+			this.current_node = node
 			window.location.hash = "#" + path
 			return res
 		}
 
-		let resAllow = this.isEditAllowed(res.data)
+		let resAllow = this.isEditAllowed(node)
 		if (resAllow.code != 200) {
 			this.wui_notif.Error(resAllow.message)
 			return resAllow
@@ -188,7 +224,7 @@ export class Awwan {
 		this.com_file_path.innerText = path
 		this.request.script = path
 
-		this.wui_editor.Open(res.data)
+		this.wui_editor.Open(node)
 		this.com_btn_local.disabled = false
 		this.com_btn_remote.disabled = false
 		this.com_btn_save.disabled = false
@@ -198,7 +234,9 @@ export class Awwan {
 
 	// OpenNode is an handler that will called when user click on of the
 	// item in the list.
-	async OpenNode(node: WuiVfsNode): Promise<WuiResponseInterface> {
+	async OpenNode(
+		node: WuiVfsNodeInterface,
+	): Promise<WuiResponseInterface> {
 		let resAllow = this.isEditAllowed(node)
 		if (resAllow.code != 200) {
 			this.wui_notif.Error(resAllow.message)
@@ -209,7 +247,7 @@ export class Awwan {
 		return res
 	}
 
-	isEditAllowed(node: WuiVfsNode): WuiResponseInterface {
+	isEditAllowed(node: WuiVfsNodeInterface): WuiResponseInterface {
 		let res: WuiResponseInterface = {
 			code: 412,
 			message: "",
@@ -351,5 +389,50 @@ export class Awwan {
 		this.wui_notif.Info(
 			`Successfully execute ${this.request.script} on ${mode}.`,
 		)
+	}
+
+	private async newNode(is_dir: boolean) {
+		if (!this.current_node) {
+			this.wui_notif.Error(
+				"No active directory loaded or selected.",
+			)
+			return
+		}
+
+		let name = this.com_inp_vfs_new.value
+		if (name === "") {
+			this.wui_notif.Error("Empty file name")
+			return
+		}
+		let req: WuiVfsNodeInterface = {
+			path: this.current_node.path + "/" + name,
+			name: name,
+			is_dir: is_dir,
+			content_type: "",
+			mod_time: 0,
+			size: 0,
+			mode: "",
+			childs: [],
+			content: "",
+		}
+
+		let http_res = await fetch("/awwan/api/fs", {
+			method: "POST",
+			headers: {
+				Accept: "application/json",
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify(req),
+		})
+
+		let res = await http_res.json()
+		if (res.code != 200) {
+			this.wui_notif.Error(`newNode: ${res.message}`)
+			return
+		}
+
+		let node = res.data as WuiVfsNodeInterface
+		this.current_node.childs.push(node)
+		this.wui_vfs.Set(this.current_node)
 	}
 }
