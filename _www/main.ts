@@ -1,4 +1,4 @@
-import { renderHtml, Awwan } from "./awwan"
+import { renderHtml, Awwan } from "./awwan.js"
 
 renderHtml()
 let awwan = new Awwan()

@@ -1,7 +1,7 @@
-import { WuiEditor, WuiEditorOptions } from "./wui/editor/editor"
-import { WuiNotif } from "./wui/notif/notif"
-import { WuiResponseInterface } from "./wui/response"
-import { WuiVfs, WuiVfsOptions, WuiVfsNodeInterface } from "./wui/vfs/vfs"
+import { WuiEditor, WuiEditorOptions } from "./wui/editor/editor.js"
+import { WuiNotif } from "./wui/notif/notif.js"
+import { WuiResponseInterface } from "./wui/response.js"
+import { WuiVfs, WuiVfsOptions, WuiVfsNodeInterface } from "./wui/vfs/vfs.js"
 
 const ID_BTN_EXEC_LOCAL = "com_btn_local"
 const ID_BTN_EXEC_REMOTE = "com_btn_remote"
@@ -255,11 +255,12 @@ export class Awwan {
 
 		let is_type_allowed = false
 		if (
-			node.content_type.indexOf("json") >= 0 ||
-			node.content_type.indexOf("message") >= 0 ||
-			node.content_type.indexOf("script") >= 0 ||
-			node.content_type.indexOf("text") >= 0 ||
-			node.content_type.indexOf("xml") >= 0
+			node.content_type &&
+			(node.content_type.indexOf("json") >= 0 ||
+				node.content_type.indexOf("message") >= 0 ||
+				node.content_type.indexOf("script") >= 0 ||
+				node.content_type.indexOf("text") >= 0 ||
+				node.content_type.indexOf("xml") >= 0)
 		) {
 			is_type_allowed = true
 		}
@@ -267,7 +268,7 @@ export class Awwan {
 			res.message = `The file "${node.name}" with content type "${node.content_type}" is not allowed to be opened`
 			return res
 		}
-		if (node.size > MAX_FILE_SIZE) {
+		if (node.size && node.size > MAX_FILE_SIZE) {
 			res.message = `The file "${node.name}" with size ${
 				node.size / 1000000
 			}MB is greater than maximum ${
@@ -432,6 +433,9 @@ export class Awwan {
 		}
 
 		let node = res.data as WuiVfsNodeInterface
+		if (!this.current_node.childs) {
+			this.current_node.childs = []
+		}
 		this.current_node.childs.push(node)
 		this.wui_vfs.Set(this.current_node)
 	}
