@@ -9,6 +9,7 @@ const ID_BTN_EXEC_LOCAL = "com_btn_local"
 const ID_BTN_EXEC_REMOTE = "com_btn_remote"
 const ID_BTN_NEW_DIR = "com_btn_new_dir"
 const ID_BTN_NEW_FILE = "com_btn_new_file"
+const ID_BTN_REMOVE = "com_btn_remove"
 const ID_BTN_SAVE = "com_btn_save"
 const ID_EDITOR = "com_editor"
 const ID_INP_VFS_NEW = "com_inp_vfs_new"
@@ -26,6 +27,12 @@ interface RequestInterface {
 	end_at: number
 }
 
+interface fsRequest {
+	path: string
+	content: string
+	is_dir: boolean
+}
+
 export function renderHtml() {
 	let el = document.createElement("div")
 	el.classList.add("awwan")
@@ -39,6 +46,7 @@ export function renderHtml() {
 				</div>
 				<button id="${ID_BTN_NEW_DIR}">New directory</button>
 				<button id="${ID_BTN_NEW_FILE}">New file</button>
+				<button id="${ID_BTN_REMOVE}">Remove</button>
 			</div>
 			<div class="awwan_content">
 				<div class="editor_file">
@@ -80,6 +88,7 @@ export class Awwan {
 	private com_btn_new_dir!: HTMLButtonElement
 	private com_btn_new_file!: HTMLButtonElement
 	private com_btn_remote!: HTMLButtonElement
+	private com_btn_remove!: HTMLButtonElement
 	private com_btn_save!: HTMLButtonElement
 	private com_file_path!: HTMLElement
 	private com_inp_vfs_new!: HTMLInputElement
@@ -133,6 +142,13 @@ export class Awwan {
 			this.com_btn_new_file = el as HTMLButtonElement
 			this.com_btn_new_file.onclick = () => {
 				this.newNode(false)
+			}
+		}
+		el = document.getElementById(ID_BTN_REMOVE)
+		if (el) {
+			this.com_btn_remove = el as HTMLButtonElement
+			this.com_btn_remove.onclick = () => {
+				this.onClickRemove()
 			}
 		}
 
@@ -459,5 +475,43 @@ export class Awwan {
 		}
 		this.current_node.childs.push(node)
 		this.wui_vfs.Set(this.current_node)
+	}
+
+	private async onClickRemove() {
+		console.log("onClickRemove: ", this.current_node)
+		if (!this.current_node) {
+			this.wui_notif.Error(
+				"No file selected.",
+			)
+			return
+		}
+
+		let name = this.com_inp_vfs_new.value
+		if (name === "") {
+			this.wui_notif.Error("Empty file name")
+			return
+		}
+		let req: fsRequest = {
+			path: this.current_node.path + "/" + name,
+			is_dir: false,
+			content: "",
+		}
+
+		let http_res = await fetch("/awwan/api/fs", {
+			method: "DELETE",
+			headers: {
+				Accept: "application/json",
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify(req),
+		})
+
+		let res = await http_res.json()
+		if (res.code != 200) {
+			this.wui_notif.Error(`remove: ${res.message}`)
+			return
+		}
+
+
 	}
 }

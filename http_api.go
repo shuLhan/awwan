@@ -45,6 +45,18 @@ func (aww *Awwan) registerHttpApis() (err error) {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
 
+	apiFsDelete := &libhttp.Endpoint{
+		Method:       libhttp.RequestMethodDelete,
+		Path:         httpApiFs,
+		RequestType:  libhttp.RequestTypeJSON,
+		ResponseType: libhttp.ResponseTypeJSON,
+		Call:         aww.httpApiFsDelete,
+	}
+	err = aww.httpd.RegisterEndpoint(apiFsDelete)
+	if err != nil {
+		return fmt.Errorf("%s: %w", logp, err)
+	}
+
 	err = aww.httpd.RegisterEndpoint(&libhttp.Endpoint{
 		Method:       libhttp.RequestMethodPost,
 		Path:         httpApiFs,
@@ -102,6 +114,78 @@ func (aww *Awwan) httpApiFs(epr *libhttp.EndpointRequest) ([]byte, error) {
 
 	res.Code = http.StatusOK
 	res.Data = node
+	return json.Marshal(res)
+}
+
+//
+// httpApiFsDelete an HTTP API to delete a file.
+//
+// Request
+//
+//	DELETE /awwan/api/fs
+//	Content-Type: application/json
+//
+//	{
+//		"path": <string>, the path to file or directory to be removed.
+//		"is_dir": <boolean>, true if its directory.
+//	}
+//
+// Response
+//
+//	Content-Type: application/json
+//
+//	{
+//		"code": <number>
+//		"message": <string>
+//	}
+//
+// List of valid response code,
+// * 200: OK.
+// * 400: Bad request.
+// * 401: Unauthorized.
+// * 404: File not found.
+//
+func (aww *Awwan) httpApiFsDelete(epr *libhttp.EndpointRequest) ([]byte, error) {
+	logp := "httpApiFsDelete"
+
+	res := &libhttp.EndpointResponse{}
+	res.Code = http.StatusBadRequest
+
+	req := &fsRequest{}
+	err := json.Unmarshal(epr.RequestBody, req)
+	if err != nil {
+		res.Message = err.Error()
+		return nil, res
+	}
+
+	parentPath := path.Dir(req.Path)
+	nodeParent := aww.memfsBase.PathNodes.Get(parentPath)
+	if nodeParent == nil {
+		res.Message = fmt.Sprintf("%s: invalid path %s", logp, req.Path)
+		return nil, res
+	}
+
+	path := filepath.Join(nodeParent.SysPath, path.Base(req.Path))
+	path, err = filepath.Abs(path)
+	if err != nil {
+		res.Message = fmt.Sprintf("%s: %s", logp, err)
+		return nil, res
+	}
+	if !strings.HasPrefix(path, aww.memfsBase.Opts.Root) {
+		res.Message = fmt.Sprintf("%s: invalid path %q", logp, path)
+		return nil, res
+	}
+
+	err = os.Remove(path)
+	if err != nil {
+		res.Code = http.StatusInternalServerError
+		res.Message = fmt.Sprintf("%s: %s", logp, err)
+		return nil, res
+	}
+
+	res.Code = http.StatusOK
+	res.Message = fmt.Sprintf("%s: %q has been removed", logp, path)
+
 	return json.Marshal(res)
 }
 

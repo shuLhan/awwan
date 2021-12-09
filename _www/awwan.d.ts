@@ -7,6 +7,7 @@ export declare class Awwan {
     private com_btn_new_dir;
     private com_btn_new_file;
     private com_btn_remote;
+    private com_btn_remove;
     private com_btn_save;
     private com_file_path;
     private com_inp_vfs_new;
@@ -30,4 +31,5 @@ export declare class Awwan {
     execRemote(): void;
     httpApiExecute(mode: string): Promise<void>;
     private newNode;
+    private onClickRemove;
 }
