@@ -1,2 +1,8 @@
-sh -c "echo a"
-sh -c "echo b"
+echo a
+sh -c "echo 'a\b'" # a\b
+sh -c "echo 'a'\'''" # a'
+
+ls -al ~/ | grep .ssh
+echo "test" > /tmp/awwan.test
+cat /tmp/awwan.test
+# test
