@@ -426,7 +426,7 @@ func (aww *Awwan) workerBuild() {
 }
 
 func doGoEmbed() (err error) {
-	err = mfsWww.GoEmbed(embedPackageName, embedVarName, embedFileName, "")
+	err = mfsWww.GoEmbed()
 	if err != nil {
 		mlog.Errf("doGoEmbed: %s", err)
 		return err
@@ -453,6 +453,11 @@ func initMemfs() (mfs *memfs.MemFS, err error) {
 		Excludes: []string{
 			`/wui.bak`,
 			`/wui.local`,
+		},
+		Embed: memfs.EmbedOptions{
+			PackageName: embedPackageName,
+			VarName:     embedVarName,
+			GoFileName:  embedFileName,
 		},
 	}
 	mfs, err = memfs.New(mfsOpts)
