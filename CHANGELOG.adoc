@@ -2,15 +2,53 @@
 
 ==  awwan 0.4.0 (2022.02.05)
 
+This release bring new command "serve" to awwan.
+The serve command run HTTP server that provide web-user interface to create,
+edit, save, and execute script.
+
+===  New features
+
+*  all: implement HTTP API and function to Save file on web-user interface
++
+The web-user interface now have button "Save" that save the edited
+content of file to storage.
+
+*  all: implement serve command
++
+--
+The serve command will run a HTTP server that provide web-user interface
+to edit and execute script.
+
+Currently, the web-user interface provide the following features,
+
+* Browsing the workspace
+* Running the script on local or remote
+--
+
 === Enhancements
 
-* all: expand the environment on statement when executing local script
+*  all: make the local statement executed with "/bin/sh -c ..."
++
+By using "sh -c", the statement can contains environment variable,
+piping, and other shell commands that cannot be supported if executed
+directly using native os.Exec.
+
+*  all: expand the environment on statement when executing local script
 +
 This changes replace the string ${x} or $x in the statements with the
 current environment variables values.
 +
 For example, statement "mkdir ${HOME}/tmp" will expand the ${HOME} to
 the current user home directory.
+
+*  all: use native SFTP to put and get file when possible
++
+Previously, the command to put and get file from remote server depends
+on installed scp program on the host computer.
++
+In this changes we add the SFTP client and use it as primary function
+to put and get file to/from remote when possible and use the scp as
+fallback.
 
 
 ==  awwan 0.3.0 (2021.06.09)

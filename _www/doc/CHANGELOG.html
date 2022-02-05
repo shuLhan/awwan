@@ -240,10 +240,61 @@ dd {
 <div class="sect1">
 <h2 id="_awwan_0_4_0_2022_02_05">awwan 0.4.0 (2022.02.05)</h2>
 <div class="sectionbody">
+<div class="paragraph">
+<p>This release bring new command "serve" to awwan.
+The serve command run HTTP server that provide web-user interface to create,
+edit, save, and execute script.</p>
+</div>
+<div class="sect2">
+<h3 id="_new_features">New features</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>all: implement HTTP API and function to Save file on web-user interface</p>
+<div class="paragraph">
+<p>The web-user interface now have button "Save" that save the edited
+content of file to storage.</p>
+</div>
+</li>
+<li>
+<p>all: implement serve command</p>
+<div class="openblock">
+<div class="content">
+<div class="paragraph">
+<p>The serve command will run a HTTP server that provide web-user interface
+to edit and execute script.</p>
+</div>
+<div class="paragraph">
+<p>Currently, the web-user interface provide the following features,</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Browsing the workspace</p>
+</li>
+<li>
+<p>Running the script on local or remote</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</li>
+</ul>
+</div>
+</div>
 <div class="sect2">
 <h3 id="_enhancements">Enhancements</h3>
 <div class="ulist">
 <ul>
+<li>
+<p>all: make the local statement executed with "/bin/sh -c &#8230;&#8203;"</p>
+<div class="paragraph">
+<p>By using "sh -c", the statement can contains environment variable,
+piping, and other shell commands that cannot be supported if executed
+directly using native os.Exec.</p>
+</div>
+</li>
 <li>
 <p>all: expand the environment on statement when executing local script</p>
 <div class="paragraph">
@@ -253,6 +304,18 @@ current environment variables values.</p>
 <div class="paragraph">
 <p>For example, statement "mkdir ${HOME}/tmp" will expand the ${HOME} to
 the current user home directory.</p>
+</div>
+</li>
+<li>
+<p>all: use native SFTP to put and get file when possible</p>
+<div class="paragraph">
+<p>Previously, the command to put and get file from remote server depends
+on installed scp program on the host computer.</p>
+</div>
+<div class="paragraph">
+<p>In this changes we add the SFTP client and use it as primary function
+to put and get file to/from remote when possible and use the scp as
+fallback.</p>
 </div>
 </li>
 </ul>
@@ -320,7 +383,7 @@ execute awwan script from any sub-directories.</p>
 <h2 id="_awwan_0_2_0_2020_07_05">awwan 0.2.0 (2020.07.05)</h2>
 <div class="sectionbody">
 <div class="sect2">
-<h3 id="_new_features">New features</h3>
+<h3 id="_new_features_1">New features</h3>
 <div class="ulist">
 <ul>
 <li>
@@ -439,7 +502,7 @@ combination of <code>gcloud</code> and <code>kubectl</code>.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2022-02-05 20:16:46 +0700
+Last updated 2022-02-05 21:14:21 +0700
 </div>
 </div>
 			</div>

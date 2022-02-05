@@ -22,7 +22,7 @@ import (
 )
 
 const (
-	Version = "0.4.0-devel"
+	Version = "0.4.0"
 
 	CommandModeBuild = "build"
 	CommandModeLocal = "local"
