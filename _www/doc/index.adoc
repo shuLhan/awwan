@@ -1,1 +1,4 @@
-../../README.adoc
+= awwan documentation
+
+* link:/doc/CHANGELOG.html[CHANGELOG]
+* link:/doc/README.html[README]
