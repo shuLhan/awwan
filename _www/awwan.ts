@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2021 M. Shulhan <ms@kilabit.info>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 import { WuiEditor, WuiEditorOptions } from "./wui/editor/editor.js"
 import { WuiNotif } from "./wui/notif/notif.js"
 import { WuiResponseInterface } from "./wui/response.js"

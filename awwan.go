@@ -1,6 +1,5 @@
-// Copyright 2019, Shulhan <ms@kilabit.info>. All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
+// SPDX-FileCopyrightText: 2019 M. Shulhan <ms@kilabit.info>
+// SPDX-License-Identifier: GPL-3.0-or-later
 
 package awwan
 
@@ -460,6 +459,9 @@ func initMemfsWww() (mfs *memfs.MemFS, err error) {
 			`/wui.local`,
 		},
 		Embed: memfs.EmbedOptions{
+			CommentHeader: `// SPDX-FileCopyrightText: 2021 M. Shulhan <ms@kilabit.info>
+// SPDX-License-Identifier: GPL-3.0-or-later
+`,
 			PackageName: embedPackageName,
 			VarName:     embedVarName,
 			GoFileName:  embedFileName,
