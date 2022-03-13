@@ -2,6 +2,13 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 = Changelog for awwan
 
+== awwan v0.5.0 (2022-03-14)
+
+This release re-lincesing the awwan software under GPL 3.0 or later.
+
+See https://kilabit.info/journal/2022/gpl for more information.
+
+
 ==  awwan 0.4.0 (2022.02.05)
 
 This release bring new command "serve" to awwan.
