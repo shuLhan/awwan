@@ -568,6 +568,7 @@ func init() {
 				`/wui.local`,
 			},
 			Embed: memfs.EmbedOptions{
+				CommentHeader:  ``,
 				PackageName:    "awwan",
 				VarName:        "mfsWww",
 				GoFileName:     "memfs_www.go",
