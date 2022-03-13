@@ -38,6 +38,10 @@ const (
 
 	cmdTsc         = "tsc -b _www"
 	envDevelopment = "AWWAN_DEVELOPMENT"
+
+	embedPackageName = "awwan"
+	embedVarName     = "mfsWww"
+	embedFileName    = "memfs_www.go"
 )
 
 var (
@@ -49,11 +53,8 @@ var (
 	newLine         = []byte("\n")
 
 	// The embedded _www for web-user interface.
-	// This variable will initialize by initMemfs.
-	mfsWww           *memfs.MemFS
-	embedPackageName = "awwan"
-	embedVarName     = "mfsWww"
-	embedFileName    = "memfs_www.go"
+	// This variable will initialize by initMemfsWww.
+	mfsWww *memfs.MemFS
 )
 
 //
@@ -109,7 +110,7 @@ func (aww *Awwan) Build() (err error) {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
 
-	mfsWww, err = initMemfs()
+	mfsWww, err = initMemfsWww()
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
@@ -280,13 +281,14 @@ func (aww *Awwan) Serve() (err error) {
 		},
 		Development: true, // Only store the file structures in the memory.
 	}
+
 	aww.memfsBase, err = memfs.New(memfsBaseOpts)
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
 
 	if len(envDev) > 0 {
-		mfsWww, err = initMemfs()
+		mfsWww, err = initMemfsWww()
 		if err != nil {
 			return fmt.Errorf("%s: %w", logp, err)
 		}
@@ -353,13 +355,17 @@ func (aww *Awwan) loadSshConfig() (err error) {
 //
 func (aww *Awwan) workerBuild() {
 	var (
-		logp       = "workerBuild"
-		changesq   = make(chan *io.NodeState, 64)
+		logp        = "workerBuild"
+		changesq    = make(chan *io.NodeState, 64)
+		buildTicker = time.NewTicker(3 * time.Second)
+
+		dw         *io.DirWatcher
 		tsCount    int
 		embedCount int
+		err        error
 	)
 
-	dw := io.DirWatcher{
+	dw = &io.DirWatcher{
 		Options: memfs.Options{
 			Root: "_www",
 			Includes: []string{
@@ -376,12 +382,11 @@ func (aww *Awwan) workerBuild() {
 		},
 	}
 
-	err := dw.Start()
+	err = dw.Start()
 	if err != nil {
 		log.Fatalf("%s: %s", logp, err)
 	}
 
-	buildTicker := time.NewTicker(3 * time.Second)
 	for {
 		select {
 		case ns := <-changesq:
@@ -444,7 +449,7 @@ func doRunTsc() (err error) {
 	return nil
 }
 
-func initMemfs() (mfs *memfs.MemFS, err error) {
+func initMemfsWww() (mfs *memfs.MemFS, err error) {
 	mfsOpts := &memfs.Options{
 		Root: "_www",
 		Includes: []string{
@@ -462,7 +467,7 @@ func initMemfs() (mfs *memfs.MemFS, err error) {
 	}
 	mfs, err = memfs.New(mfsOpts)
 	if err != nil {
-		return nil, fmt.Errorf("initMemfs: %w", err)
+		return nil, fmt.Errorf("initMemfsWww: %w", err)
 	}
 	return mfs, nil
 }

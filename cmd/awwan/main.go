@@ -22,8 +22,10 @@ import (
 
 func main() {
 	var (
-		logp        = "awwan"
+		logp = "awwan"
+
 		req         *awwan.Request
+		aww         *awwan.Awwan
 		cmdMode     string
 		baseDir     string
 		err         error
@@ -73,7 +75,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	aww, err := awwan.New(baseDir)
+	aww, err = awwan.New(baseDir)
 	if err != nil {
 		log.Printf("%s: %s", logp, err)
 		os.Exit(1)
