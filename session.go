@@ -5,7 +5,6 @@ package awwan
 
 import (
 	"fmt"
-	"io/ioutil"
 	"math/rand"
 	"os"
 	"os/exec"
@@ -493,12 +492,18 @@ func (ses *Session) initSSHClient(req *Request, sshSection *config.Section) (err
 // loadEnvFromPaths load environment file from each directory in paths.
 //
 func (ses *Session) loadEnvFromPaths() (err error) {
-	logp := "loadEnvFromPaths"
+	var (
+		logp = "loadEnvFromPaths"
 
-	for _, path := range ses.paths {
-		awwanEnv := filepath.Join(path, defEnvFileName)
+		path     string
+		awwanEnv string
+		content  []byte
+	)
 
-		content, err := ioutil.ReadFile(awwanEnv)
+	for _, path = range ses.paths {
+		awwanEnv = filepath.Join(path, defEnvFileName)
+
+		content, err = os.ReadFile(awwanEnv)
 		if err != nil {
 			if os.IsNotExist(err) {
 				continue

@@ -6,7 +6,6 @@ package awwan
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"text/template"
 )
@@ -26,9 +25,12 @@ type Script struct {
 // split it into Statements.
 //
 func NewScriptForLocal(ses *Session, path string) (script *Script, err error) {
-	logp := "NewScriptForLocal"
+	var (
+		logp    = "NewScriptForLocal"
+		content []byte
+	)
 
-	content, err := ioutil.ReadFile(path)
+	content, err = os.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", logp, err)
 	}
@@ -46,9 +48,12 @@ func NewScriptForLocal(ses *Session, path string) (script *Script, err error) {
 // Statements.
 //
 func NewScriptForRemote(ses *Session, path string) (script *Script, err error) {
-	logp := "NewScriptForRemote"
+	var (
+		logp    = "NewScriptForRemote"
+		content []byte
+	)
 
-	content, err := ioutil.ReadFile(path)
+	content, err = os.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", logp, err)
 	}
