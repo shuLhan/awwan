@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/shuLhan/share/lib/http"
-	"github.com/shuLhan/share/lib/io"
 	"github.com/shuLhan/share/lib/memfs"
 	"github.com/shuLhan/share/lib/mlog"
 	"github.com/shuLhan/share/lib/os/exec"
@@ -287,10 +286,6 @@ func (aww *Awwan) Serve() (err error) {
 	}
 
 	if len(envDev) > 0 {
-		mfsWww, err = initMemfsWww()
-		if err != nil {
-			return fmt.Errorf("%s: %w", logp, err)
-		}
 		go aww.workerBuild()
 	}
 
@@ -355,40 +350,31 @@ func (aww *Awwan) loadSshConfig() (err error) {
 func (aww *Awwan) workerBuild() {
 	var (
 		logp        = "workerBuild"
-		changesq    = make(chan *io.NodeState, 64)
 		buildTicker = time.NewTicker(3 * time.Second)
 
-		dw         *io.DirWatcher
+		dw         *memfs.DirWatcher
+		node       *memfs.Node
+		ns         memfs.NodeState
 		tsCount    int
 		embedCount int
 		err        error
 	)
 
-	dw = &io.DirWatcher{
-		Options: memfs.Options{
-			Root: "_www",
-			Includes: []string{
-				`.*\.(js|html|ts)$`,
-				`/tsconfig.json$`,
-			},
-			Excludes: []string{
-				`/wui.bak`,
-				`/wui.local`,
-			},
-		},
-		Callback: func(ns *io.NodeState) {
-			changesq <- ns
-		},
+	if mfsWww == nil {
+		mfsWww, err = initMemfsWww()
+		if err != nil {
+			log.Fatalf("%s: %s", logp, err)
+		}
 	}
 
-	err = dw.Start()
+	dw, err = mfsWww.Watch(0)
 	if err != nil {
 		log.Fatalf("%s: %s", logp, err)
 	}
 
 	for {
 		select {
-		case ns := <-changesq:
+		case ns = <-dw.C:
 			if strings.HasSuffix(ns.Node.SysPath, ".ts") ||
 				strings.HasSuffix(ns.Node.SysPath, "tsconfig.json") {
 				mlog.Outf("%s: update %s\n", logp, ns.Node.SysPath)
@@ -397,7 +383,7 @@ func (aww *Awwan) workerBuild() {
 				strings.HasSuffix(ns.Node.SysPath, ".html") {
 				embedCount++
 				mlog.Outf("%s: update %s\n", logp, ns.Node.Path)
-				node, err := mfsWww.Get(ns.Node.Path)
+				node, err = mfsWww.Get(ns.Node.Path)
 				if err != nil {
 					mlog.Errf("%s: %q: %s", logp, ns.Node.Path, err)
 					continue
