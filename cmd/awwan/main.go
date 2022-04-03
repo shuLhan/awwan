@@ -19,32 +19,31 @@ import (
 	"git.sr.ht/~shulhan/awwan"
 )
 
+const (
+	cmdHelp    = "help"
+	cmdVersion = "version"
+)
+
 func main() {
 	var (
 		logp = "awwan"
 
-		req         *awwan.Request
-		aww         *awwan.Awwan
-		cmdMode     string
-		baseDir     string
-		err         error
-		flagHelp    bool
-		flagVersion bool
+		req      *awwan.Request
+		aww      *awwan.Awwan
+		cmdMode  string
+		baseDir  string
+		err      error
+		flagHelp bool
 	)
 
 	log.SetFlags(0)
 
 	flag.Usage = usage
-	flag.BoolVar(&flagVersion, "version", false, "Display version and exit.")
 	flag.BoolVar(&flagHelp, "help", false, "Display the command usage and its description.")
 	flag.Parse()
 
 	if flagHelp {
 		flag.Usage()
-	}
-	if flagVersion {
-		version()
-		return
 	}
 	if flag.NArg() <= 0 {
 		flag.Usage()
@@ -54,6 +53,11 @@ func main() {
 
 	// Check for valid command and flags.
 	switch cmdMode {
+	case cmdHelp:
+		flag.Usage()
+	case cmdVersion:
+		fmt.Printf("awwan %s\n", awwan.Version)
+		return
 	case awwan.CommandModeBuild:
 	case awwan.CommandModeLocal:
 		req, err = parseArgScriptStartEnd(cmdMode)
@@ -163,7 +167,10 @@ layout.
 
 awwan <command> <arguments>
 
-command = "local" | "play" | "serve"
+command = "help" | "local" | "play" | "serve" | "version"
+
+	help
+		Display the command usage and its description.
 
 	local <script> <start> [end]
 		Execute the script in current system from line <start> until
@@ -176,6 +183,9 @@ command = "local" | "play" | "serve"
 	serve <workspace>
 		Run the web-user interface using <workspace> directory as base
 		directory.
+
+	version
+		Print the application version to standard output.
 
 arguments = <script> <start> [end] | <workspace>
 
@@ -209,8 +219,4 @@ Run the web-user interface using the current directory as workspace,
 
 `, awwan.Version)
 	os.Exit(1)
-}
-
-func version() {
-	fmt.Printf("awwan %s\n", awwan.Version)
 }
