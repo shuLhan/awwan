@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/evanw/esbuild/pkg/api"
 	"github.com/shuLhan/share/lib/http"
 	"github.com/shuLhan/share/lib/memfs"
 	"github.com/shuLhan/share/lib/mlog"
@@ -34,7 +35,6 @@ const (
 	defSshDir        = ".ssh"   // The default SSH config directory name.
 	defTmpDir        = "/tmp"
 
-	cmdTsc         = "tsc -b _www"
 	envDevelopment = "AWWAN_DEVELOPMENT"
 
 	embedPackageName = "awwan"
@@ -102,13 +102,16 @@ func New(baseDir string) (aww *Awwan, err error) {
 // Build compile all TypeScript files inside _www into JavaScript and embed
 // them into memfs_www.go.
 func (aww *Awwan) Build() (err error) {
-	logp := "Build"
-	err = doRunTsc()
+	var (
+		logp = "Build"
+	)
+
+	err = doBuildTypeScript(nil)
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
 
-	mfsWww, err = initMemfsWww()
+	err = initMemfsWww()
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
@@ -342,18 +345,30 @@ func (aww *Awwan) loadSshConfig() (err error) {
 //
 // workerBuild watch any update on the .js/.html/.ts files inside the _www
 // directory.
-// If the .ts files changes it will execute TypeScript compiler, tsc, to
+// If the .ts files changes it will execute TypeScript compiler, esbuild, to
 // compile the .ts into .js.
 // If the .js or .html files changes it will update the node content and
 // re-generate the Go embed file memfs_www.go.
 //
 func (aww *Awwan) workerBuild() {
 	var (
-		logp        = "workerBuild"
+		logp      = "workerBuild"
+		watchOpts = memfs.WatchOptions{
+			Watches: []string{
+				`.*\.ts$`,
+			},
+		}
+		esBuildOptions = api.BuildOptions{
+			EntryPoints: []string{"_www/main.ts"},
+			Platform:    api.PlatformBrowser,
+			Outfile:     "_www/main.js",
+			GlobalName:  "awwan",
+			Bundle:      true,
+			Write:       true,
+		}
 		buildTicker = time.NewTicker(3 * time.Second)
 
 		dw         *memfs.DirWatcher
-		node       *memfs.Node
 		ns         memfs.NodeState
 		tsCount    int
 		embedCount int
@@ -361,13 +376,13 @@ func (aww *Awwan) workerBuild() {
 	)
 
 	if mfsWww == nil {
-		mfsWww, err = initMemfsWww()
+		err = initMemfsWww()
 		if err != nil {
 			log.Fatalf("%s: %s", logp, err)
 		}
 	}
 
-	dw, err = mfsWww.Watch(0)
+	dw, err = mfsWww.Watch(watchOpts)
 	if err != nil {
 		log.Fatalf("%s: %s", logp, err)
 	}
@@ -375,6 +390,7 @@ func (aww *Awwan) workerBuild() {
 	for {
 		select {
 		case ns = <-dw.C:
+			fmt.Printf("%s: update on %s\n", logp, ns.Node.SysPath)
 			if strings.HasSuffix(ns.Node.SysPath, ".ts") ||
 				strings.HasSuffix(ns.Node.SysPath, "tsconfig.json") {
 				mlog.Outf("%s: update %s\n", logp, ns.Node.SysPath)
@@ -382,33 +398,24 @@ func (aww *Awwan) workerBuild() {
 			} else if strings.HasSuffix(ns.Node.SysPath, ".js") ||
 				strings.HasSuffix(ns.Node.SysPath, ".html") {
 				embedCount++
-				mlog.Outf("%s: update %s\n", logp, ns.Node.Path)
-				node, err = mfsWww.Get(ns.Node.Path)
-				if err != nil {
-					mlog.Errf("%s: %q: %s", logp, ns.Node.Path, err)
-					continue
-				}
-				if node != nil {
-					err = node.Update(nil, 0)
-					if err != nil {
-						mlog.Errf("%s: %q: %s", logp, node.Path, err)
-					}
-				}
 			}
 
 		case <-buildTicker.C:
 			if tsCount > 0 {
-				tsCount = 0
-				err = doRunTsc()
+				err = doBuildTypeScript(&esBuildOptions)
 				if err != nil {
 					mlog.Errf("%s", err)
+				} else {
+					tsCount = 0
+					embedCount++
 				}
 			}
 			if embedCount > 0 {
-				embedCount = 0
 				err = doGoEmbed()
 				if err != nil {
 					mlog.Errf("%s", err)
+				} else {
+					embedCount = 0
 				}
 			}
 		}
@@ -425,22 +432,48 @@ func doGoEmbed() (err error) {
 	return nil
 }
 
-func doRunTsc() (err error) {
-	mlog.Outf("doRunTsc: execute %s\n", cmdTsc)
-	err = exec.Run(cmdTsc, nil, nil)
-	if err != nil {
-		return fmt.Errorf("doRunTsc: %w", err)
+func doBuildTypeScript(esBuildOptions *api.BuildOptions) (err error) {
+	var (
+		logp = "doBuildTypeScript"
+
+		buildResult api.BuildResult
+		msg         api.Message
+		x           int
+	)
+
+	if esBuildOptions == nil {
+		esBuildOptions = &api.BuildOptions{
+			EntryPoints: []string{"_www/main.ts"},
+			Platform:    api.PlatformBrowser,
+			Outfile:     "_www/main.js",
+			GlobalName:  "app",
+			Bundle:      true,
+			Write:       true,
+		}
 	}
-	return nil
+
+	buildResult = api.Build(*esBuildOptions)
+	if len(buildResult.Errors) == 0 {
+		err = exec.Run("tsc --noEmit --target es6 ./_www/main.ts", nil, nil)
+		if err != nil {
+			return fmt.Errorf("%s: %w", logp, err)
+		}
+		return nil
+	}
+	for x, msg = range buildResult.Errors {
+		mlog.Errf("!!! error #%d: %v", x, msg)
+	}
+	return fmt.Errorf("%s: %v", logp, buildResult.Errors[0])
 }
 
-func initMemfsWww() (mfs *memfs.MemFS, err error) {
+func initMemfsWww() (err error) {
 	mfsOpts := &memfs.Options{
 		Root: "_www",
 		Includes: []string{
 			`.*\.(js|html|png|ico)$`,
 		},
 		Excludes: []string{
+			`/wui`,
 			`/wui.bak`,
 			`/wui.local`,
 		},
@@ -453,11 +486,11 @@ func initMemfsWww() (mfs *memfs.MemFS, err error) {
 			GoFileName:  embedFileName,
 		},
 	}
-	mfs, err = memfs.New(mfsOpts)
+	mfsWww, err = memfs.New(mfsOpts)
 	if err != nil {
-		return nil, fmt.Errorf("initMemfsWww: %w", err)
+		return fmt.Errorf("initMemfsWww: %w", err)
 	}
-	return mfs, nil
+	return nil
 }
 
 //
