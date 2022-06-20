@@ -1,4 +1,4 @@
-var awwan = (() => {
+var app = (() => {
   // _www/wui/editor/editor.js
   var WUI_EDITOR_CLASS = "wui_editor";
   var WUI_EDITOR_CLASS_LINE = "wui_editor_line";
