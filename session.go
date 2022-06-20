@@ -169,8 +169,14 @@ func (ses *Session) Put(stmt *Statement) (err error) {
 }
 
 // SudoCopy copy file in local system using sudo.
-func (ses *Session) SudoCopy(req *Request, stmt *Statement) (err error) {
-	logp := "SudoCopy"
+func (ses *Session) SudoCopy(req *Request, stmt *Statement, withParseInput bool) (err error) {
+	var (
+		logp = "SudoCopy"
+
+		sudoCp *Statement
+		src    string
+	)
+
 	if len(stmt.cmd) == 0 {
 		return fmt.Errorf("%s: missing source argument", logp)
 	}
@@ -181,15 +187,20 @@ func (ses *Session) SudoCopy(req *Request, stmt *Statement) (err error) {
 		return fmt.Errorf("%s: two or more destination arguments is given", logp)
 	}
 
-	src, err := parseTemplate(ses, stmt.cmd)
-	if err != nil {
-		return fmt.Errorf("%s: %w", logp, err)
+	if withParseInput {
+		src, err = parseTemplate(ses, stmt.cmd)
+		if err != nil {
+			return fmt.Errorf("%s: %w", logp, err)
+		}
+	} else {
+		src = stmt.cmd
 	}
 
-	sudoCp := &Statement{
+	sudoCp = &Statement{
 		kind: statementKindDefault,
 		cmd:  "sudo",
 		args: []string{"cp", src, stmt.args[0]},
+		raw:  []byte("sudo cp " + src + " " + stmt.args[0]),
 	}
 
 	err = ses.ExecLocal(req, sudoCp)
@@ -341,9 +352,9 @@ func (ses *Session) executeScriptOnLocal(req *Request) {
 		case statementKindPut:
 			err = ses.Copy(stmt)
 		case statementKindSudoGet:
-			err = ses.SudoCopy(req, stmt)
+			err = ses.SudoCopy(req, stmt, false)
 		case statementKindSudoPut:
-			err = ses.SudoCopy(req, stmt)
+			err = ses.SudoCopy(req, stmt, true)
 		}
 		if err != nil {
 			fmt.Fprintf(req.stderr, "!!! %s\n", err)
