@@ -9,8 +9,7 @@ This documentation describe the design of awwan library.
 For documentation about awwan as CLI see the README.adoc on the root of
 repository.
 
-
-Terminology
+# Terminology
 
 This section describe some terminologies that we use along when developing
 awwan.
@@ -30,8 +29,7 @@ awwan.
 		The file with .aww extension, its contains the statement to be
 		executed.
 
-
-Specifications
+# Specifications
 
 Awwan workspace is indicated by ".ssh" directory.
 User can pass the workspace directory when creating Awwan service or
@@ -49,8 +47,7 @@ connection when executing different script on the same host.
 The Script type contains list of statements to be executed later, either in
 local or remote.
 
-
-References
+# References
 
 [1] https://pkg.go.dev/github.com/shuLhan/share/lib/ini
 

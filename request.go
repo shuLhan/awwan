@@ -8,14 +8,12 @@ import (
 	"os"
 )
 
-//
 // Request for executing local or remote script.
 // Each request define the script file to be executed and the line number
 // range in form of BeginAt and EndAt.
 //
 // Each request may set the Writer where the command output and error will be
 // written.  If its nil, it will default to os.Stdout and os.Stderr.
-//
 type Request struct {
 	Mode    string `json:"mode"`
 	Script  string `json:"script"`
@@ -29,10 +27,8 @@ type Request struct {
 	script     *Script
 }
 
-//
 // NewRequest create new Request and initialize stdout and stderr to os.Stdout
 // and os.Stderr.
-//
 func NewRequest() *Request {
 	return &Request{
 		stdout: os.Stdout,

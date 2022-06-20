@@ -12,10 +12,8 @@ import (
 	libio "github.com/shuLhan/share/lib/io"
 )
 
-//
 // parseTemplate read the file input "in" and apply the session variables,
 // and write the result to ".cache" directory.
-//
 func parseTemplate(ses *Session, in string) (out string, err error) {
 	logp := "parseTemplate"
 

@@ -1,10 +1,8 @@
 // SPDX-FileCopyrightText: 2019 M. Shulhan <ms@kilabit.info>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-//
 // awwan is command line interface to configure and manage remote system
 // through SSH connection.
-//
 package main
 
 import (
@@ -128,9 +126,7 @@ func parseArgScriptStartEnd(cmdMode string) (req *awwan.Request, err error) {
 	return req, nil
 }
 
-//
 // parseArgScriptStart parse the third argument, the line start number.
-//
 func parseArgScriptStart(in string) (out int, err error) {
 	out, err = strconv.Atoi(in)
 	if err != nil {
@@ -142,10 +138,8 @@ func parseArgScriptStart(in string) (out int, err error) {
 	return out, nil
 }
 
-//
 // parseArgScriptEnd parse the fourth argument, the line end number or "-" for
 // the last line.
-//
 func parseArgScriptEnd(in string) (out int, err error) {
 	if in == "-" {
 		return math.MaxInt32, nil

@@ -21,9 +21,7 @@ const (
 	statementKindSudoPut
 )
 
-//
 // Statetement contains parsed raw line from the script.
-//
 type Statement struct {
 	kind int
 	cmd  string
@@ -31,10 +29,8 @@ type Statement struct {
 	raw  []byte
 }
 
-//
 // ParseStatement create and initialize new Statement from raw line.
 // It will return nil if raw line is empty.
-//
 func ParseStatement(raw []byte) (stmt *Statement, err error) {
 	logp := "ParseStatement"
 

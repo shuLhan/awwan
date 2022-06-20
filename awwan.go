@@ -55,10 +55,8 @@ var (
 	mfsWww *memfs.MemFS
 )
 
-//
 // Awwan is the service that run script in local or remote.
 // Awwan contains cache of sessions and cache of environment files.
-//
 type Awwan struct {
 	BaseDir string
 
@@ -72,11 +70,9 @@ type Awwan struct {
 	buferr bytes.Buffer
 }
 
-//
 // New create and initialize new Awwan service using baseDir as the root of
 // Awwan workspace.
 // If baseDir is empty, it will set to current working directory.
-//
 func New(baseDir string) (aww *Awwan, err error) {
 	logp := "New"
 
@@ -264,9 +260,7 @@ func (aww *Awwan) Play(req *Request) (err error) {
 	return nil
 }
 
-//
 // Serve start the web-user interface that serve awwan actions through HTTP.
-//
 func (aww *Awwan) Serve() (err error) {
 	logp := "Serve"
 
@@ -311,10 +305,8 @@ func (aww *Awwan) Serve() (err error) {
 	return aww.httpd.Start()
 }
 
-//
 // loadSshConfig load all SSH config from user's home and the awwan base
 // directoy.
-//
 func (aww *Awwan) loadSshConfig() (err error) {
 	logp := "loadSshConfig"
 
@@ -342,14 +334,12 @@ func (aww *Awwan) loadSshConfig() (err error) {
 	return nil
 }
 
-//
 // workerBuild watch any update on the .js/.html/.ts files inside the _www
 // directory.
 // If the .ts files changes it will execute TypeScript compiler, esbuild, to
 // compile the .ts into .js.
 // If the .js or .html files changes it will update the node content and
 // re-generate the Go embed file memfs_www.go.
-//
 func (aww *Awwan) workerBuild() {
 	var (
 		logp      = "workerBuild"
@@ -493,11 +483,9 @@ func initMemfsWww() (err error) {
 	return nil
 }
 
-//
 // lookupBaseDir find the directory that contains ".ssh" directory from
 // current working directory until "/", as the base working directory of
 // awwan.
-//
 func lookupBaseDir(baseDir string) (dir string, err error) {
 	var (
 		logp  = "lookupBaseDir"

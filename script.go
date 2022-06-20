@@ -10,20 +10,16 @@ import (
 	"text/template"
 )
 
-//
 // Script define the content of ".aww" file, line by line.
-//
 type Script struct {
 	stmts    []*Statement
 	requires []*Statement
 	rawLines [][]byte
 }
 
-//
 // NewScriptForLocal load the content of awwan script (".aww"), apply the
 // value of session and environment variables into the script content, and
 // split it into Statements.
-//
 func NewScriptForLocal(ses *Session, path string) (script *Script, err error) {
 	var (
 		logp    = "NewScriptForLocal"
@@ -42,11 +38,9 @@ func NewScriptForLocal(ses *Session, path string) (script *Script, err error) {
 	return script, nil
 }
 
-//
 // NewScriptForRemote load the content of awwan script (".aww"), apply the
 // value of session variables into the script content, and split it into
 // Statements.
-//
 func NewScriptForRemote(ses *Session, path string) (script *Script, err error) {
 	var (
 		logp    = "NewScriptForRemote"
@@ -65,18 +59,14 @@ func NewScriptForRemote(ses *Session, path string) (script *Script, err error) {
 	return script, nil
 }
 
-//
 // ParseScriptForLocal parse the script content by applying the session and
 // environment variables and splitting it into Statement.
-//
 func ParseScriptForLocal(ses *Session, content []byte) (s *Script, err error) {
 	return parseScript(ses, content, true)
 }
 
-//
 // ParseScriptForRemote parse the script content by applying the session
 // variables and splitting it into Statement.
-//
 func ParseScriptForRemote(ses *Session, content []byte) (s *Script, err error) {
 	return parseScript(ses, content, false)
 }
@@ -146,7 +136,6 @@ func parseScript(ses *Session, content []byte, isLocal bool) (script *Script, er
 	return script, nil
 }
 
-//
 // joinRequireStatements join the "#require:" statement into one line.
 // For example,
 //
@@ -158,13 +147,13 @@ func parseScript(ses *Session, content []byte, isLocal bool) (script *Script, er
 //
 //	#require: a
 //	b
+//
 // and
 //
 //	#require: a
 //	b
 //
 // will be leave as is.
-//
 func joinRequireStatements(in [][]byte) (out [][]byte) {
 	out = make([][]byte, len(in))
 	if len(in) > 0 {
@@ -201,7 +190,6 @@ func joinRequireStatements(in [][]byte) (out [][]byte) {
 	return out
 }
 
-//
 // joinStatements join multiline statements that ends with "\" into single
 // line.
 //
@@ -215,7 +203,6 @@ func joinRequireStatements(in [][]byte) (out [][]byte) {
 //
 //	a b
 //	c
-//
 func joinStatements(in [][]byte) (out [][]byte) {
 	out = make([][]byte, len(in))
 

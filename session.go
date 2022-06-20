@@ -20,10 +20,8 @@ import (
 	"github.com/shuLhan/share/lib/ssh/sftp"
 )
 
-//
 // Session manage and cache SSH client and list of scripts.
 // One session have one SSH client, but may contains more than one script.
-//
 type Session struct {
 	BaseDir   string
 	ScriptDir string
@@ -42,10 +40,8 @@ type Session struct {
 	sftpc     *sftp.Client
 }
 
-//
 // NewSession create and initialize the new session based on Awwan base
 // directory and the session directory.
-//
 func NewSession(baseDir, sessionDir string) (ses *Session, err error) {
 	logp := "newSession"
 
@@ -67,37 +63,27 @@ func NewSession(baseDir, sessionDir string) (ses *Session, err error) {
 	return ses, nil
 }
 
-//
 // Subs return list of sub sections that have the same section name.
-//
 func (ses *Session) Subs(secName string) (subs []*ini.Section) {
 	return ses.vars.Subs(secName)
 }
 
-//
 // Vars return all variables in section and/or subsection as map of string.
-//
 func (ses *Session) Vars(path string) (vars map[string]string) {
 	return ses.vars.Vars(path)
 }
 
-//
 // Val return the last variable value defined in key path.
-//
 func (ses *Session) Val(keyPath string) string {
 	return ses.vars.Val(keyPath)
 }
 
-//
 // Vals return all variable values as slice of string.
-//
 func (ses *Session) Vals(keyPath string) []string {
 	return ses.vars.Vals(keyPath)
 }
 
-//
 // Copy file in local system.
-//
 func (ses *Session) Copy(stmt *Statement) (err error) {
 	logp := "Copy"
 	if len(stmt.cmd) == 0 {
@@ -124,9 +110,7 @@ func (ses *Session) Copy(stmt *Statement) (err error) {
 	return nil
 }
 
-//
 // Get copy file from remote to local.
-//
 func (ses *Session) Get(stmt *Statement) (err error) {
 	logp := "Get"
 	if len(stmt.cmd) == 0 {
@@ -153,9 +137,7 @@ func (ses *Session) Get(stmt *Statement) (err error) {
 	return nil
 }
 
-//
 // Put copy file from local to remote system.
-//
 func (ses *Session) Put(stmt *Statement) (err error) {
 	logp := "Put"
 	if len(stmt.cmd) == 0 {
@@ -186,9 +168,7 @@ func (ses *Session) Put(stmt *Statement) (err error) {
 	return nil
 }
 
-//
 // SudoCopy copy file in local system using sudo.
-//
 func (ses *Session) SudoCopy(req *Request, stmt *Statement) (err error) {
 	logp := "SudoCopy"
 	if len(stmt.cmd) == 0 {
@@ -219,10 +199,8 @@ func (ses *Session) SudoCopy(req *Request, stmt *Statement) (err error) {
 	return nil
 }
 
-//
 // SudoGet copy file from remote that can be accessed by root on remote, to
 // local.
-//
 func (ses *Session) SudoGet(stmt *Statement) (err error) {
 	logp := "SudoGet"
 	if len(stmt.cmd) == 0 {
@@ -268,9 +246,7 @@ func (ses *Session) SudoGet(stmt *Statement) (err error) {
 	return nil
 }
 
-//
 // SudoPut copy file from local to remote using sudo.
-//
 func (ses *Session) SudoPut(stmt *Statement) (err error) {
 	logp := "SudoPut"
 	if len(stmt.cmd) == 0 {
@@ -312,10 +288,8 @@ func (ses *Session) SudoPut(stmt *Statement) (err error) {
 	return ses.sshClient.Execute(moveStmt)
 }
 
-//
 // ExecLocal execute the command with its arguments in local environment where
 // the output and error send to os.Stdout and os.Stderr respectively.
-//
 func (ses *Session) ExecLocal(req *Request, stmt *Statement) (err error) {
 	cmd := exec.Command("/bin/sh", "-c", string(stmt.raw))
 	cmd.Stdout = req.stdout
@@ -323,10 +297,8 @@ func (ses *Session) ExecLocal(req *Request, stmt *Statement) (err error) {
 	return cmd.Run()
 }
 
-//
 // executeRequires run the "#require:" statements from line 0 until
 // the start argument in the local system.
-//
 func (ses *Session) executeRequires(req *Request) (err error) {
 	for x := 0; x < req.BeginAt; x++ {
 		stmt := req.script.requires[x]
@@ -417,9 +389,7 @@ func (ses *Session) executeScriptOnRemote(req *Request) {
 	}
 }
 
-//
 // generatePaths using baseDir return all paths from BaseDir to ScriptDir.
-//
 func (ses *Session) generatePaths() (err error) {
 	logp := "generatePaths"
 
@@ -488,9 +458,7 @@ func (ses *Session) initSSHClient(req *Request, sshSection *config.Section) (err
 	return nil
 }
 
-//
 // loadEnvFromPaths load environment file from each directory in paths.
-//
 func (ses *Session) loadEnvFromPaths() (err error) {
 	var (
 		logp = "loadEnvFromPaths"

@@ -33,7 +33,7 @@ func TestParseStatement(t *testing.T) {
 		raw: []byte(`#get! a\	b	c`),
 		exp: &Statement{
 			kind: statementKindSudoGet,
-			cmd: `a	b`,
+			cmd:  `a	b`,
 			args: []string{
 				"c",
 			},
@@ -45,7 +45,7 @@ func TestParseStatement(t *testing.T) {
 			kind: statementKindSudoPut,
 			cmd:  `a`,
 			args: []string{"bc"},
-			raw: []byte(` a	bc`),
+			raw:  []byte(` a	bc`),
 		},
 	}, {
 		raw: []byte(`#require:\ a\ `),

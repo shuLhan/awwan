@@ -92,10 +92,8 @@ func (aww *Awwan) registerHttpApis() (err error) {
 	return nil
 }
 
-//
 // httpApiFs get the list of files or specific file using query parameter
 // "path".
-//
 func (aww *Awwan) httpApiFs(epr *libhttp.EndpointRequest) ([]byte, error) {
 	res := &libhttp.EndpointResponse{}
 
@@ -116,10 +114,11 @@ func (aww *Awwan) httpApiFs(epr *libhttp.EndpointRequest) ([]byte, error) {
 	return json.Marshal(res)
 }
 
-//
 // httpApiFsDelete an HTTP API to delete a file.
 //
-// Request
+// # Request
+//
+// Format,
 //
 //	DELETE /awwan/api/fs
 //	Content-Type: application/json
@@ -129,7 +128,9 @@ func (aww *Awwan) httpApiFs(epr *libhttp.EndpointRequest) ([]byte, error) {
 //		"is_dir": <boolean>, true if its directory.
 //	}
 //
-// Response
+// # Response
+//
+// Format,
 //
 //	Content-Type: application/json
 //
@@ -139,11 +140,10 @@ func (aww *Awwan) httpApiFs(epr *libhttp.EndpointRequest) ([]byte, error) {
 //	}
 //
 // List of valid response code,
-// * 200: OK.
-// * 400: Bad request.
-// * 401: Unauthorized.
-// * 404: File not found.
-//
+//   - 200: OK.
+//   - 400: Bad request.
+//   - 401: Unauthorized.
+//   - 404: File not found.
 func (aww *Awwan) httpApiFsDelete(epr *libhttp.EndpointRequest) ([]byte, error) {
 	logp := "httpApiFsDelete"
 
@@ -188,10 +188,11 @@ func (aww *Awwan) httpApiFsDelete(epr *libhttp.EndpointRequest) ([]byte, error) 
 	return json.Marshal(res)
 }
 
-//
 // httpApiFsPost create new directory or file.
 //
-// Request
+// # Request
+//
+// Format,
 //
 //	POST /awwan/api/fs
 //	Content-Type: application/json
@@ -200,7 +201,6 @@ func (aww *Awwan) httpApiFsDelete(epr *libhttp.EndpointRequest) ([]byte, error) 
 //		"path": <string>, the path to new directory or file.
 //		"is_dir": <boolean>, true if its directory.
 //	}
-//
 func (aww *Awwan) httpApiFsPost(epr *libhttp.EndpointRequest) (rawBody []byte, err error) {
 	var (
 		logp = "httpApiFsPost"
@@ -268,9 +268,7 @@ func (aww *Awwan) httpApiFsPost(epr *libhttp.EndpointRequest) (rawBody []byte, e
 	return json.Marshal(res)
 }
 
-//
 // httpApiFsPut save the content of file.
-//
 func (aww *Awwan) httpApiFsPut(epr *libhttp.EndpointRequest) (rawBody []byte, err error) {
 	var (
 		logp = "httpApiFsPut"
