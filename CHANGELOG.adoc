@@ -2,6 +2,60 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 = Changelog for awwan
 
+[#v0_6_0]
+== awwan v0.6.0 (2022-07-04)
+
+This release set minimum Go version to 1.17.
+
+[#v0_6_0_bug_fix]
+===  Bug fix
+
+all: fix the #get! statement when executing on local::
++
+--
+Since fa94025f8e, we change the local statement to be executed using
+"/bin/sh", "-c", "<statement>".
+This cause the #get! command failed to execute because
+
+* we try to read the input file without permission, and
+* we did not set the raw statement required by ExecLocal.
+--
+
+[#v0_6_0_enhancements]
+===  Enhancements
+
+cmd/awwan: make the "help" and "version" as command::
++
+--
+Previously, to print the help and version we use the flag package, "-h"
+for printing usage and "-v" for printing "version".
+
+The flag should be used to changes the behaviour of command not
+terminating the command.
+Using and mixing flag as command make the CLI API to be inconsistent.
+
+For example, the following argument is inconsistent,
+
+  $ awwan -h play script.aww 1 -
+
+Instead of executing script.aww, it print the usage and terminate.
+--
+
+
+[#v0_6_0_chores]
+===  Chores
+
+all: changes the way to build JavaScript using esbuild::
++
+--
+Previously, we build the JavaScript files on directory _www by
+using TypeScript compiler (tsc).
+
+This changes replace the tsc with esbuild, a Go module that provide
+API to convert TypeScript to JavaScript, and use tsc for type checking
+only.
+--
+
 [#v0_5_0]
 == awwan v0.5.0 (2022-03-14)
 

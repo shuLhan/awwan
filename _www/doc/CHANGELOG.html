@@ -245,6 +245,100 @@ dd {
 </div>
 </div>
 <div class="sect1">
+<h2 id="v0_6_0">awwan v0.6.0 (2022-07-04)</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This release set minimum Go version to 1.17.</p>
+</div>
+<div class="sect2">
+<h3 id="v0_6_0_bug_fix">Bug fix</h3>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">all: fix the #get! statement when executing on local</dt>
+<dd>
+<div class="openblock">
+<div class="content">
+<div class="paragraph">
+<p>Since fa94025f8e, we change the local statement to be executed using
+"/bin/sh", "-c", "&lt;statement&gt;".
+This cause the #get! command failed to execute because</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>we try to read the input file without permission, and</p>
+</li>
+<li>
+<p>we did not set the raw statement required by ExecLocal.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</dd>
+</dl>
+</div>
+</div>
+<div class="sect2">
+<h3 id="v0_6_0_enhancements">Enhancements</h3>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">cmd/awwan: make the "help" and "version" as command</dt>
+<dd>
+<div class="openblock">
+<div class="content">
+<div class="paragraph">
+<p>Previously, to print the help and version we use the flag package, "-h"
+for printing usage and "-v" for printing "version".</p>
+</div>
+<div class="paragraph">
+<p>The flag should be used to changes the behaviour of command not
+terminating the command.
+Using and mixing flag as command make the CLI API to be inconsistent.</p>
+</div>
+<div class="paragraph">
+<p>For example, the following argument is inconsistent,</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>$ awwan -h play script.aww 1 -</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Instead of executing script.aww, it print the usage and terminate.</p>
+</div>
+</div>
+</div>
+</dd>
+</dl>
+</div>
+</div>
+<div class="sect2">
+<h3 id="v0_6_0_chores">Chores</h3>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">all: changes the way to build JavaScript using esbuild</dt>
+<dd>
+<div class="openblock">
+<div class="content">
+<div class="paragraph">
+<p>Previously, we build the JavaScript files on directory _www by
+using TypeScript compiler (tsc).</p>
+</div>
+<div class="paragraph">
+<p>This changes replace the tsc with esbuild, a Go module that provide
+API to convert TypeScript to JavaScript, and use tsc for type checking
+only.</p>
+</div>
+</div>
+</div>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
 <h2 id="v0_5_0">awwan v0.5.0 (2022-03-14)</h2>
 <div class="sectionbody">
 <div class="paragraph">
@@ -544,7 +638,7 @@ combination of <code>gcloud</code> and <code>kubectl</code>.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2022-07-04 12:28:51 +0700
+Last updated 2022-07-04 12:31:44 +0700
 </div>
 </div>
 			</div>
