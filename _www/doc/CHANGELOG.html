@@ -106,12 +106,11 @@ h3 > span {
 dl {
 	margin: 1.25rem;
 }
+dt {
+	font-weight: bold
+}
 dd {
 	margin: 0 0 0 1.25rem;
-}
-dl,
-dd {
-	font-size: 0.875rem;
 }
 
 /**
@@ -187,6 +186,14 @@ dd {
 	margin: 2.5rem 0;
 }
 
+.ulist li .paragraph {
+	margin-bottom: 1em;
+}
+
+.ulist li .paragraph {
+	margin-bottom: 1em;
+}
+
 /** Custom classes */
 #toctitle {
 	display: none;
@@ -238,7 +245,18 @@ dd {
 </div>
 </div>
 <div class="sect1">
-<h2 id="_awwan_0_4_0_2022_02_05">awwan 0.4.0 (2022.02.05)</h2>
+<h2 id="v0_5_0">awwan v0.5.0 (2022-03-14)</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This release re-lincesing the awwan software under GPL 3.0 or later.</p>
+</div>
+<div class="paragraph">
+<p>See <a href="https://kilabit.info/journal/2022/gpl" class="bare">https://kilabit.info/journal/2022/gpl</a> for more information.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="v0_4_0">awwan 0.4.0 (2022.02.05)</h2>
 <div class="sectionbody">
 <div class="paragraph">
 <p>This release bring new command "serve" to awwan.
@@ -246,18 +264,22 @@ The serve command run HTTP server that provide web-user interface to create,
 edit, save, and execute script.</p>
 </div>
 <div class="sect2">
-<h3 id="_new_features">New features</h3>
-<div class="ulist">
-<ul>
-<li>
-<p>all: implement HTTP API and function to Save file on web-user interface</p>
+<h3 id="v0_4_0_new_features">New features</h3>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">all: implement HTTP API and function to Save file on web-user interface</dt>
+<dd>
+<div class="openblock">
+<div class="content">
 <div class="paragraph">
 <p>The web-user interface now have button "Save" that save the edited
 content of file to storage.</p>
 </div>
-</li>
-<li>
-<p>all: implement serve command</p>
+</div>
+</div>
+</dd>
+<dt class="hdlist1">all: implement serve command</dt>
+<dd>
 <div class="openblock">
 <div class="content">
 <div class="paragraph">
@@ -279,24 +301,30 @@ to edit and execute script.</p>
 </div>
 </div>
 </div>
-</li>
-</ul>
+</dd>
+</dl>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_enhancements">Enhancements</h3>
-<div class="ulist">
-<ul>
-<li>
-<p>all: make the local statement executed with "/bin/sh -c &#8230;&#8203;"</p>
+<h3 id="v0_4_0_enhancements">Enhancements</h3>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">all: make the local statement executed with "/bin/sh -c &#8230;&#8203;"</dt>
+<dd>
+<div class="openblock">
+<div class="content">
 <div class="paragraph">
 <p>By using "sh -c", the statement can contains environment variable,
 piping, and other shell commands that cannot be supported if executed
 directly using native os.Exec.</p>
 </div>
-</li>
-<li>
-<p>all: expand the environment on statement when executing local script</p>
+</div>
+</div>
+</dd>
+<dt class="hdlist1">all: expand the environment on statement when executing local script</dt>
+<dd>
+<div class="openblock">
+<div class="content">
 <div class="paragraph">
 <p>This changes replace the string ${x} or $x in the statements with the
 current environment variables values.</p>
@@ -305,9 +333,13 @@ current environment variables values.</p>
 <p>For example, statement "mkdir ${HOME}/tmp" will expand the ${HOME} to
 the current user home directory.</p>
 </div>
-</li>
-<li>
-<p>all: use native SFTP to put and get file when possible</p>
+</div>
+</div>
+</dd>
+<dt class="hdlist1">all: use native SFTP to put and get file when possible</dt>
+<dd>
+<div class="openblock">
+<div class="content">
 <div class="paragraph">
 <p>Previously, the command to put and get file from remote server depends
 on installed scp program on the host computer.</p>
@@ -317,44 +349,48 @@ on installed scp program on the host computer.</p>
 to put and get file to/from remote when possible and use the scp as
 fallback.</p>
 </div>
-</li>
-</ul>
+</div>
+</div>
+</dd>
+</dl>
 </div>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_awwan_0_3_0_2021_06_09">awwan 0.3.0 (2021.06.09)</h2>
+<h2 id="v0_3_0">awwan 0.3.0 (2021.06.09)</h2>
 <div class="sectionbody">
-<div class="ulist">
-<ul>
-<li>
+<div class="paragraph">
 <p>go.mod: set the minimum Go to 1.16 and update to share module v0.25.1</p>
-</li>
-</ul>
 </div>
 <div class="sect2">
-<h3 id="_enhancements_1">Enhancements</h3>
-<div class="ulist">
-<ul>
-<li>
-<p>cmd/awwan: print the awwan version on command usage output</p>
-</li>
-<li>
-<p>all: check and return an error if start index is out of range</p>
-</li>
-<li>
-<p>all: log error when executing script (local or play)</p>
-</li>
-<li>
-<p>all: do not load SSH config if command mode is "local"</p>
+<h3 id="v0_3_0_enhancements">Enhancements</h3>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">cmd/awwan: print the awwan version on command usage output</dt>
+<dd>
+</dd>
+<dt class="hdlist1">all: check and return an error if start index is out of range</dt>
+<dd>
+</dd>
+<dt class="hdlist1">all: log error when executing script (local or play)</dt>
+<dd>
+</dd>
+<dt class="hdlist1">all: do not load SSH config if command mode is "local"</dt>
+<dd>
+<div class="openblock">
+<div class="content">
 <div class="paragraph">
 <p>If the mode is local there is no need to parse and load the SSH config,
 since the command to be executed will run on local machine anyway.</p>
 </div>
-</li>
-<li>
-<p>all: set base dir based on the first .ssh directory that we found</p>
+</div>
+</div>
+</dd>
+<dt class="hdlist1">all: set base dir based on the first .ssh directory that we found</dt>
+<dd>
+<div class="openblock">
+<div class="content">
 <div class="paragraph">
 <p>Previously, the base directory is set on current working directory.
 This limit the way to execute awwan only from the directory
@@ -365,14 +401,16 @@ that contains the .ssh directory.</p>
 directory that we found from script path up to the "/".  So, user can
 execute awwan script from any sub-directories.</p>
 </div>
-</li>
-</ul>
+</div>
+</div>
+</dd>
+</dl>
 </div>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_awwan_0_2_1_2021_01_18">awwan 0.2.1 (2021.01.18)</h2>
+<h2 id="v0_2_1">awwan 0.2.1 (2021.01.18)</h2>
 <div class="sectionbody">
 <div class="paragraph">
 <p>Update the share modules which bring fixes to "#put" commands.</p>
@@ -380,14 +418,14 @@ execute awwan script from any sub-directories.</p>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_awwan_0_2_0_2020_07_05">awwan 0.2.0 (2020.07.05)</h2>
+<h2 id="v0_2_0">awwan 0.2.0 (2020.07.05)</h2>
 <div class="sectionbody">
 <div class="sect2">
-<h3 id="_new_features_1">New features</h3>
-<div class="ulist">
-<ul>
-<li>
-<p>environment: export the SSH key, user, host, and port</p>
+<h3 id="v0_2_0_new_features">New features</h3>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">environment: export the SSH key, user, host, and port</dt>
+<dd>
 <div class="openblock">
 <div class="content">
 <div class="paragraph">
@@ -401,9 +439,9 @@ command, for example to copy file using <code>scp</code></p>
 </div>
 </div>
 </div>
-</li>
-<li>
-<p>all: add magic command "#require:"</p>
+</dd>
+<dt class="hdlist1">all: add magic command "#require:"</dt>
+<dd>
 <div class="openblock">
 <div class="content">
 <div class="paragraph">
@@ -426,37 +464,41 @@ number 2 <code>echo a</code>, but not line number 5 (because its before line sta
 </div>
 </div>
 </div>
-</li>
-</ul>
+</dd>
+</dl>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_bug_fixes">Bug fixes</h3>
-<div class="ulist">
-<ul>
-<li>
-<p>command: change the owner of file when doing #get!</p>
+<h3 id="v0_2_0_bug_fixes">Bug fixes</h3>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">command: change the owner of file when doing <code>#get!</code></dt>
+<dd>
+<div class="openblock">
+<div class="content">
 <div class="paragraph">
 <p>In case the owner of file is not active user and it does not have
 read permission, the "#get!" command will fail when copying command
 from remote to local.</p>
 </div>
-</li>
-<li>
-<p>command: fix magic copy and get command on templates</p>
-</li>
-</ul>
+</div>
+</div>
+</dd>
+<dt class="hdlist1">command: fix magic copy and get command on templates</dt>
+<dd>
+</dd>
+</dl>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_enhancements_2">Enhancements</h3>
-<div class="ulist">
-<ul>
-<li>
-<p>command: merge sequences of spaces on command into single space</p>
-</li>
-<li>
-<p>command: check for single, double, or back quote on command</p>
+<h3 id="v0_2_0_enhancements">Enhancements</h3>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">command: merge sequences of spaces on command into single space</dt>
+<dd>
+</dd>
+<dt class="hdlist1">command: check for single, double, or back quote on command</dt>
+<dd>
 <div class="openblock">
 <div class="content">
 <div class="paragraph">
@@ -477,14 +519,14 @@ quote.</p>
 </div>
 </div>
 </div>
-</li>
-</ul>
+</dd>
+</dl>
 </div>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_awwan_0_1_0_2020_05_30">awwan 0.1.0 (2020.05.30)</h2>
+<h2 id="v0_1_0">awwan 0.1.0 (2020.05.30)</h2>
 <div class="sectionbody">
 <div class="paragraph">
 <p>Its better late than never.</p>
@@ -502,7 +544,7 @@ combination of <code>gcloud</code> and <code>kubectl</code>.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2022-02-05 21:14:21 +0700
+Last updated 2022-07-04 12:28:51 +0700
 </div>
 </div>
 			</div>
