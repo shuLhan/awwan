@@ -1,7 +1,7 @@
 github.com/evanw/esbuild v0.14.30 h1:DIfU1ZOBa1Q73CsogXD6iAGsK0B/2nbvrWdRMOVlwfU=
 github.com/evanw/esbuild v0.14.30/go.mod h1:GG+zjdi59yh3ehDn4ZWfPcATxjPDUH53iU4ZJbp7dkY=
-github.com/shuLhan/share v0.38.0 h1:Da9aheUJxOQnrN9qwcC5KSrJt7yJUNXuOiY/KJ5Ekt0=
-github.com/shuLhan/share v0.38.0/go.mod h1:1phZr6PX+8YLCOeNvx92J14/AV0mTo0Ebbc1SmzzYvk=
+github.com/shuLhan/share v0.39.0 h1:pga+HQqKeHgPiIs7b5sutf59uM/PsNqO2VlifZFKqTU=
+github.com/shuLhan/share v0.39.0/go.mod h1:1phZr6PX+8YLCOeNvx92J14/AV0mTo0Ebbc1SmzzYvk=
 golang.org/x/crypto v0.0.0-20220518034528-6f7dac969898 h1:SLP7Q4Di66FONjDJbCYrCRrh97focO6sLogHO7/g8F0=
 golang.org/x/crypto v0.0.0-20220518034528-6f7dac969898/go.mod h1:IxCIyHEi3zRg3s0A5j5BB6A9Jmi73HwBIUl50j+osU4=
 golang.org/x/net v0.0.0-20211112202133-69e39bad7dc2/go.mod h1:9nx3DQGgdP8bBQD5qxJ1jj9UTztislL4KSBs9R2vV5Y=

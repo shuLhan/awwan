@@ -7,7 +7,7 @@ go 1.17
 
 require (
 	github.com/evanw/esbuild v0.14.30
-	github.com/shuLhan/share v0.38.0
+	github.com/shuLhan/share v0.39.0
 )
 
 require (
