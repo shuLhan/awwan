@@ -274,7 +274,7 @@ func (aww *Awwan) Serve() (err error) {
 			"vendor",
 			`.*\.(bz|bz2|gz|iso|jar|tar|xz|zip)`,
 		},
-		Development: true, // Only store the file structures in the memory.
+		TryDirect: true, // Only store the file structures in the memory.
 	}
 
 	aww.memfsBase, err = memfs.New(memfsBaseOpts)
