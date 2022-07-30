@@ -17,11 +17,11 @@ install: build
 	go install ./cmd/awwan
 
 test:
-	go tool cover -html=cover.out -o cover.html
 	CGO_ENABLED=1 go test -race -coverprofile=cover.out ./...
+	go tool cover -html=cover.out -o cover.html
 
 lint:
-	golangci-lint run ./...
+	-golangci-lint run ./...
 
 serve-doc:
 	ciigo serve _www/
