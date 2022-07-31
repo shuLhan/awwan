@@ -18,6 +18,68 @@ import (
 )
 
 const (
+	usage = `= awwan v` + awwan.Version + `
+
+Configuration management software, infrastructure as file and directory
+layout.
+
+== USAGE
+
+awwan <command> <arguments>
+
+command = "help" | "local" | "play" | "serve" | "version"
+
+	help
+		Display the command usage and its description.
+
+	local <script> <start> [end]
+		Execute the script in current system from line <start> until
+		line <end>.
+
+	play <script> <start> [end]
+		Execute the script in the remote server from line <start>
+		until line <end>.
+
+	serve <workspace>
+		Run the web-user interface using <workspace> directory as base
+		directory.
+
+	version
+		Print the application version to standard output.
+
+arguments = <script> <start> [end] | <workspace>
+
+	script = STRING
+		A path to script to be executed.
+
+	start = 1*DIGITS
+		The starting line number in the script.
+
+	end = 1*DIGITS | "-"
+		The end of line number, default to start.
+		The "-" means until the end of file.
+
+	workspace = STRING
+		The root directory of awwan workspace, the one that contains
+		the .ssh directory.
+
+== EXAMPLES
+
+Execute only line 5 of "script.aww" on local system,
+
+	$ awwan local myserver/script.aww 5
+
+Execute line 5 until end of line of "script.aww" on remote server known as
+"myserver",
+
+	$ awwan play myserver/script.aww 5 -
+
+Run the web-user interface using the current directory as workspace,
+
+	$ awwan serve .`
+)
+
+const (
 	cmdHelp    = "help"
 	cmdVersion = "version"
 )
@@ -26,25 +88,20 @@ func main() {
 	var (
 		logp = "awwan"
 
-		req      *awwan.Request
-		aww      *awwan.Awwan
-		cmdMode  string
-		baseDir  string
-		err      error
-		flagHelp bool
+		req     *awwan.Request
+		aww     *awwan.Awwan
+		cmdMode string
+		baseDir string
+		err     error
 	)
 
 	log.SetFlags(0)
 
-	flag.Usage = usage
-	flag.BoolVar(&flagHelp, "help", false, "Display the command usage and its description.")
 	flag.Parse()
 
-	if flagHelp {
-		flag.Usage()
-	}
 	if flag.NArg() <= 0 {
-		flag.Usage()
+		fmt.Println(usage)
+		os.Exit(1)
 	}
 
 	cmdMode = strings.ToLower(flag.Arg(0))
@@ -52,15 +109,22 @@ func main() {
 	// Check for valid command and flags.
 	switch cmdMode {
 	case cmdHelp:
-		flag.Usage()
+		fmt.Println(usage)
+		os.Exit(0)
+
 	case cmdVersion:
 		fmt.Printf("awwan %s\n", awwan.Version)
 		return
+
 	case awwan.CommandModeBuild:
+		// NOOP.
+
 	case awwan.CommandModeLocal:
 		req, err = parseArgScriptStartEnd(cmdMode)
+
 	case awwan.CommandModePlay:
 		req, err = parseArgScriptStartEnd(cmdMode)
+
 	case awwan.CommandModeServe:
 		if flag.NArg() <= 1 {
 			err = fmt.Errorf("%s: missing workspace directory", cmdMode)
@@ -149,68 +213,4 @@ func parseArgScriptEnd(in string) (out int, err error) {
 		return 0, fmt.Errorf("invalid end at argument %q: %w", in, err)
 	}
 	return out, nil
-}
-
-func usage() {
-	log.Printf(`= awwan v%s
-
-Configuration management software, infrastructure as file and directory
-layout.
-
-== USAGE
-
-awwan <command> <arguments>
-
-command = "help" | "local" | "play" | "serve" | "version"
-
-	help
-		Display the command usage and its description.
-
-	local <script> <start> [end]
-		Execute the script in current system from line <start> until
-		line <end>.
-
-	play <script> <start> [end]
-		Execute the script in the remote server from line <start>
-		until line <end>.
-
-	serve <workspace>
-		Run the web-user interface using <workspace> directory as base
-		directory.
-
-	version
-		Print the application version to standard output.
-
-arguments = <script> <start> [end] | <workspace>
-
-	script = STRING
-		A path to script to be executed.
-
-	start = 1*DIGITS
-		The starting line number in the script.
-
-	end = 1*DIGITS | "-"
-		The end of line number, default to start. The "-" means until
-		the last line.
-
-	workspace = STRING
-		The directory that contains the .ssh directory.
-
-== EXAMPLES
-
-Execute only line 5 of "script.aww" on local system,
-
-	$ awwan local myserver/script.aww 5
-
-Execute line 5 until end of line of "script.aww" on remote server known as
-"myserver",
-
-	$ awwan play myserver/script.aww 5 -
-
-Run the web-user interface using the current directory as workspace,
-
-	$ awwan serve .
-
-`, awwan.Version)
-	os.Exit(1)
 }
