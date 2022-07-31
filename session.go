@@ -23,6 +23,10 @@ import (
 // Session manage and cache SSH client and list of scripts.
 // One session have one SSH client, but may contains more than one script.
 type Session struct {
+	sftpc     *sftp.Client
+	sshClient *ssh.Client
+	vars      *ini.Ini
+
 	BaseDir   string
 	ScriptDir string
 
@@ -32,12 +36,8 @@ type Session struct {
 	SSHPort string // The value of "Port" in configuration.
 
 	hostname string
-	paths    []string
 	tmpDir   string
-	vars     *ini.Ini
-
-	sshClient *ssh.Client
-	sftpc     *sftp.Client
+	paths    []string
 }
 
 // NewSession create and initialize the new session based on Awwan base

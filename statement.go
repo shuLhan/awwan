@@ -23,10 +23,10 @@ const (
 
 // Statetement contains parsed raw line from the script.
 type Statement struct {
-	kind int
 	cmd  string
 	args []string
 	raw  []byte
+	kind int
 }
 
 // ParseStatement create and initialize new Statement from raw line.

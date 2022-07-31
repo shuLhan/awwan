@@ -15,16 +15,16 @@ import (
 // Each request may set the Writer where the command output and error will be
 // written.  If its nil, it will default to os.Stdout and os.Stderr.
 type Request struct {
+	stdout     io.Writer `json:"-"`
+	stderr     io.Writer `json:"-"`
+	scriptPath string    // The actual or cleaned up path of the Script.
+	script     *Script
+
 	Mode    string `json:"mode"`
 	Script  string `json:"script"`
 	Content []byte `json:"content"`
 	BeginAt int    `json:"begin_at"`
 	EndAt   int    `json:"end_at"`
-
-	stdout     io.Writer `json:"-"`
-	stderr     io.Writer `json:"-"`
-	scriptPath string    // The actual or cleaned up path of the Script.
-	script     *Script
 }
 
 // NewRequest create new Request and initialize stdout and stderr to os.Stdout

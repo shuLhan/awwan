@@ -13,19 +13,24 @@ import (
 )
 
 func TestSession_generatePaths(t *testing.T) {
-	var err error
+	type testCase struct {
+		scriptPath string
+		expError   string
+		exp        []string
+	}
 
-	ses := &Session{}
+	var (
+		ses = &Session{}
+
+		err error
+	)
+
 	ses.BaseDir, err = os.Getwd()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	cases := []struct {
-		scriptPath string
-		exp        []string
-		expError   string
-	}{{
+	var cases = []testCase{{
 		scriptPath: "/tmp/test.aww",
 		expError:   fmt.Sprintf(`generatePaths: %q must be under %q`, "/tmp", ses.BaseDir),
 	}, {
@@ -58,10 +63,15 @@ func TestSession_generatePaths(t *testing.T) {
 		},
 	}}
 
-	for _, c := range cases {
+	var (
+		c          testCase
+		scriptPath string
+	)
+
+	for _, c = range cases {
 		t.Logf(c.scriptPath)
 
-		scriptPath := filepath.Clean(c.scriptPath)
+		scriptPath = filepath.Clean(c.scriptPath)
 		ses.ScriptDir = filepath.Dir(scriptPath)
 		ses.hostname = filepath.Base(ses.ScriptDir)
 

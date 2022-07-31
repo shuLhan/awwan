@@ -10,10 +10,12 @@ import (
 )
 
 func TestParseStatement(t *testing.T) {
-	cases := []struct {
-		raw []byte
+	type testCase struct {
 		exp *Statement
-	}{{
+		raw []byte
+	}
+
+	var cases = []testCase{{
 		raw: []byte(`#get: a\ b c`),
 		exp: &Statement{
 			kind: statementKindGet,
@@ -62,8 +64,14 @@ func TestParseStatement(t *testing.T) {
 		},
 	}}
 
-	for _, c := range cases {
-		got, err := ParseStatement(c.raw)
+	var (
+		c   testCase
+		got *Statement
+		err error
+	)
+
+	for _, c = range cases {
+		got, err = ParseStatement(c.raw)
 		if err != nil {
 			t.Fatal(err)
 		}
