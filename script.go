@@ -74,9 +74,17 @@ func ParseScriptForRemote(ses *Session, content []byte) (s *Script, err error) {
 func parseScript(ses *Session, content []byte, isLocal bool) (script *Script, err error) {
 	var (
 		logp = "parseScript"
-		tmpl *template.Template
-		buf  bytes.Buffer
-		raw  []byte
+
+		tmpl     *template.Template
+		buf      bytes.Buffer
+		stmt     *Statement
+		line     []byte
+		raw      []byte
+		splits   [][]byte
+		rawLines [][]byte
+		stmts    []*Statement
+		requires []*Statement
+		x        int
 	)
 
 	// Apply the session variables.
@@ -100,20 +108,20 @@ func parseScript(ses *Session, content []byte, isLocal bool) (script *Script, er
 	}
 
 	raw = bytes.TrimRight(raw, " \t\r\n\v")
-	splits := bytes.Split(raw, newLine)
+	splits = bytes.Split(raw, newLine)
 
 	// Add empty line at the beginning to make the start index start from
 	// 1, not 0.
-	rawLines := [][]byte{newLine}
+	rawLines = [][]byte{newLine}
 	rawLines = append(rawLines, splits...)
 	rawLines = joinStatements(rawLines)
 	rawLines = joinRequireStatements(rawLines)
 
-	stmts := make([]*Statement, len(rawLines))
-	requires := make([]*Statement, len(rawLines))
+	stmts = make([]*Statement, len(rawLines))
+	requires = make([]*Statement, len(rawLines))
 
-	for x, line := range rawLines {
-		stmt, err := ParseStatement(line)
+	for x, line = range rawLines {
+		stmt, err = ParseStatement(line)
 		if err != nil {
 			return nil, fmt.Errorf("%s: line %d: %w", logp, x, err)
 		}
@@ -155,12 +163,17 @@ func parseScript(ses *Session, content []byte, isLocal bool) (script *Script, er
 //
 // will be leave as is.
 func joinRequireStatements(in [][]byte) (out [][]byte) {
+	var (
+		stmt []byte
+		x    int
+	)
+
 	out = make([][]byte, len(in))
 	if len(in) > 0 {
 		out[0] = in[0]
 	}
-	for x := 1; x < len(in); x++ {
-		stmt := in[x]
+	for x = 1; x < len(in); x++ {
+		stmt = in[x]
 		if !bytes.HasPrefix(stmt, cmdMagicRequire) {
 			out[x] = in[x]
 			continue
@@ -204,20 +217,29 @@ func joinRequireStatements(in [][]byte) (out [][]byte) {
 //	a b
 //	c
 func joinStatements(in [][]byte) (out [][]byte) {
+	var (
+		stmt     []byte
+		nextStmt []byte
+		x        int
+		y        int
+		endc     int
+		lastc    byte
+	)
+
 	out = make([][]byte, len(in))
 
 	if len(in) > 0 {
 		out[0] = nil
 	}
-	for x := 1; x < len(in); x++ {
-		stmt := bytes.TrimSpace(in[x])
+	for x = 1; x < len(in); x++ {
+		stmt = bytes.TrimSpace(in[x])
 		if len(stmt) == 0 {
 			in[x] = nil
 			out[x] = nil
 			continue
 		}
 
-		endc := len(stmt) - 1
+		endc = len(stmt) - 1
 		if stmt[endc] != '\\' {
 			in[x] = nil
 			out[x] = stmt
@@ -227,9 +249,9 @@ func joinStatements(in [][]byte) (out [][]byte) {
 		stmt = bytes.TrimRight(stmt, "\\ \t")
 		stmt = append(stmt, ' ')
 
-		y := x + 1
+		y = x + 1
 		for ; y < len(in); y++ {
-			nextStmt := bytes.TrimSpace(in[y])
+			nextStmt = bytes.TrimSpace(in[y])
 			if len(nextStmt) == 0 {
 				in[y] = nil
 				out[y] = nil
@@ -237,7 +259,7 @@ func joinStatements(in [][]byte) (out [][]byte) {
 			}
 
 			endc = len(nextStmt) - 1
-			lastc := nextStmt[endc]
+			lastc = nextStmt[endc]
 
 			if lastc == '\\' {
 				nextStmt = bytes.TrimRight(nextStmt, "\\ \t")

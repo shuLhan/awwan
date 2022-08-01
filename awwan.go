@@ -74,7 +74,9 @@ type Awwan struct {
 // Awwan workspace.
 // If baseDir is empty, it will set to current working directory.
 func New(baseDir string) (aww *Awwan, err error) {
-	logp := "New"
+	var (
+		logp = "New"
+	)
 
 	aww = &Awwan{}
 
@@ -120,7 +122,13 @@ func (aww *Awwan) Build() (err error) {
 }
 
 func (aww *Awwan) Local(req *Request) (err error) {
-	logp := "Local"
+	var (
+		logp = "Local"
+
+		ses        *Session
+		sessionDir string
+		maxLines   int
+	)
 
 	req.scriptPath = filepath.Clean(req.Script)
 	req.scriptPath, err = filepath.Abs(req.scriptPath)
@@ -128,9 +136,9 @@ func (aww *Awwan) Local(req *Request) (err error) {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
 
-	sessionDir := filepath.Dir(req.scriptPath)
+	sessionDir = filepath.Dir(req.scriptPath)
 
-	ses, err := NewSession(aww.BaseDir, sessionDir)
+	ses, err = NewSession(aww.BaseDir, sessionDir)
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
@@ -149,7 +157,7 @@ func (aww *Awwan) Local(req *Request) (err error) {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
 
-	maxLines := len(req.script.stmts)
+	maxLines = len(req.script.stmts)
 	if req.BeginAt >= maxLines {
 		return fmt.Errorf("%s: start index %d out of range %d", logp,
 			req.BeginAt, maxLines)
@@ -181,7 +189,16 @@ func (aww *Awwan) Local(req *Request) (err error) {
 }
 
 func (aww *Awwan) Play(req *Request) (err error) {
-	logp := "Play"
+	var (
+		logp = "Play"
+
+		sessionDir string
+		ses        *Session
+		sshSection *config.Section
+		mkdirStmt  string
+		rmdirStmt  string
+		maxLines   int
+	)
 
 	req.scriptPath = filepath.Clean(req.Script)
 	req.scriptPath, err = filepath.Abs(req.scriptPath)
@@ -189,9 +206,9 @@ func (aww *Awwan) Play(req *Request) (err error) {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
 
-	sessionDir := filepath.Dir(req.scriptPath)
+	sessionDir = filepath.Dir(req.scriptPath)
 
-	ses, err := NewSession(aww.BaseDir, sessionDir)
+	ses, err = NewSession(aww.BaseDir, sessionDir)
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
@@ -208,7 +225,7 @@ func (aww *Awwan) Play(req *Request) (err error) {
 		}
 	}
 
-	sshSection := aww.sshConfig.Get(ses.hostname)
+	sshSection = aww.sshConfig.Get(ses.hostname)
 	if sshSection == nil {
 		return fmt.Errorf("%s: can not find Host %q in SSH config", logp, ses.hostname)
 	}
@@ -227,7 +244,7 @@ func (aww *Awwan) Play(req *Request) (err error) {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
 
-	maxLines := len(req.script.stmts)
+	maxLines = len(req.script.stmts)
 	if req.BeginAt >= maxLines {
 		return fmt.Errorf("%s: start index %d out of range %d", logp, req.BeginAt, maxLines)
 	}
@@ -236,15 +253,15 @@ func (aww *Awwan) Play(req *Request) (err error) {
 	}
 
 	// Create temporary directory ...
-	mkdirStmt := fmt.Sprintf("mkdir %s", ses.tmpDir)
+	mkdirStmt = fmt.Sprintf("mkdir %s", ses.tmpDir)
 
 	err = ses.sshClient.Execute(mkdirStmt)
 	if err != nil {
 		return fmt.Errorf("%s: %s: %w", logp, mkdirStmt, err)
 	}
 	defer func() {
-		rmdirStmt := fmt.Sprintf("rm -rf %s", ses.tmpDir)
-		err := ses.sshClient.Execute(rmdirStmt)
+		rmdirStmt = fmt.Sprintf("rm -rf %s", ses.tmpDir)
+		err = ses.sshClient.Execute(rmdirStmt)
 		if err != nil {
 			log.Printf("%s: %s", logp, err)
 		}
@@ -262,20 +279,22 @@ func (aww *Awwan) Play(req *Request) (err error) {
 
 // Serve start the web-user interface that serve awwan actions through HTTP.
 func (aww *Awwan) Serve() (err error) {
-	logp := "Serve"
+	var (
+		logp          = "Serve"
+		envDev        = os.Getenv(envDevelopment)
+		memfsBaseOpts = &memfs.Options{
+			Root: aww.BaseDir,
+			Excludes: []string{
+				`.*/\.git`,
+				"node_modules",
+				"vendor",
+				`.*\.(bz|bz2|gz|iso|jar|tar|xz|zip)`,
+			},
+			TryDirect: true, // Only store the file structures in the memory.
+		}
 
-	envDev := os.Getenv(envDevelopment)
-
-	memfsBaseOpts := &memfs.Options{
-		Root: aww.BaseDir,
-		Excludes: []string{
-			`.*/\.git`,
-			"node_modules",
-			"vendor",
-			`.*\.(bz|bz2|gz|iso|jar|tar|xz|zip)`,
-		},
-		TryDirect: true, // Only store the file structures in the memory.
-	}
+		serverOpts *http.ServerOptions
+	)
 
 	aww.memfsBase, err = memfs.New(memfsBaseOpts)
 	if err != nil {
@@ -286,7 +305,7 @@ func (aww *Awwan) Serve() (err error) {
 		go aww.workerBuild()
 	}
 
-	serverOpts := &http.ServerOptions{
+	serverOpts = &http.ServerOptions{
 		Memfs:   mfsWww,
 		Address: defListenAddress,
 	}
@@ -308,21 +327,28 @@ func (aww *Awwan) Serve() (err error) {
 // loadSshConfig load all SSH config from user's home and the awwan base
 // directoy.
 func (aww *Awwan) loadSshConfig() (err error) {
-	logp := "loadSshConfig"
+	var (
+		logp = "loadSshConfig"
 
-	homeDir, err := os.UserHomeDir()
+		baseDirConfig *config.Config
+		homeDir       string
+		configFile    string
+	)
+
+	homeDir, err = os.UserHomeDir()
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
 
-	configFile := filepath.Join(homeDir, defSshDir, defSshConfig)
+	configFile = filepath.Join(homeDir, defSshDir, defSshConfig)
 	aww.sshConfig, err = config.Load(configFile)
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
 
 	configFile = filepath.Join(aww.BaseDir, defSshDir, defSshConfig)
-	baseDirConfig, err := config.Load(configFile)
+
+	baseDirConfig, err = config.Load(configFile)
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
@@ -457,7 +483,7 @@ func doBuildTypeScript(esBuildOptions *api.BuildOptions) (err error) {
 }
 
 func initMemfsWww() (err error) {
-	mfsOpts := &memfs.Options{
+	var mfsOpts = &memfs.Options{
 		Root: "_www",
 		Includes: []string{
 			`.*\.(js|html|png|ico)$`,

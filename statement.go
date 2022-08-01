@@ -32,7 +32,12 @@ type Statement struct {
 // ParseStatement create and initialize new Statement from raw line.
 // It will return nil if raw line is empty.
 func ParseStatement(raw []byte) (stmt *Statement, err error) {
-	logp := "ParseStatement"
+	var (
+		logp = "ParseStatement"
+
+		cmd  string
+		args []string
+	)
 
 	raw = bytes.TrimSpace(raw)
 	if len(raw) == 0 {
@@ -41,7 +46,7 @@ func ParseStatement(raw []byte) (stmt *Statement, err error) {
 
 	if bytes.HasPrefix(raw, cmdMagicGet) {
 		raw = raw[len(cmdMagicGet):]
-		cmd, args := libexec.ParseCommandArgs(string(raw))
+		cmd, args = libexec.ParseCommandArgs(string(raw))
 		if len(cmd) == 0 || len(args) == 0 {
 			return nil, fmt.Errorf("%s: %s missing argument", logp, cmdMagicGet)
 		}
@@ -55,7 +60,7 @@ func ParseStatement(raw []byte) (stmt *Statement, err error) {
 	}
 	if bytes.HasPrefix(raw, cmdMagicPut) {
 		raw = raw[len(cmdMagicPut):]
-		cmd, args := libexec.ParseCommandArgs(string(raw))
+		cmd, args = libexec.ParseCommandArgs(string(raw))
 		if len(cmd) == 0 || len(args) == 0 {
 			return nil, fmt.Errorf("%s: %s missing argument", logp, cmdMagicPut)
 		}
@@ -69,7 +74,7 @@ func ParseStatement(raw []byte) (stmt *Statement, err error) {
 	}
 	if bytes.HasPrefix(raw, cmdMagicSudoGet) {
 		raw = raw[len(cmdMagicSudoGet):]
-		cmd, args := libexec.ParseCommandArgs(string(raw))
+		cmd, args = libexec.ParseCommandArgs(string(raw))
 		if len(cmd) == 0 || len(args) == 0 {
 			return nil, fmt.Errorf("%s: %s missing argument", logp, cmdMagicSudoGet)
 		}
@@ -83,7 +88,7 @@ func ParseStatement(raw []byte) (stmt *Statement, err error) {
 	}
 	if bytes.HasPrefix(raw, cmdMagicSudoPut) {
 		raw = raw[len(cmdMagicSudoPut):]
-		cmd, args := libexec.ParseCommandArgs(string(raw))
+		cmd, args = libexec.ParseCommandArgs(string(raw))
 		if len(cmd) == 0 || len(args) == 0 {
 			return nil, fmt.Errorf("%s: %s missing argument", logp, cmdMagicSudoPut)
 		}
@@ -97,7 +102,7 @@ func ParseStatement(raw []byte) (stmt *Statement, err error) {
 	}
 	if bytes.HasPrefix(raw, cmdMagicRequire) {
 		raw = raw[len(cmdMagicRequire):]
-		cmd, args := libexec.ParseCommandArgs(string(raw))
+		cmd, args = libexec.ParseCommandArgs(string(raw))
 		stmt = &Statement{
 			kind: statementKindRequire,
 			cmd:  cmd,
@@ -114,7 +119,7 @@ func ParseStatement(raw []byte) (stmt *Statement, err error) {
 		return stmt, nil
 	}
 
-	cmd, args := libexec.ParseCommandArgs(string(raw))
+	cmd, args = libexec.ParseCommandArgs(string(raw))
 	stmt = &Statement{
 		cmd:  cmd,
 		args: args,

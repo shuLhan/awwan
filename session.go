@@ -43,7 +43,11 @@ type Session struct {
 // NewSession create and initialize the new session based on Awwan base
 // directory and the session directory.
 func NewSession(baseDir, sessionDir string) (ses *Session, err error) {
-	logp := "newSession"
+	var (
+		logp = "newSession"
+
+		randomString string
+	)
 
 	ses = &Session{
 		BaseDir:   baseDir,
@@ -57,7 +61,7 @@ func NewSession(baseDir, sessionDir string) (ses *Session, err error) {
 	}
 
 	rand.Seed(time.Now().Unix())
-	randomString := string(ascii.Random([]byte(ascii.LettersNumber), 16))
+	randomString = string(ascii.Random([]byte(ascii.LettersNumber), 16))
 	ses.tmpDir = filepath.Join(defTmpDir, randomString)
 
 	return ses, nil
@@ -85,7 +89,13 @@ func (ses *Session) Vals(keyPath string) []string {
 
 // Copy file in local system.
 func (ses *Session) Copy(stmt *Statement) (err error) {
-	logp := "Copy"
+	var (
+		logp = "Copy"
+
+		src  string
+		dest string
+	)
+
 	if len(stmt.cmd) == 0 {
 		return fmt.Errorf("%s: missing source argument", logp)
 	}
@@ -96,12 +106,12 @@ func (ses *Session) Copy(stmt *Statement) (err error) {
 		return fmt.Errorf("%s: two or more destination arguments is given", logp)
 	}
 
-	src, err := parseTemplate(ses, stmt.cmd)
+	src, err = parseTemplate(ses, stmt.cmd)
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
 
-	dest := stmt.args[0]
+	dest = stmt.args[0]
 
 	err = libio.Copy(dest, src)
 	if err != nil {
@@ -112,7 +122,13 @@ func (ses *Session) Copy(stmt *Statement) (err error) {
 
 // Get copy file from remote to local.
 func (ses *Session) Get(stmt *Statement) (err error) {
-	logp := "Get"
+	var (
+		logp = "Get"
+
+		remote string
+		local  string
+	)
+
 	if len(stmt.cmd) == 0 {
 		return fmt.Errorf("%s: missing source argument", logp)
 	}
@@ -123,8 +139,8 @@ func (ses *Session) Get(stmt *Statement) (err error) {
 		return fmt.Errorf("%s: two or more destination arguments is given", logp)
 	}
 
-	remote := stmt.cmd
-	local := stmt.args[0]
+	remote = stmt.cmd
+	local = stmt.args[0]
 
 	if ses.sftpc == nil {
 		err = ses.sshClient.ScpGet(remote, local)
@@ -139,7 +155,13 @@ func (ses *Session) Get(stmt *Statement) (err error) {
 
 // Put copy file from local to remote system.
 func (ses *Session) Put(stmt *Statement) (err error) {
-	logp := "Put"
+	var (
+		logp = "Put"
+
+		local  string
+		remote string
+	)
+
 	if len(stmt.cmd) == 0 {
 		return fmt.Errorf("%s: missing source argument", logp)
 	}
@@ -150,12 +172,12 @@ func (ses *Session) Put(stmt *Statement) (err error) {
 		return fmt.Errorf("%s: two or more destination arguments is given", logp)
 	}
 
-	local, err := parseTemplate(ses, stmt.cmd)
+	local, err = parseTemplate(ses, stmt.cmd)
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
 
-	remote := stmt.args[0]
+	remote = stmt.args[0]
 
 	if ses.sftpc == nil {
 		err = ses.sshClient.ScpPut(local, remote)
@@ -213,7 +235,17 @@ func (ses *Session) SudoCopy(req *Request, stmt *Statement, withParseInput bool)
 // SudoGet copy file from remote that can be accessed by root on remote, to
 // local.
 func (ses *Session) SudoGet(stmt *Statement) (err error) {
-	logp := "SudoGet"
+	var (
+		logp = "SudoGet"
+
+		remoteSrc     string
+		remoteBase    string
+		remoteTmp     string
+		cpRemoteToTmp string
+		chmod         string
+		local         string
+	)
+
 	if len(stmt.cmd) == 0 {
 		return fmt.Errorf("%s: missing source argument", logp)
 	}
@@ -226,18 +258,18 @@ func (ses *Session) SudoGet(stmt *Statement) (err error) {
 
 	// Copy file in the remote to temporary directory first, so user can
 	// read them.
-	remoteSrc := stmt.cmd
-	remoteBase := filepath.Base(remoteSrc)
-	remoteTmp := filepath.Join(ses.tmpDir, remoteBase)
+	remoteSrc = stmt.cmd
+	remoteBase = filepath.Base(remoteSrc)
+	remoteTmp = filepath.Join(ses.tmpDir, remoteBase)
 
-	cpRemoteToTmp := fmt.Sprintf("sudo cp -f %s %s", remoteSrc, remoteTmp)
+	cpRemoteToTmp = fmt.Sprintf("sudo cp -f %s %s", remoteSrc, remoteTmp)
 
 	err = ses.sshClient.Execute(cpRemoteToTmp)
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
 
-	chmod := fmt.Sprintf("sudo chown %s %s", ses.SSHUser, remoteTmp)
+	chmod = fmt.Sprintf("sudo chown %s %s", ses.SSHUser, remoteTmp)
 
 	err = ses.sshClient.Execute(chmod)
 	if err != nil {
@@ -245,7 +277,7 @@ func (ses *Session) SudoGet(stmt *Statement) (err error) {
 	}
 
 	// Get temporary file in the remote to local.
-	local := stmt.args[0]
+	local = stmt.args[0]
 	if ses.sftpc == nil {
 		err = ses.sshClient.ScpGet(remoteTmp, local)
 	} else {
@@ -259,7 +291,16 @@ func (ses *Session) SudoGet(stmt *Statement) (err error) {
 
 // SudoPut copy file from local to remote using sudo.
 func (ses *Session) SudoPut(stmt *Statement) (err error) {
-	logp := "SudoPut"
+	var (
+		logp = "SudoPut"
+
+		local    string
+		baseName string
+		tmp      string
+		remote   string
+		moveStmt string
+	)
+
 	if len(stmt.cmd) == 0 {
 		return fmt.Errorf("%s: missing source argument", logp)
 	}
@@ -272,16 +313,16 @@ func (ses *Session) SudoPut(stmt *Statement) (err error) {
 
 	// Apply the session variables into local file to be copied first, and
 	// save them into cache directory.
-	local, err := parseTemplate(ses, stmt.cmd)
+	local, err = parseTemplate(ses, stmt.cmd)
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
 
-	baseName := filepath.Base(stmt.cmd)
+	baseName = filepath.Base(stmt.cmd)
 
 	// Copy file from local to temporary directory first in remote.
-	tmp := filepath.Join(ses.tmpDir, baseName)
-	remote := string(stmt.args[0])
+	tmp = filepath.Join(ses.tmpDir, baseName)
+	remote = string(stmt.args[0])
 
 	if ses.sftpc == nil {
 		err = ses.sshClient.ScpPut(local, tmp)
@@ -294,7 +335,7 @@ func (ses *Session) SudoPut(stmt *Statement) (err error) {
 
 	// Finally, move the file from the temporary directory to original
 	// destination.
-	moveStmt := fmt.Sprintf("sudo mv -f %s %s", tmp, remote)
+	moveStmt = fmt.Sprintf("sudo mv -f %s %s", tmp, remote)
 
 	return ses.sshClient.Execute(moveStmt)
 }
@@ -302,7 +343,9 @@ func (ses *Session) SudoPut(stmt *Statement) (err error) {
 // ExecLocal execute the command with its arguments in local environment where
 // the output and error send to os.Stdout and os.Stderr respectively.
 func (ses *Session) ExecLocal(req *Request, stmt *Statement) (err error) {
-	cmd := exec.Command("/bin/sh", "-c", string(stmt.raw))
+	var (
+		cmd = exec.Command("/bin/sh", "-c", string(stmt.raw))
+	)
 	cmd.Stdout = req.stdout
 	cmd.Stderr = req.stderr
 	return cmd.Run()
@@ -311,8 +354,13 @@ func (ses *Session) ExecLocal(req *Request, stmt *Statement) (err error) {
 // executeRequires run the "#require:" statements from line 0 until
 // the start argument in the local system.
 func (ses *Session) executeRequires(req *Request) (err error) {
-	for x := 0; x < req.BeginAt; x++ {
-		stmt := req.script.requires[x]
+	var (
+		x    int
+		stmt *Statement
+	)
+
+	for x = 0; x < req.BeginAt; x++ {
+		stmt = req.script.requires[x]
 		if stmt == nil {
 			continue
 		}

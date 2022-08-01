@@ -11,7 +11,13 @@ import (
 )
 
 func TestJoinRequireStatements(t *testing.T) {
-	in := bytes.Split([]byte(`
+	var (
+		in  [][]byte
+		exp [][]byte
+		got [][]byte
+	)
+
+	in = bytes.Split([]byte(`
 #require:
 a
 b
@@ -20,7 +26,7 @@ b
 #get:
 #require:`), newLine)
 
-	exp := [][]byte{
+	exp = [][]byte{
 		nil,
 		[]byte("#require: a"),
 		nil,
@@ -31,15 +37,17 @@ b
 		nil,
 	}
 
-	got := joinRequireStatements(in)
+	got = joinRequireStatements(in)
 	test.Assert(t, "joinRequireStatements", exp, got)
 }
 
 func TestJoinStatements(t *testing.T) {
-	cases := []struct {
+	type testCase struct {
 		in  [][]byte
 		exp [][]byte
-	}{{
+	}
+
+	var cases = []testCase{{
 		in: bytes.Split([]byte(`
 a
 b \
@@ -59,8 +67,14 @@ g`), newLine),
 			[]byte("g"),
 		},
 	}}
-	for _, c := range cases {
-		got := joinStatements(c.in)
+
+	var (
+		c   testCase
+		got [][]byte
+	)
+
+	for _, c = range cases {
+		got = joinStatements(c.in)
 		test.Assert(t, "joinStatements", c.exp, got)
 	}
 }

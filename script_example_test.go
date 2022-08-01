@@ -9,28 +9,36 @@ import (
 )
 
 func ExampleParseScriptForLocal() {
-	envContent := `
+	var (
+		envContent = `
 [section]
 key=value
 `
 
-	scriptContent := `
+		scriptContent = `
 multiline\
 command {{.Val "section::key"}};\
 end;
 `
-	ses := &Session{}
-	err := ses.loadEnvFromBytes([]byte(envContent))
+
+		ses = &Session{}
+
+		s    *Script
+		err  error
+		stmt []byte
+	)
+
+	err = ses.loadEnvFromBytes([]byte(envContent))
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	s, err := ParseScriptForLocal(ses, []byte(scriptContent))
+	s, err = ParseScriptForLocal(ses, []byte(scriptContent))
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	for _, stmt := range s.rawLines {
+	for _, stmt = range s.rawLines {
 		fmt.Printf("%s\n", stmt)
 	}
 	// Output:

@@ -15,6 +15,7 @@ import (
 
 	libbytes "github.com/shuLhan/share/lib/bytes"
 	libhttp "github.com/shuLhan/share/lib/http"
+	"github.com/shuLhan/share/lib/memfs"
 )
 
 const (
@@ -31,7 +32,9 @@ type fsRequest struct {
 }
 
 func (aww *Awwan) registerHttpApis() (err error) {
-	logp := "registerHttpApis"
+	var (
+		logp = "registerHttpApis"
+	)
 
 	err = aww.httpd.RegisterEndpoint(&libhttp.Endpoint{
 		Method:       libhttp.RequestMethodGet,
@@ -44,14 +47,13 @@ func (aww *Awwan) registerHttpApis() (err error) {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
 
-	apiFsDelete := &libhttp.Endpoint{
+	err = aww.httpd.RegisterEndpoint(&libhttp.Endpoint{
 		Method:       libhttp.RequestMethodDelete,
 		Path:         httpApiFs,
 		RequestType:  libhttp.RequestTypeJSON,
 		ResponseType: libhttp.ResponseTypeJSON,
 		Call:         aww.httpApiFsDelete,
-	}
-	err = aww.httpd.RegisterEndpoint(apiFsDelete)
+	})
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
@@ -94,17 +96,22 @@ func (aww *Awwan) registerHttpApis() (err error) {
 
 // httpApiFs get the list of files or specific file using query parameter
 // "path".
-func (aww *Awwan) httpApiFs(epr *libhttp.EndpointRequest) ([]byte, error) {
-	res := &libhttp.EndpointResponse{}
+func (aww *Awwan) httpApiFs(epr *libhttp.EndpointRequest) (resb []byte, err error) {
+	var (
+		res = &libhttp.EndpointResponse{}
 
-	path := epr.HttpRequest.Form.Get(paramNamePath)
+		node *memfs.Node
+		path string
+	)
+
+	path = epr.HttpRequest.Form.Get(paramNamePath)
 	if len(path) == 0 {
 		res.Code = http.StatusOK
 		res.Data = aww.memfsBase
 		return json.Marshal(res)
 	}
 
-	node, err := aww.memfsBase.Get(path)
+	node, err = aww.memfsBase.Get(path)
 	if err != nil {
 		return nil, err
 	}
@@ -144,38 +151,44 @@ func (aww *Awwan) httpApiFs(epr *libhttp.EndpointRequest) ([]byte, error) {
 //   - 400: Bad request.
 //   - 401: Unauthorized.
 //   - 404: File not found.
-func (aww *Awwan) httpApiFsDelete(epr *libhttp.EndpointRequest) ([]byte, error) {
-	logp := "httpApiFsDelete"
+func (aww *Awwan) httpApiFsDelete(epr *libhttp.EndpointRequest) (resb []byte, err error) {
+	var (
+		logp = "httpApiFsDelete"
+		res  = &libhttp.EndpointResponse{}
+		req  = &fsRequest{}
 
-	res := &libhttp.EndpointResponse{}
+		parentPath string
+		sysPath    string
+		nodeParent *memfs.Node
+	)
+
 	res.Code = http.StatusBadRequest
 
-	req := &fsRequest{}
-	err := json.Unmarshal(epr.RequestBody, req)
+	err = json.Unmarshal(epr.RequestBody, req)
 	if err != nil {
 		res.Message = err.Error()
 		return nil, res
 	}
 
-	parentPath := path.Dir(req.Path)
-	nodeParent := aww.memfsBase.PathNodes.Get(parentPath)
+	parentPath = path.Dir(req.Path)
+	nodeParent = aww.memfsBase.PathNodes.Get(parentPath)
 	if nodeParent == nil {
 		res.Message = fmt.Sprintf("%s: invalid path %s", logp, req.Path)
 		return nil, res
 	}
 
-	path := filepath.Join(nodeParent.SysPath, path.Base(req.Path))
-	path, err = filepath.Abs(path)
+	sysPath = filepath.Join(nodeParent.SysPath, path.Base(req.Path))
+	sysPath, err = filepath.Abs(sysPath)
 	if err != nil {
 		res.Message = fmt.Sprintf("%s: %s", logp, err)
 		return nil, res
 	}
-	if !strings.HasPrefix(path, aww.memfsBase.Opts.Root) {
-		res.Message = fmt.Sprintf("%s: invalid path %q", logp, path)
+	if !strings.HasPrefix(sysPath, aww.memfsBase.Opts.Root) {
+		res.Message = fmt.Sprintf("%s: invalid path %q", logp, sysPath)
 		return nil, res
 	}
 
-	err = os.Remove(path)
+	err = os.Remove(sysPath)
 	if err != nil {
 		res.Code = http.StatusInternalServerError
 		res.Message = fmt.Sprintf("%s: %s", logp, err)
@@ -183,7 +196,7 @@ func (aww *Awwan) httpApiFsDelete(epr *libhttp.EndpointRequest) ([]byte, error) 
 	}
 
 	res.Code = http.StatusOK
-	res.Message = fmt.Sprintf("%s: %q has been removed", logp, path)
+	res.Message = fmt.Sprintf("%s: %q has been removed", logp, sysPath)
 
 	return json.Marshal(res)
 }
@@ -206,6 +219,12 @@ func (aww *Awwan) httpApiFsPost(epr *libhttp.EndpointRequest) (rawBody []byte, e
 		logp = "httpApiFsPost"
 		res  = &libhttp.EndpointResponse{}
 		req  = &fsRequest{}
+
+		nodeParent *memfs.Node
+		node       *memfs.Node
+		fi         os.FileInfo
+		parentPath string
+		sysPath    string
 	)
 
 	res.Code = http.StatusBadRequest
@@ -216,13 +235,13 @@ func (aww *Awwan) httpApiFsPost(epr *libhttp.EndpointRequest) (rawBody []byte, e
 		return nil, res
 	}
 
-	parentPath := path.Dir(req.Path)
-	nodeParent := aww.memfsBase.PathNodes.Get(parentPath)
+	parentPath = path.Dir(req.Path)
+	nodeParent = aww.memfsBase.PathNodes.Get(parentPath)
 	if nodeParent == nil {
 		res.Message = fmt.Sprintf("%s: invalid path %s", logp, req.Path)
 		return nil, res
 	}
-	node := aww.memfsBase.PathNodes.Get(req.Path)
+	node = aww.memfsBase.PathNodes.Get(req.Path)
 	if node != nil {
 		res.Message = fmt.Sprintf("%s: file exist", logp)
 		return nil, res
@@ -230,27 +249,27 @@ func (aww *Awwan) httpApiFsPost(epr *libhttp.EndpointRequest) (rawBody []byte, e
 
 	res.Code = http.StatusInternalServerError
 
-	path := filepath.Join(nodeParent.SysPath, path.Base(req.Path))
-	path, err = filepath.Abs(path)
+	sysPath = filepath.Join(nodeParent.SysPath, path.Base(req.Path))
+	sysPath, err = filepath.Abs(sysPath)
 	if err != nil {
 		res.Message = fmt.Sprintf("%s: %s", logp, err)
 		return nil, res
 	}
-	if !strings.HasPrefix(path, aww.memfsBase.Opts.Root) {
-		res.Message = fmt.Sprintf("%s: invalid path %q", logp, path)
+	if !strings.HasPrefix(sysPath, aww.memfsBase.Opts.Root) {
+		res.Message = fmt.Sprintf("%s: invalid path %q", logp, sysPath)
 		return nil, res
 	}
 	if req.IsDir {
-		err = os.Mkdir(path, 0700)
+		err = os.Mkdir(sysPath, 0700)
 	} else {
-		err = os.WriteFile(path, nil, 0600)
+		err = os.WriteFile(sysPath, nil, 0600)
 	}
 	if err != nil {
 		res.Message = fmt.Sprintf("%s: %s", logp, err)
 		return nil, res
 	}
 
-	fi, err := os.Stat(path)
+	fi, err = os.Stat(sysPath)
 	if err != nil {
 		res.Message = fmt.Sprintf("%s: %s", logp, err)
 		return nil, res
@@ -274,6 +293,8 @@ func (aww *Awwan) httpApiFsPut(epr *libhttp.EndpointRequest) (rawBody []byte, er
 		logp = "httpApiFsPut"
 		res  = &libhttp.EndpointResponse{}
 		req  = &fsRequest{}
+
+		node *memfs.Node
 	)
 
 	res.Code = http.StatusInternalServerError
@@ -284,7 +305,7 @@ func (aww *Awwan) httpApiFsPut(epr *libhttp.EndpointRequest) (rawBody []byte, er
 		return nil, res
 	}
 
-	node := aww.memfsBase.PathNodes.Get(req.Path)
+	node = aww.memfsBase.PathNodes.Get(req.Path)
 	if node == nil {
 		res.Code = http.StatusNotFound
 		res.Message = fmt.Sprintf("%s: invalid or empty path %s", logp, req.Path)
@@ -303,16 +324,18 @@ func (aww *Awwan) httpApiFsPut(epr *libhttp.EndpointRequest) (rawBody []byte, er
 	return json.Marshal(res)
 }
 
-func (aww *Awwan) httpApiExecute(epr *libhttp.EndpointRequest) ([]byte, error) {
+func (aww *Awwan) httpApiExecute(epr *libhttp.EndpointRequest) (resb []byte, err error) {
 	var (
 		logp = "httpApiExecute"
 		req  = NewRequest()
 		res  = &libhttp.EndpointResponse{}
+
+		data *HttpResponse
 	)
 
 	res.Code = http.StatusInternalServerError
 
-	err := json.Unmarshal(epr.RequestBody, req)
+	err = json.Unmarshal(epr.RequestBody, req)
 	if err != nil {
 		res.Message = fmt.Sprintf("%s: %s", logp, err)
 		return nil, res
@@ -343,7 +366,7 @@ func (aww *Awwan) httpApiExecute(epr *libhttp.EndpointRequest) ([]byte, error) {
 		return nil, res
 	}
 
-	data := &HttpResponse{
+	data = &HttpResponse{
 		Request: req,
 		Stdout:  libbytes.Copy(aww.bufout.Bytes()),
 		Stderr:  libbytes.Copy(aww.buferr.Bytes()),
