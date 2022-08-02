@@ -18,7 +18,6 @@ import (
 	"github.com/shuLhan/share/lib/http"
 	"github.com/shuLhan/share/lib/memfs"
 	"github.com/shuLhan/share/lib/mlog"
-	"github.com/shuLhan/share/lib/os/exec"
 	"github.com/shuLhan/share/lib/ssh/config"
 )
 
@@ -513,10 +512,6 @@ func doBuildTypeScript(esBuildOptions *api.BuildOptions) (err error) {
 
 	buildResult = api.Build(*esBuildOptions)
 	if len(buildResult.Errors) == 0 {
-		err = exec.Run("tsc --noEmit --target es6 ./_www/main.ts", nil, nil)
-		if err != nil {
-			return fmt.Errorf("%s: %w", logp, err)
-		}
 		return nil
 	}
 	for x, msg = range buildResult.Errors {
