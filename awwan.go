@@ -383,7 +383,7 @@ func (aww *Awwan) workerBuild() {
 		logp      = "workerBuild"
 		watchOpts = memfs.WatchOptions{
 			Watches: []string{
-				`.*\.ts$`,
+				`.*\.(adoc|ts)$`,
 			},
 		}
 		esBuildOptions = api.BuildOptions{
@@ -395,13 +395,21 @@ func (aww *Awwan) workerBuild() {
 			Write:       true,
 		}
 		buildTicker = time.NewTicker(3 * time.Second)
+		ciigoConv   *ciigo.Converter
 
-		dw         *memfs.DirWatcher
-		ns         memfs.NodeState
-		tsCount    int
-		embedCount int
-		err        error
+		dw           *memfs.DirWatcher
+		ns           memfs.NodeState
+		pathAdocBase string
+		pathHtml     string
+		err          error
+		tsCount      int
+		embedCount   int
 	)
+
+	ciigoConv, err = ciigo.NewConverter(``)
+	if err != nil {
+		log.Fatalf(`%s: %s`, logp, err)
+	}
 
 	if mfsWww == nil {
 		err = initMemfsWww()
@@ -419,10 +427,22 @@ func (aww *Awwan) workerBuild() {
 		select {
 		case ns = <-dw.C:
 			fmt.Printf("%s: update on %s\n", logp, ns.Node.SysPath)
-			if strings.HasSuffix(ns.Node.SysPath, ".ts") ||
+
+			if strings.HasSuffix(ns.Node.SysPath, `.adoc`) {
+				pathAdocBase = strings.TrimSuffix(ns.Node.SysPath, `.adoc`)
+				pathHtml = pathAdocBase + `.html`
+				err = ciigoConv.ToHtmlFile(ns.Node.SysPath, pathHtml)
+				if err != nil {
+					mlog.Errf(`%s: %s: %s`, logp, ns.Node.SysPath, err)
+				} else {
+					embedCount++
+				}
+
+			} else if strings.HasSuffix(ns.Node.SysPath, `.ts`) ||
 				strings.HasSuffix(ns.Node.SysPath, "tsconfig.json") {
-				mlog.Outf("%s: update %s\n", logp, ns.Node.SysPath)
+				mlog.Outf(`%s: update %s`, logp, ns.Node.SysPath)
 				tsCount++
+
 			} else if strings.HasSuffix(ns.Node.SysPath, ".js") ||
 				strings.HasSuffix(ns.Node.SysPath, ".html") {
 				embedCount++

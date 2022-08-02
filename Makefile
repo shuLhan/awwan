@@ -23,9 +23,6 @@ test:
 lint:
 	-golangci-lint run ./...
 
-serve-doc:
-	ciigo serve _www/
-
 dev:
 	AWWAN_DEVELOPMENT=1 go run ./cmd/awwan serve $(AWWAN_WORKSPACE)
 
