@@ -1,6 +1,7 @@
 /CHANGELOG.html
 /README.html
 /_bin
+/_www/doc/*.html
 /awwan
 /cover.html
 /cover.out
