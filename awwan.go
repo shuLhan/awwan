@@ -12,7 +12,9 @@ import (
 	"strings"
 	"time"
 
+	"git.sr.ht/~shulhan/ciigo"
 	"github.com/evanw/esbuild/pkg/api"
+
 	"github.com/shuLhan/share/lib/http"
 	"github.com/shuLhan/share/lib/memfs"
 	"github.com/shuLhan/share/lib/mlog"
@@ -107,6 +109,11 @@ func (aww *Awwan) Build() (err error) {
 	err = doBuildTypeScript(nil)
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
+	}
+
+	err = convertAdoc()
+	if err != nil {
+		return fmt.Errorf(`%s: %w`, logp, err)
 	}
 
 	err = initMemfsWww()
@@ -302,6 +309,11 @@ func (aww *Awwan) Serve() (err error) {
 	}
 
 	if len(envDev) > 0 {
+		err = convertAdoc()
+		if err != nil {
+			return fmt.Errorf(`%s: %w`, logp, err)
+		}
+
 		go aww.workerBuild()
 	}
 
@@ -438,13 +450,24 @@ func (aww *Awwan) workerBuild() {
 	}
 }
 
+// convertAdoc convert all .adoc files inside _www/doc directory to HTML.
+func convertAdoc() (err error) {
+	var (
+		opts = &ciigo.ConvertOptions{
+			Root: `_www/doc`,
+		}
+	)
+	err = ciigo.Convert(opts)
+	return err
+}
+
 func doGoEmbed() (err error) {
 	err = mfsWww.GoEmbed()
 	if err != nil {
 		mlog.Errf("doGoEmbed: %s", err)
 		return err
 	}
-	mlog.Outf("doGoEmbed: %s\n", embedFileName)
+	mlog.Outf("doGoEmbed: %s", embedFileName)
 	return nil
 }
 
