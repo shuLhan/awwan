@@ -1,0 +1,16 @@
+pkgbase = awwan-git
+	pkgdesc = Configuration management software, infrastructure as file and directory layout.
+	pkgver = 0.6.0.r11.gbe9889f
+	pkgrel = 1
+	url = https://git.sr.ht/~shulhan/awwan
+	arch = x86_64
+	license = GPL3
+	makedepends = go
+	makedepends = git
+	provides = awwan
+	source = awwan-git::git+https://git.sr.ht/~shulhan/awwan
+	source = wui::git+https://git.sr.ht/~shulhan/wui
+	md5sums = SKIP
+	md5sums = SKIP
+
+pkgname = awwan-git

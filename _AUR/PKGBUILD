@@ -1,0 +1,51 @@
+# Maintainer: shulhan <ms@kilabit.info>
+
+pkgname=awwan-git
+pkgver=0.6.0.r11.gbe9889f
+pkgrel=1
+
+pkgdesc="Configuration management software, infrastructure as file and directory layout."
+arch=(x86_64)
+url='https://git.sr.ht/~shulhan/awwan'
+license=('GPL3')
+
+makedepends=(
+	'go'
+	'git'
+)
+
+provides=('awwan')
+
+source=(
+	"$pkgname::git+https://git.sr.ht/~shulhan/awwan"
+	"wui::git+https://git.sr.ht/~shulhan/wui"
+	#"$pkgname::git+file:///home/ms/go/src/git.sr.ht/~shulhan/awwan"
+	#"wui::git+file:///home/ms/go/src/git.sr.ht/~shulhan/wui"
+)
+md5sums=(
+	'SKIP'
+	'SKIP'
+)
+
+pkgver() {
+	cd "$pkgname"
+	git describe --long --tags | sed 's/^v//;s/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+prepare() {
+	cd "$pkgname"
+	git submodule init
+	git config submodule."submodules/wui".url "${srcdir}/wui"
+	git submodule update
+}
+
+build() {
+	cd "$pkgname"
+	make
+}
+
+package() {
+	cd "$pkgname"
+	install -Dm755 _bin/awwan $pkgdir/usr/bin/awwan
+	install -Dm755 COPYING $pkgdir/usr/share/licenses/awwan/COPYING
+}
