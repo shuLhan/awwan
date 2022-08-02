@@ -1,10 +1,11 @@
 // SPDX-FileCopyrightText: 2019 M. Shulhan <ms@kilabit.info>
 // SPDX-License-Identifier: GPL-3.0-or-later
 = awwan
-:author: Shulhan
-:date: 11 August 2021
-:email: <ms@kilabit.info>
+Shulhan <ms@kilabit.info>
+11 Aug 2021
 :toc:
+:sectanchors:
+:sectlinks:
 :url-godoc: https://pkg.go.dev/git.sr.ht/~shulhan/awwan
 
 image:https://img.shields.io/badge/go.dev-reference-007d9c?logo=go&logoColor=white&style=flat-square[GoDoc, link={url-godoc}]
@@ -17,17 +18,18 @@ directory layout.
 
 ==  SYNOPSIS
 
+----
 awwan <command> <arguments>
 
 command = "local" | "play" | "serve"
 
-arguments = <script> <start> [end] | <workspace>
-
+arguments = <script> <line-start> [line-end] | <workspace>
+----
 
 ==  DESCRIPTION
 
 `awwan` is command-line interface to execute multiple lines of command in
-the local or remote server using SSH.
+the local or remote server using shell or SSH.
 
 
 ==  BACKGROUND
@@ -42,28 +44,27 @@ If yes, awwan is the right tools for you.
 
 ==  THE COMMAND
 
-The awwan tool have three command: local, play, or serve.
+The awwan tool have three commands: local, play, or serve.
 
 The "local" command execute the script in local environment, your host
-machine, without using SSH.
+machine, using shell.
 The "play" command execute the script in remote environment using SSH.
 The "serve" command run the web-user interface using <workspace> directory as
 base directory.
 
 The "local" and "play" command has the same arguments,
 
-	(local | play) <script> <start> [end]
+	(local | play) <script> <line-start> [line-end]
 
 The <script> argument is the path to the awwan script file.
 
-The <start> argument is line start number.
-Its define the line number in the script where awwan will start
-execution.
+The <line-start> argument is line start number.
+Its define the line number in the script where awwan start execution.
 
-The <end> argument define the line number in the script where awwan will stop
-executing the script, or "-" to set to the last line.
-If not defined then it will be equal to the line start, which means awwan will
-execute only single line.
+The <line-end> argument define the line number in the script where awwan
+stop executing the script, or "-" to set to the last line.
+If not defined then its equal to the line start, which means awwan execute
+only single line.
 
 The "serve" command have only single argument,
 
@@ -107,12 +108,13 @@ $ awwan serve ./work
 
 The awwan script is similar to shell script.
 Each line started with '#' is a comment, except for special, magic words.
+Each statement, either in local or remote, is executed using "sh -c".
 
 There are five magic words in the script: `#require:`, `#get:`, `#get!`,
 `#put:`, and `#put!`.
 
-Magic word `#require:` will ensure that the statement will always executed
-even if its skipped by line-start number argument.
+Magic word `#require:` ensure that the statement after it always executed even
+if its skipped by line-start number argument.
 For example, given following script with line number
 
 ----
@@ -122,16 +124,16 @@ For example, given following script with line number
 4: echo d
 ----
 
-Executing `awwan local script.aww 2`, will always execute line number 1 `echo
-a`, so the output would be
+Executing "awwan local script.aww 2", always execute line number 1 `echo a`,
+so the output would be
 
 ----
 a
 b
 ----
 
-Executing `awwan local script.aww 4` will always execute line number 1 and 3,
-so the output would be
+Executing "awwan local script.aww 4", always execute line number 1 and 3, so
+the output would be
 
 ----
 a
@@ -139,39 +141,35 @@ c
 d
 ----
 
-Magic word `#get:` will copy file from remote server to your local file
-system.
-Example,
+Magic word `#get:` copy file from remote server to your local file system.
+For example,
 
 ----
 #get: /etc/os-release os-release
 ----
 
-Magic word `#get!` will copy file from remote server, that can be accessed
-only by using sudo, to your local file.
-Example,
+Magic word `#get!` copy file from remote server, that can be accessed only by
+using sudo, to your local file.
+For example,
 
 ----
 #get! /etc/nginx/ssl/my.crt server.crt
 ----
 
-Magic word `#put:` will copy file from your local to remote server.
-Example,
+Magic word `#put:` copy file from your local to remote server.
+For example,
 
 ----
 #put: /etc/locale.conf /tmp/locale.conf
 ----
 
-Magic word `#put!` will copy file from your local system to remote server
-using sudo.
-Example,
+Magic word `#put!` copy file from your local system to remote server using
+sudo.
+For example,
 
 ----
 #put! /etc/locale.conf /etc/locale.conf
 ----
-
-One thing that script can't do is piping, for example "echo a > b".
-The workaround for this is using "sh -c 'echo a > b'".
 
 Here is an example of script that install Nginx on remote Arch Linux server
 using configuration from your local computer,
@@ -191,7 +189,7 @@ sudo systemctl status nginx
 The environment file is a file named `awwan.env` that contains variables using
 the form "key=value" that can be used for templating.
 
-When executing the script, `awwan` will read environment files in the current
+When executing the script, `awwan` read environment files in the current
 directory, and in each sub-directory, until the script directory.
 
 The environment file use the ini file format,
@@ -245,8 +243,8 @@ alpha = 1.2.3.4/32
 beta  = 2.3.4.5/32
 ----
 
-* `{{.Val "all::user"}}` will result to "arch" (without double quote), and
-* `{{.Val "whitelist:ip:alpha"}}` will result to "1.2.3.4/32"
+* `{{.Val "all::user"}}` result to "arch" (without double quote), and
+* `{{.Val "whitelist:ip:alpha"}}` result to "1.2.3.4/32"
   (without double quote)
 
 
@@ -262,7 +260,7 @@ All of this are derived from ssh_config(5) file in the current directory and
 in the user's home directory.
 
 The remote host name is derived from directory name of the script file.
-It will be matched with `Host` or `Match` section in the ssh_config(5) file.
+It is matched with `Host` or `Match` section in the ssh_config(5) file.
 
 For example, given the following directory structure,
 
@@ -277,8 +275,8 @@ For example, given the following directory structure,
     --- script.aww
 ----
 
-If we execute the "development/script.aww", awwan will search for the Host
-that match with "development" in current ".ssh/config" or in "~/.ssh/config".
+If we execute the "development/script.aww", awwan search for the Host that
+match with "development" in current ".ssh/config" or in "~/.ssh/config".
 
 
 ==  EXAMPLE
@@ -342,7 +340,7 @@ When executed from start to end like these,
 $ awwan play myserver/test.aww 1 -
 ----
 
-it will print the following output to terminal,
+it prints the following output to terminal,
 
 ----
 >>> arch@1.2.3.4:2222: 1: echo myserver
@@ -425,9 +423,9 @@ The `gcp` directory is cloud service with two accounts "development" and
 
 === What happened if two variables declared inside two environment files?
 
-When executing the script `awwan` will merge the variables from current
-directory with variable from script directory.
-Any keys that are duplicate will be merged and the last one will overwrite the
+When executing the script `awwan` merge the variables from current directory
+with variables from script directory.
+Any keys that are duplicate will be merged and the last one overwrite the
 previous one.
 
 
@@ -490,8 +488,10 @@ Activated [dev].
 
 ==  BUGS
 
-Shell pipe "|", "<", or ">"  does not work in the script.
-Use "sh -c 'cmd arguments'" if you need piping.
+Known bugs,
+
+* Executing script start with line number contains "#require:" is not
+  executing the required statement.
 
 
 ==  LINKS
@@ -520,31 +520,18 @@ To run development server that watch changes on _www, run
 ==  LICENSE
 
 ----
-Copyright (c) 2020 M. Shulhan (m.shulhan@gmail.com). All rights reserved.
+Copyright (C) 2019-2022 M. Shulhan <ms@kilabit.info>
 
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are
-met:
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the Free
+Software Foundation, either version 3 of the License, or any later version.
 
-   * Redistributions of source code must retain the above copyright
-notice, this list of conditions and the following disclaimer.
-   * Redistributions in binary form must reproduce the above
-copyright notice, this list of conditions and the following disclaimer
-in the documentation and/or other materials provided with the
-distribution.
-   * Neither the name of M. Shulhan, nor the names of its
-contributors may be used to endorse or promote products derived from
-this software without specific prior written permission.
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+or FITNESS FOR A PARTICULAR PURPOSE.
+See the GNU General Public License for more details.
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+You should have received a copy of the GNU General Public License along with
+this program.
+If not, see <http://www.gnu.org/licenses/>.
 ----
