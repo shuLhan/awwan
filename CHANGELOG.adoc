@@ -2,6 +2,43 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 = Changelog for awwan
 
+[#v0_6_1]
+==  awwan v0.6.1 (2022-08-06)
+
+This release fix the build process due to unused dependencies, private
+submodules URL, and missing directory; which is not caught when running on
+local.
+
+[#v0_6_1_chores]
+===  Chores
+
+all: remove calling tsc when building main.js::
++
+--
+The main.js already build with esbuild.
+--
+
+all: add empty .ssh directory to allow running build command::
+
+all: changes the submodule wui to use https schema::
++
+--
+Using git schema will fail on user that does not have SSH key in
+git.sr.ht.
+--
+
+_AUR: add package script for Arch Linux user::
+
+all: update the README with the latest implementation::
+This include updating the license to GPL v3.0.
+
+all: watch and convert .adoc files during development::
+
+all: convert the adoc during build and serve::
+
+all: realign some structs to minimize memory usage::
+
+
 [#v0_6_0]
 == awwan v0.6.0 (2022-07-04)
 
