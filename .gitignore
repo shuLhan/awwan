@@ -1,11 +1,12 @@
 /CHANGELOG.html
 /README.html
+/_AUR/*.tar.zst
 /_AUR/awwan-git
 /_AUR/pkg
 /_AUR/src
-/_AUR/*.tar.zst
 /_AUR/wui
 /_bin
+/_doc/*.html
 /_example/.cache
 /_www/doc/*.html
 /awwan

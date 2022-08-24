@@ -1,6 +1,9 @@
 // SPDX-FileCopyrightText: 2019 M. Shulhan <ms@kilabit.info>
 // SPDX-License-Identifier: GPL-3.0-or-later
 = Changelog for awwan
+:toc:
+:sectanchors:
+:sectlinks:
 
 [#v0_6_1]
 ==  awwan v0.6.1 (2022-08-06)
