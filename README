@@ -509,7 +509,7 @@ This project require git, GNU make, Go compiler, and TypeScript compiler.
 
 Steps to build from source,
 
-    $ git clone --recurse-submodules git@git.sr.ht:~shulhan/awwan
+    $ git clone --recurse-submodules https://git.sr.ht/~shulhan/awwan
     $ make
 
 To run development server that watch changes on _www, run
