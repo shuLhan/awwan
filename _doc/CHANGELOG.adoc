@@ -5,6 +5,35 @@
 :sectanchors:
 :sectlinks:
 
+
+[#v0_6_2]
+==  awwan v0.6.2 (2023-03-03)
+
+This release set minimum Go to 1.18 and update all dependencies.
+
+[#v0_6_2__chores]
+===  Chores
+
+all: fix the git clone URL in README::
++
+The clone URL should be in https scheme to make works for non-authenticated
+user.
+
+
+all: restructure the documents::
++
+--
+Changes,
+
+* Store all documents into directory _doc. This changes make the
+  directory doc inside _www become symlinks.
+* Move CHANGELOG.adoc to _doc
+* Rename README.adoc to README so it can be rendered on git.sr.ht, and
+  make it symlink so it can still rendered as AsciiDoc on GitHub.
+* Add To-do to _doc/index.adoc that was previously uncommitted as NOTEs
+--
+
+
 [#v0_6_1]
 ==  awwan v0.6.1 (2022-08-06)
 
