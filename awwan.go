@@ -21,14 +21,18 @@ import (
 	"github.com/shuLhan/share/lib/ssh/config"
 )
 
-const (
-	Version = `0.6.2`
+// Version current version of this module (library and program).
+const Version = `0.7.0-dev`
 
+// List of command available for program awwan.
+const (
 	CommandModeBuild = "build"
 	CommandModeLocal = "local"
 	CommandModePlay  = "play"
 	CommandModeServe = "serve"
+)
 
+const (
 	defCacheDir      = ".cache"
 	defEnvFileName   = "awwan.env" // The default awwan environment file name.
 	defListenAddress = "127.0.0.1:17600"
@@ -127,6 +131,7 @@ func (aww *Awwan) Build() (err error) {
 	return nil
 }
 
+// Local execute the script in the local machine using shell.
 func (aww *Awwan) Local(req *Request) (err error) {
 	var (
 		logp = "Local"
@@ -194,6 +199,7 @@ func (aww *Awwan) Local(req *Request) (err error) {
 	return nil
 }
 
+// Play execute the script in the remote machine using SSH.
 func (aww *Awwan) Play(req *Request) (err error) {
 	var (
 		logp = "Play"

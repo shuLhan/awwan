@@ -21,7 +21,7 @@ const (
 	statementKindSudoPut
 )
 
-// Statetement contains parsed raw line from the script.
+// Statement contains parsed raw line from the script.
 type Statement struct {
 	cmd  string
 	args []string
