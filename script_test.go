@@ -24,7 +24,7 @@ b
 #require: c
 #require:
 #get:
-#require:`), newLine)
+#require:`), []byte("\n"))
 
 	exp = [][]byte{
 		nil,
@@ -55,7 +55,7 @@ c
 d \
 e 	\
 f
-g`), newLine),
+g`), []byte("\n")),
 		exp: [][]byte{
 			nil,
 			[]byte("a"),

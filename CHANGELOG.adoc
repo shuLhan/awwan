@@ -37,6 +37,18 @@ Or to execute multiple lines and line range,
 
 ===  Chores
 
+all: replace golangci-lint with revive::
++
+--
+The golangci-lint become unusable if we build it with Go tip and
+sometimes it does not provide any hint anymore.
+
+While [revive] can run when building with Go tip and provide hints where
+we can improve.
+
+[revive]: https://github.com/mgechev/revive
+--
+
 go.mod: set the Go module version to 1.19::
 +
 The Go 1.18 has been archived and not maintained anymore.

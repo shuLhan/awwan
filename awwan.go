@@ -339,7 +339,7 @@ func (aww *Awwan) Serve() (err error) {
 }
 
 // loadSshConfig load all SSH config from user's home and the awwan base
-// directoy.
+// directory.
 func (aww *Awwan) loadSshConfig() (err error) {
 	var (
 		logp = "loadSshConfig"

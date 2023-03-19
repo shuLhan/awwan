@@ -44,20 +44,20 @@ func TestSession_generatePaths(t *testing.T) {
 	}, {
 		scriptPath: "testdata/test.aww",
 		exp: []string{
-			filepath.Join(ses.BaseDir),
+			ses.BaseDir,
 			filepath.Join(ses.BaseDir, "testdata"),
 		},
 	}, {
 		scriptPath: "./testdata/a/test.aww",
 		exp: []string{
-			filepath.Join(ses.BaseDir),
+			ses.BaseDir,
 			filepath.Join(ses.BaseDir, "testdata"),
 			filepath.Join(ses.BaseDir, "testdata", "a"),
 		},
 	}, {
 		scriptPath: "testdata/../testdata/a/test.aww",
 		exp: []string{
-			filepath.Join(ses.BaseDir),
+			ses.BaseDir,
 			filepath.Join(ses.BaseDir, "testdata"),
 			filepath.Join(ses.BaseDir, "testdata", "a"),
 		},

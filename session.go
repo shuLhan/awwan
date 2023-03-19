@@ -344,7 +344,8 @@ func (ses *Session) SudoPut(stmt *Statement) (err error) {
 // the output and error send to os.Stdout and os.Stderr respectively.
 func (ses *Session) ExecLocal(req *Request, stmt *Statement) (err error) {
 	var (
-		cmd = exec.Command("/bin/sh", "-c", string(stmt.raw))
+		args = string(stmt.raw)
+		cmd  = exec.Command(`/bin/sh`, `-c`, args)
 	)
 	cmd.Stdout = req.stdout
 	cmd.Stderr = req.stderr
