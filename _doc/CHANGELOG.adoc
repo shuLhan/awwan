@@ -35,6 +35,12 @@ Or to execute multiple lines and line range,
    awwan local 4,8,10-12
 --
 
+===  Chores
+
+go.mod: set the Go module version to 1.19::
++
+The Go 1.18 has been archived and not maintained anymore.
+
 
 [#v0_6_2]
 ==  awwan v0.6.2 (2023-03-03)

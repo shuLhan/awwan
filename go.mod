@@ -3,7 +3,7 @@
 
 module git.sr.ht/~shulhan/awwan
 
-go 1.18
+go 1.19
 
 require (
 	git.sr.ht/~shulhan/ciigo v0.9.3
