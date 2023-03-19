@@ -133,12 +133,16 @@ func (aww *Awwan) Build() (err error) {
 
 // Local execute the script in the local machine using shell.
 func (aww *Awwan) Local(req *Request) (err error) {
+	if len(req.lineRange.list) == 0 {
+		// No position to be executed.
+		return nil
+	}
+
 	var (
 		logp = "Local"
 
 		ses        *Session
 		sessionDir string
-		maxLines   int
 	)
 
 	req.scriptPath = filepath.Clean(req.Script)
@@ -168,15 +172,6 @@ func (aww *Awwan) Local(req *Request) (err error) {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
 
-	maxLines = len(req.script.stmts)
-	if req.BeginAt >= maxLines {
-		return fmt.Errorf("%s: start index %d out of range %d", logp,
-			req.BeginAt, maxLines)
-	}
-	if req.EndAt > maxLines {
-		req.EndAt = maxLines - 1
-	}
-
 	// Create temporary directory.
 	err = os.MkdirAll(ses.tmpDir, 0700)
 	if err != nil {
@@ -189,18 +184,26 @@ func (aww *Awwan) Local(req *Request) (err error) {
 		}
 	}()
 
-	err = ses.executeRequires(req)
-	if err != nil {
-		return fmt.Errorf("%s:%w", logp, err)
-	}
+	var pos linePosition
+	for _, pos = range req.lineRange.list {
+		err = ses.executeRequires(req, pos)
+		if err != nil {
+			return fmt.Errorf("%s:%w", logp, err)
+		}
 
-	ses.executeScriptOnLocal(req)
+		ses.executeScriptOnLocal(req, pos)
+	}
 
 	return nil
 }
 
 // Play execute the script in the remote machine using SSH.
 func (aww *Awwan) Play(req *Request) (err error) {
+	if len(req.lineRange.list) == 0 {
+		// No position to be executed.
+		return nil
+	}
+
 	var (
 		logp = "Play"
 
@@ -209,7 +212,6 @@ func (aww *Awwan) Play(req *Request) (err error) {
 		sshSection *config.Section
 		mkdirStmt  string
 		rmdirStmt  string
-		maxLines   int
 	)
 
 	req.scriptPath = filepath.Clean(req.Script)
@@ -256,14 +258,6 @@ func (aww *Awwan) Play(req *Request) (err error) {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
 
-	maxLines = len(req.script.stmts)
-	if req.BeginAt >= maxLines {
-		return fmt.Errorf("%s: start index %d out of range %d", logp, req.BeginAt, maxLines)
-	}
-	if req.EndAt > maxLines {
-		req.EndAt = maxLines - 1
-	}
-
 	// Create temporary directory ...
 	mkdirStmt = fmt.Sprintf("mkdir %s", ses.tmpDir)
 
@@ -279,12 +273,15 @@ func (aww *Awwan) Play(req *Request) (err error) {
 		}
 	}()
 
-	err = ses.executeRequires(req)
-	if err != nil {
-		return fmt.Errorf("%s: %w", logp, err)
-	}
+	var pos linePosition
+	for _, pos = range req.lineRange.list {
+		err = ses.executeRequires(req, pos)
+		if err != nil {
+			return fmt.Errorf("%s: %w", logp, err)
+		}
 
-	ses.executeScriptOnRemote(req)
+		ses.executeScriptOnRemote(req, pos)
+	}
 
 	return nil
 }

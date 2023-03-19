@@ -20,18 +20,27 @@ type Request struct {
 	scriptPath string    // The actual or cleaned up path of the Script.
 	script     *Script
 
-	Mode    string `json:"mode"`
-	Script  string `json:"script"`
-	Content []byte `json:"content"`
-	BeginAt int    `json:"begin_at"`
-	EndAt   int    `json:"end_at"`
+	Mode      string `json:"mode"`
+	Script    string `json:"script"`
+	LineRange string `json:"line_range"`
+	Content   []byte `json:"content"`
+
+	lineRange lineRange
 }
 
 // NewRequest create new Request and initialize stdout and stderr to os.Stdout
 // and os.Stderr.
-func NewRequest() *Request {
-	return &Request{
+func NewRequest(mode, script, lineRange string) (req *Request) {
+	req = &Request{
 		stdout: os.Stdout,
 		stderr: os.Stderr,
+
+		Mode:      mode,
+		Script:    script,
+		LineRange: lineRange,
 	}
+
+	req.lineRange = parseLineRange(lineRange)
+
+	return req
 }

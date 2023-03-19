@@ -6,7 +6,6 @@ package awwan
 import (
 	"encoding/json"
 	"fmt"
-	"math"
 	"net/http"
 	"os"
 	"path"
@@ -327,7 +326,7 @@ func (aww *Awwan) httpApiFsPut(epr *libhttp.EndpointRequest) (rawBody []byte, er
 func (aww *Awwan) httpApiExecute(epr *libhttp.EndpointRequest) (resb []byte, err error) {
 	var (
 		logp = "httpApiExecute"
-		req  = NewRequest()
+		req  = &Request{}
 		res  = &libhttp.EndpointResponse{}
 
 		data *HttpResponse
@@ -342,13 +341,7 @@ func (aww *Awwan) httpApiExecute(epr *libhttp.EndpointRequest) (resb []byte, err
 	}
 
 	req.Script = filepath.Join(aww.memfsBase.Opts.Root, req.Script)
-	if req.BeginAt == 0 && req.EndAt == 0 {
-		req.BeginAt = 1
-		req.EndAt = math.MaxInt
-	}
-	if req.EndAt < req.BeginAt {
-		req.EndAt = req.BeginAt
-	}
+	req.lineRange = parseLineRange(req.LineRange)
 
 	aww.bufout.Reset()
 	aww.buferr.Reset()

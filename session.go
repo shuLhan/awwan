@@ -353,13 +353,13 @@ func (ses *Session) ExecLocal(req *Request, stmt *Statement) (err error) {
 
 // executeRequires run the "#require:" statements from line 0 until
 // the start argument in the local system.
-func (ses *Session) executeRequires(req *Request) (err error) {
+func (ses *Session) executeRequires(req *Request, pos linePosition) (err error) {
 	var (
-		x    int
 		stmt *Statement
+		x    int64
 	)
 
-	for x = 0; x < req.BeginAt; x++ {
+	for x = 0; x < pos.start; x++ {
 		stmt = req.script.requires[x]
 		if stmt == nil {
 			continue
@@ -375,10 +375,16 @@ func (ses *Session) executeRequires(req *Request) (err error) {
 	return nil
 }
 
-func (ses *Session) executeScriptOnLocal(req *Request) {
-	var err error
+func (ses *Session) executeScriptOnLocal(req *Request, pos linePosition) {
+	var max = int64(len(req.script.stmts))
+	if pos.start > max {
+		return
+	}
+	if pos.end == 0 {
+		pos.end = max - 1
+	}
 
-	for x := req.BeginAt; x <= req.EndAt; x++ {
+	for x := pos.start; x <= pos.end; x++ {
 		stmt := req.script.stmts[x]
 		if stmt == nil {
 			continue
@@ -392,6 +398,7 @@ func (ses *Session) executeScriptOnLocal(req *Request) {
 
 		fmt.Fprintf(req.stdout, "\n>>> local: %3d: %s %s\n", x, stmt.cmd, stmt.args)
 
+		var err error
 		switch stmt.kind {
 		case statementKindDefault:
 			err = ses.ExecLocal(req, stmt)
@@ -411,10 +418,16 @@ func (ses *Session) executeScriptOnLocal(req *Request) {
 	}
 }
 
-func (ses *Session) executeScriptOnRemote(req *Request) {
-	var err error
+func (ses *Session) executeScriptOnRemote(req *Request, pos linePosition) {
+	var max = int64(len(req.script.stmts))
+	if pos.start > max {
+		return
+	}
+	if pos.end == 0 {
+		pos.end = max - 1
+	}
 
-	for x := req.BeginAt; x <= req.EndAt; x++ {
+	for x := pos.start; x <= pos.end; x++ {
 		stmt := req.script.stmts[x]
 		if stmt == nil {
 			continue
@@ -429,6 +442,7 @@ func (ses *Session) executeScriptOnRemote(req *Request) {
 		fmt.Fprintf(req.stdout, "\n>>> %s: %3d: %s %s\n",
 			ses.sshClient, x, stmt.cmd, stmt.args)
 
+		var err error
 		switch stmt.kind {
 		case statementKindDefault:
 			err = ses.sshClient.Execute(string(stmt.raw))

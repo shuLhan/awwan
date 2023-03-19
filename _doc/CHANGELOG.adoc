@@ -6,6 +6,36 @@
 :sectlinks:
 
 
+[#v0_7_0]
+==  awwan v0.7.0-dev (2023-04-xx)
+
+===  New features
+
+all: changes the line number arguments for "local" and "play" command::
++
+--
+Previously, the "local" and "play" command only accept two kind of
+arguments: one argument for executing single line or two arguments for
+executing line range.
+There are no options to executing multiple single line, multiple line
+range, or combination of them.
+
+This changes make the both commands accept list of lines or line range
+where each separated by comma.
+For example, to execute multiple, different single lines
+
+   awwan local 4,8,12
+
+To execute multiple line range,
+
+   awwan local 4-8,12-16
+
+Or to execute multiple lines and line range,
+
+   awwan local 4,8,10-12
+--
+
+
 [#v0_6_2]
 ==  awwan v0.6.2 (2023-03-03)
 

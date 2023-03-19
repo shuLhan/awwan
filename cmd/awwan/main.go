@@ -9,16 +9,19 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"math"
 	"os"
-	"strconv"
 	"strings"
 
 	"git.sr.ht/~shulhan/awwan"
 )
 
 const (
-	usage = `= awwan v` + awwan.Version + `
+	cmdHelp    = "help"
+	cmdVersion = "version"
+)
+
+func usage() {
+	var v = `= awwan v` + awwan.Version + `
 
 Configuration management software, infrastructure as file and directory
 layout.
@@ -27,16 +30,16 @@ layout.
 
 awwan <command> <arguments>
 
-command = "help" | "local" | "play" | "serve" | "version"
+command = "help" / "local" / "play" / "serve" / "version"
 
 	help
 		Display the command usage and its description.
 
-	local <script> <start> [end]
+	local <script> <line-range>
 		Execute the script in current system from line <start> until
 		line <end>.
 
-	play <script> <start> [end]
+	play <script> <line-range>
 		Execute the script in the remote server from line <start>
 		until line <end>.
 
@@ -47,90 +50,82 @@ command = "help" | "local" | "play" | "serve" | "version"
 	version
 		Print the application version to standard output.
 
-arguments = <script> <start> [end] | <workspace>
+arguments = <script> <line-range> / <workspace>
 
 	script = STRING
 		A path to script to be executed.
-
-	start = 1*DIGITS
-		The starting line number in the script.
-
-	end = 1*DIGITS | "-"
-		The end of line number, default to start.
-		The "-" means until the end of file.
 
 	workspace = STRING
 		The root directory of awwan workspace, the one that contains
 		the .ssh directory.
 
+line-range = start [ "-" [end] ] *("," line-range)
+
+	start = 1*DIGITS
+		The starting line number in the script.
+
+	end = 1*DIGITS
+		The end of line number.
+		Its value either empty, equal, or greater than start.
+
 == EXAMPLES
 
-Execute only line 5 of "script.aww" on local system,
+Execute line 5, 7, and line 10 until 15 of "script.aww" in local system,
 
-	$ awwan local myserver/script.aww 5
+	$ awwan local myserver/script.aww 5,7,10-15
 
-Execute line 5 until end of line of "script.aww" on remote server known as
-"myserver",
+Execute line 6 and line 12 until the end of line of "script.aww" in remote
+server known as "myserver",
 
-	$ awwan play myserver/script.aww 5 -
+	$ awwan play myserver/script.aww 6,12-
 
 Run the web-user interface using the current directory as workspace,
 
 	$ awwan serve .`
-)
 
-const (
-	cmdHelp    = "help"
-	cmdVersion = "version"
-)
+	fmt.Println(v)
+}
 
 func main() {
-	var (
-		logp = "awwan"
-
-		req     *awwan.Request
-		aww     *awwan.Awwan
-		cmdMode string
-		baseDir string
-		err     error
-	)
+	var logp = "awwan"
 
 	log.SetFlags(0)
 
 	flag.Parse()
 
 	if flag.NArg() <= 0 {
-		fmt.Println(usage)
+		usage()
 		os.Exit(1)
 	}
 
-	cmdMode = strings.ToLower(flag.Arg(0))
+	var (
+		cmdMode = strings.ToLower(flag.Arg(0))
+		req     *awwan.Request
+		baseDir string
+		err     error
+	)
 
 	// Check for valid command and flags.
 	switch cmdMode {
 	case cmdHelp:
-		fmt.Println(usage)
+		usage()
 		os.Exit(0)
 
 	case cmdVersion:
-		fmt.Printf("awwan %s\n", awwan.Version)
+		fmt.Println(`awwan ` + awwan.Version)
 		return
 
 	case awwan.CommandModeBuild:
 		// NOOP.
 
-	case awwan.CommandModeLocal:
-		req, err = parseArgScriptStartEnd(cmdMode)
-
-	case awwan.CommandModePlay:
-		req, err = parseArgScriptStartEnd(cmdMode)
+	case awwan.CommandModeLocal, awwan.CommandModePlay:
+		req = awwan.NewRequest(cmdMode, flag.Arg(1), flag.Arg(2))
 
 	case awwan.CommandModeServe:
 		if flag.NArg() <= 1 {
 			err = fmt.Errorf("%s: missing workspace directory", cmdMode)
 		} else {
 			baseDir = flag.Arg(1)
-			req = awwan.NewRequest()
 		}
 	default:
 		err = fmt.Errorf("missing or invalid command %s", cmdMode)
@@ -139,6 +134,8 @@ func main() {
 		log.Printf("%s: %s", logp, err)
 		os.Exit(1)
 	}
+
+	var aww *awwan.Awwan
 
 	aww, err = awwan.New(baseDir)
 	if err != nil {
@@ -160,57 +157,4 @@ func main() {
 		log.Printf("%s: %s", logp, err)
 		os.Exit(1)
 	}
-}
-
-func parseArgScriptStartEnd(cmdMode string) (req *awwan.Request, err error) {
-	if flag.NArg() <= 2 {
-		return nil, fmt.Errorf("%s: missing start and/or end arguments", cmdMode)
-	}
-
-	req = awwan.NewRequest()
-
-	req.Script = flag.Arg(1)
-
-	req.BeginAt, err = parseArgScriptStart(flag.Arg(2))
-	if err != nil {
-		return nil, err
-	}
-	req.EndAt = req.BeginAt
-
-	if flag.NArg() >= 4 {
-		req.EndAt, err = parseArgScriptEnd(flag.Arg(3))
-		if err != nil {
-			return nil, err
-		}
-		if req.EndAt < req.BeginAt {
-			req.EndAt = req.BeginAt
-		}
-	}
-
-	return req, nil
-}
-
-// parseArgScriptStart parse the third argument, the line start number.
-func parseArgScriptStart(in string) (out int, err error) {
-	out, err = strconv.Atoi(in)
-	if err != nil {
-		return 0, fmt.Errorf("invalid start at argument %q: %w", in, err)
-	}
-	if out < 0 {
-		out = 0
-	}
-	return out, nil
-}
-
-// parseArgScriptEnd parse the fourth argument, the line end number or "-" for
-// the last line.
-func parseArgScriptEnd(in string) (out int, err error) {
-	if in == "-" {
-		return math.MaxInt32, nil
-	}
-	out, err = strconv.Atoi(in)
-	if err != nil {
-		return 0, fmt.Errorf("invalid end at argument %q: %w", in, err)
-	}
-	return out, nil
 }

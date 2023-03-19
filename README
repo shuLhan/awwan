@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 = awwan
 Shulhan <ms@kilabit.info>
-11 Aug 2021
 :toc:
 :sectanchors:
 :sectlinks:
@@ -21,10 +20,45 @@ directory layout.
 ----
 awwan <command> <arguments>
 
-command = "local" | "play" | "serve"
+command = "help" / "local" / "play" / "serve" / "version"
 
-arguments = <script> <line-start> [line-end] | <workspace>
+	help
+		Display the command usage and its description.
+
+	local <script> <line-range>
+		Execute the script in current system from line <start> until
+		line <end>.
+
+	play <script> <line-range>
+		Execute the script in the remote server from line <start>
+		until line <end>.
+
+	serve <workspace>
+		Run the web-user interface using <workspace> directory as base
+		directory.
+
+	version
+		Print the application version to standard output.
+
+arguments = <script> <line-range> / <workspace>
+
+	script = STRING
+		A path to script to be executed.
+
+	workspace = STRING
+		The root directory of awwan workspace, the one that contains
+		the .ssh directory.
+
+line-range = start [ "-" [end] ] *("," line-range)
+
+	start = 1*DIGITS
+		The starting line number in the script.
+
+	end = 1*DIGITS
+		The end of line number.
+		Its value either empty, equal, or greater than start.
 ----
+
 
 ==  DESCRIPTION
 
@@ -54,21 +88,21 @@ base directory.
 
 The "local" and "play" command has the same arguments,
 
-	(local | play) <script> <line-start> [line-end]
+	<script> <start> ["-" <end>] *(start ["-" <end>])
 
 The <script> argument is the path to the awwan script file.
 
-The <line-start> argument is line start number.
+The <start> argument is line start number.
 Its define the line number in the script where awwan start execution.
 
-The <line-end> argument define the line number in the script where awwan
-stop executing the script, or "-" to set to the last line.
+The <end> argument define the line number in the script where awwan
+stop executing the script, or "-" empty to set to the last line.
 If not defined then its equal to the line start, which means awwan execute
 only single line.
 
 The "serve" command have only single argument,
 
-    serve <workspace>
+    <workspace>
 
 The <workspace> argument is the awwan workspace directory that contains the
 .ssh directory.
@@ -76,33 +110,27 @@ The <workspace> argument is the awwan workspace directory that contains the
 
 Here is some examples of how to execute script,
 
-* Execute only line 5 of "script.aww" on local system,
+* Execute line 5, 7, and 10 until 15 of "script.aww" in local system,
 +
 ----
-$ awwan local myserver/script.aww 5
+$ awwan local myserver/script.aww 5,7,10-15
 ----
 
-* Execute line 5 until line 10 of "script.aww" on remote server known as
-  "myserver",
+* Execute line 6 and line 12 until the end of line of "script.aww" in remote
+  server known as "myserver",
 +
 ----
-$ awwan play myserver/script.aww 5 10
+$ awwan play myserver/script.aww 6,12-
 ----
 
-* Execute line 5 until last line of "script.aww" on remote server known as
-  "myserver",
+* Run the web-user interface using the current directory as workspace,
 +
 ----
-$ awwan play cloud/myserver/script.aww 5 -
-----
-
-* Serve the directory "work" as base directory for awwan workspace,
-+
-----
-$ awwan serve ./work
---- BaseDir: ./work
+$ awwan serve .
+--- BaseDir: .
 --- Starting HTTP server at 127.0.0.1:17600
 ----
+
 
 ==  THE SCRIPT
 
@@ -124,16 +152,16 @@ For example, given following script with line number
 4: echo d
 ----
 
-Executing "awwan local script.aww 2", always execute line number 1 `echo a`,
-so the output would be
+Executing "awwan local script.aww 2", always execute "require:" at line number
+1 `echo a`, so the output would be
 
 ----
 a
 b
 ----
 
-Executing "awwan local script.aww 4", always execute line number 1 and 3, so
-the output would be
+Executing "awwan local script.aww 4", always execute "require:" line number 1
+and 3, so the output would be
 
 ----
 a
@@ -337,7 +365,7 @@ EOF
 When executed from start to end like these,
 
 ----
-$ awwan play myserver/test.aww 1 -
+$ awwan play myserver/test.aww 1-
 ----
 
 it prints the following output to terminal,
@@ -356,9 +384,6 @@ That's it.
 
 
 ==  FAQ
-
-Since this software is working in progress, there are many things that we have
-in mind, but can't put it to code, yet.
 
 ===  Workspace structure
 
@@ -519,7 +544,6 @@ To run development server that watch changes on _www, run
 
 ==  LICENSE
 
-----
 Copyright (C) 2019-2022 M. Shulhan <ms@kilabit.info>
 
 This program is free software: you can redistribute it and/or modify it
@@ -534,4 +558,3 @@ See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License along with
 this program.
 If not, see <http://www.gnu.org/licenses/>.
-----
