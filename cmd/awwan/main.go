@@ -115,9 +115,6 @@ func main() {
 		fmt.Println(`awwan ` + awwan.Version)
 		return
 
-	case awwan.CommandModeBuild:
-		// NOOP.
-
 	case awwan.CommandModeLocal, awwan.CommandModePlay:
 		req = awwan.NewRequest(cmdMode, flag.Arg(1), flag.Arg(2))
 
@@ -144,8 +141,6 @@ func main() {
 	}
 
 	switch cmdMode {
-	case awwan.CommandModeBuild:
-		err = aww.Build()
 	case awwan.CommandModeLocal:
 		err = aww.Local(req)
 	case awwan.CommandModePlay:

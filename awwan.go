@@ -9,16 +9,12 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
-	"time"
-
-	"git.sr.ht/~shulhan/ciigo"
-	"github.com/evanw/esbuild/pkg/api"
 
 	"github.com/shuLhan/share/lib/http"
 	"github.com/shuLhan/share/lib/memfs"
-	"github.com/shuLhan/share/lib/mlog"
 	"github.com/shuLhan/share/lib/ssh/config"
+
+	"git.sr.ht/~shulhan/awwan/internal"
 )
 
 // Version current version of this module (library and program).
@@ -26,7 +22,6 @@ const Version = `0.7.0-dev`
 
 // List of command available for program awwan.
 const (
-	CommandModeBuild = "build"
 	CommandModeLocal = "local"
 	CommandModePlay  = "play"
 	CommandModeServe = "serve"
@@ -39,12 +34,6 @@ const (
 	defSshConfig     = "config" // The default SSH config file name.
 	defSshDir        = ".ssh"   // The default SSH config directory name.
 	defTmpDir        = "/tmp"
-
-	envDevelopment = "AWWAN_DEVELOPMENT"
-
-	embedPackageName = "awwan"
-	embedVarName     = "mfsWww"
-	embedFileName    = "memfs_www.go"
 )
 
 var (
@@ -54,10 +43,6 @@ var (
 	cmdMagicSudoPut = []byte("#put!")
 	cmdMagicRequire = []byte("#require:")
 	newLine         = []byte("\n")
-
-	// The embedded _www for web-user interface.
-	// This variable will initialize by initMemfsWww.
-	mfsWww *memfs.MemFS
 )
 
 // Awwan is the service that run script in local or remote.
@@ -100,35 +85,6 @@ func New(baseDir string) (aww *Awwan, err error) {
 	fmt.Printf("--- BaseDir: %s\n", aww.BaseDir)
 
 	return aww, nil
-}
-
-// Build compile all TypeScript files inside _www into JavaScript and embed
-// them into memfs_www.go.
-func (aww *Awwan) Build() (err error) {
-	var (
-		logp = "Build"
-	)
-
-	err = doBuildTypeScript(nil)
-	if err != nil {
-		return fmt.Errorf("%s: %w", logp, err)
-	}
-
-	err = convertAdoc()
-	if err != nil {
-		return fmt.Errorf(`%s: %w`, logp, err)
-	}
-
-	err = initMemfsWww()
-	if err != nil {
-		return fmt.Errorf("%s: %w", logp, err)
-	}
-
-	err = doGoEmbed()
-	if err != nil {
-		return fmt.Errorf("%s: %w", logp, err)
-	}
-	return nil
 }
 
 // Local execute the script in the local machine using shell.
@@ -290,7 +246,7 @@ func (aww *Awwan) Play(req *Request) (err error) {
 func (aww *Awwan) Serve() (err error) {
 	var (
 		logp          = "Serve"
-		envDev        = os.Getenv(envDevelopment)
+		envDev        = os.Getenv(internal.EnvDevelopment)
 		memfsBaseOpts = &memfs.Options{
 			Root: aww.BaseDir,
 			Excludes: []string{
@@ -311,16 +267,11 @@ func (aww *Awwan) Serve() (err error) {
 	}
 
 	if len(envDev) > 0 {
-		err = convertAdoc()
-		if err != nil {
-			return fmt.Errorf(`%s: %w`, logp, err)
-		}
-
-		go aww.workerBuild()
+		go internal.Watch()
 	}
 
 	serverOpts = &http.ServerOptions{
-		Memfs:   mfsWww,
+		Memfs:   internal.MemfsWww,
 		Address: defListenAddress,
 	}
 	aww.httpd, err = http.NewServer(serverOpts)
@@ -371,182 +322,6 @@ func (aww *Awwan) loadSshConfig() (err error) {
 	}
 	aww.sshConfig.Prepend(baseDirConfig)
 
-	return nil
-}
-
-// workerBuild watch any update on the .js/.html/.ts files inside the _www
-// directory.
-// If the .ts files changes it will execute TypeScript compiler, esbuild, to
-// compile the .ts into .js.
-// If the .js or .html files changes it will update the node content and
-// re-generate the Go embed file memfs_www.go.
-func (aww *Awwan) workerBuild() {
-	var (
-		logp      = "workerBuild"
-		watchOpts = memfs.WatchOptions{
-			Watches: []string{
-				`.*\.(adoc|ts)$`,
-			},
-		}
-		esBuildOptions = api.BuildOptions{
-			EntryPoints: []string{"_www/main.ts"},
-			Platform:    api.PlatformBrowser,
-			Outfile:     "_www/main.js",
-			GlobalName:  "awwan",
-			Bundle:      true,
-			Write:       true,
-		}
-		buildTicker = time.NewTicker(3 * time.Second)
-		ciigoConv   *ciigo.Converter
-
-		dw           *memfs.DirWatcher
-		ns           memfs.NodeState
-		pathAdocBase string
-		pathHtml     string
-		err          error
-		tsCount      int
-		embedCount   int
-	)
-
-	ciigoConv, err = ciigo.NewConverter(``)
-	if err != nil {
-		log.Fatalf(`%s: %s`, logp, err)
-	}
-
-	if mfsWww == nil {
-		err = initMemfsWww()
-		if err != nil {
-			log.Fatalf("%s: %s", logp, err)
-		}
-	}
-
-	dw, err = mfsWww.Watch(watchOpts)
-	if err != nil {
-		log.Fatalf("%s: %s", logp, err)
-	}
-
-	for {
-		select {
-		case ns = <-dw.C:
-			fmt.Printf("%s: update on %s\n", logp, ns.Node.SysPath)
-
-			if strings.HasSuffix(ns.Node.SysPath, `.adoc`) {
-				pathAdocBase = strings.TrimSuffix(ns.Node.SysPath, `.adoc`)
-				pathHtml = pathAdocBase + `.html`
-				err = ciigoConv.ToHtmlFile(ns.Node.SysPath, pathHtml)
-				if err != nil {
-					mlog.Errf(`%s: %s: %s`, logp, ns.Node.SysPath, err)
-				} else {
-					embedCount++
-				}
-
-			} else if strings.HasSuffix(ns.Node.SysPath, `.ts`) ||
-				strings.HasSuffix(ns.Node.SysPath, "tsconfig.json") {
-				mlog.Outf(`%s: update %s`, logp, ns.Node.SysPath)
-				tsCount++
-
-			} else if strings.HasSuffix(ns.Node.SysPath, ".js") ||
-				strings.HasSuffix(ns.Node.SysPath, ".html") {
-				embedCount++
-			}
-
-		case <-buildTicker.C:
-			if tsCount > 0 {
-				err = doBuildTypeScript(&esBuildOptions)
-				if err != nil {
-					mlog.Errf("%s", err)
-				} else {
-					tsCount = 0
-					embedCount++
-				}
-			}
-			if embedCount > 0 {
-				err = doGoEmbed()
-				if err != nil {
-					mlog.Errf("%s", err)
-				} else {
-					embedCount = 0
-				}
-			}
-		}
-	}
-}
-
-// convertAdoc convert all .adoc files inside _www/doc directory to HTML.
-func convertAdoc() (err error) {
-	var (
-		opts = &ciigo.ConvertOptions{
-			Root: `_www/doc`,
-		}
-	)
-	err = ciigo.Convert(opts)
-	return err
-}
-
-func doGoEmbed() (err error) {
-	err = mfsWww.GoEmbed()
-	if err != nil {
-		mlog.Errf("doGoEmbed: %s", err)
-		return err
-	}
-	mlog.Outf("doGoEmbed: %s", embedFileName)
-	return nil
-}
-
-func doBuildTypeScript(esBuildOptions *api.BuildOptions) (err error) {
-	var (
-		logp = "doBuildTypeScript"
-
-		buildResult api.BuildResult
-		msg         api.Message
-		x           int
-	)
-
-	if esBuildOptions == nil {
-		esBuildOptions = &api.BuildOptions{
-			EntryPoints: []string{"_www/main.ts"},
-			Platform:    api.PlatformBrowser,
-			Outfile:     "_www/main.js",
-			GlobalName:  "app",
-			Bundle:      true,
-			Write:       true,
-		}
-	}
-
-	buildResult = api.Build(*esBuildOptions)
-	if len(buildResult.Errors) == 0 {
-		return nil
-	}
-	for x, msg = range buildResult.Errors {
-		mlog.Errf("!!! error #%d: %v", x, msg)
-	}
-	return fmt.Errorf("%s: %v", logp, buildResult.Errors[0])
-}
-
-func initMemfsWww() (err error) {
-	var mfsOpts = &memfs.Options{
-		Root: "_www",
-		Includes: []string{
-			`.*\.(js|html|png|ico)$`,
-		},
-		Excludes: []string{
-			`/wui`,
-			`/wui.bak`,
-			`/wui.local`,
-		},
-		Embed: memfs.EmbedOptions{
-			CommentHeader: `// SPDX-FileCopyrightText: 2021 M. Shulhan <ms@kilabit.info>
-// SPDX-License-Identifier: GPL-3.0-or-later
-`,
-			PackageName: embedPackageName,
-			VarName:     embedVarName,
-			GoFileName:  embedFileName,
-		},
-	}
-	mfsWww, err = memfs.New(mfsOpts)
-	if err != nil {
-		return fmt.Errorf("initMemfsWww: %w", err)
-	}
 	return nil
 }
 

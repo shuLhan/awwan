@@ -16,7 +16,7 @@ lint:
 
 build:
 	mkdir -p _bin
-	go run ./cmd/awwan build
+	go run ./internal/cmd/awwan-internal build
 	go build -o _bin/ ./cmd/awwan
 
 install: build
