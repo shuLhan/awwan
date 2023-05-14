@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"text/template"
 
-	libio "github.com/shuLhan/share/lib/io"
+	libos "github.com/shuLhan/share/lib/os"
 )
 
 // parseTemplate read the file input "in" and apply the session variables,
@@ -24,7 +24,7 @@ func parseTemplate(ses *Session, in string) (out string, err error) {
 		base   string
 	)
 
-	if libio.IsBinary(in) {
+	if libos.IsBinary(in) {
 		return in, nil
 	}
 

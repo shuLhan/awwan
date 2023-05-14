@@ -14,7 +14,7 @@ import (
 
 	"github.com/shuLhan/share/lib/ascii"
 	"github.com/shuLhan/share/lib/ini"
-	libio "github.com/shuLhan/share/lib/io"
+	libos "github.com/shuLhan/share/lib/os"
 	"github.com/shuLhan/share/lib/ssh"
 	"github.com/shuLhan/share/lib/ssh/config"
 	"github.com/shuLhan/share/lib/ssh/sftp"
@@ -113,7 +113,7 @@ func (ses *Session) Copy(stmt *Statement) (err error) {
 
 	dest = stmt.args[0]
 
-	err = libio.Copy(dest, src)
+	err = libos.Copy(dest, src)
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
 	}

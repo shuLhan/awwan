@@ -32,7 +32,7 @@ func Build() (err error) {
 		return fmt.Errorf(`%s: %w`, logp, err)
 	}
 
-	err = convertAdoc()
+	err = convertMarkup()
 	if err != nil {
 		return fmt.Errorf(`%s: %w`, logp, err)
 	}
@@ -62,7 +62,7 @@ func Watch() {
 		err       error
 	)
 
-	err = convertAdoc()
+	err = convertMarkup()
 	if err != nil {
 		log.Fatalf(`%s: %s`, logp, err)
 	}
@@ -81,7 +81,7 @@ func Watch() {
 
 	var watchOpts = memfs.WatchOptions{
 		Watches: []string{
-			`.*\.(adoc|ts)$`,
+			`.*\.(adoc|md|ts)$`,
 		},
 	}
 
@@ -113,17 +113,23 @@ func Watch() {
 			fmt.Printf("%s: update on %s\n", logp, ns.Node.SysPath)
 
 			switch {
-			case strings.HasSuffix(ns.Node.SysPath, `.adoc`):
-				var (
-					pathAdocBase = strings.TrimSuffix(ns.Node.SysPath, `.adoc`)
-					pathHtml     = pathAdocBase + `.html`
-				)
-				err = ciigoConv.ToHtmlFile(ns.Node.SysPath, pathHtml)
+			case strings.HasSuffix(ns.Node.SysPath, `.adoc`),
+				strings.HasSuffix(ns.Node.SysPath, `.md`):
+				var fmarkup *ciigo.FileMarkup
+
+				fmarkup, err = ciigo.NewFileMarkup(ns.Node.SysPath, nil)
 				if err != nil {
 					mlog.Errf(`%s: %s: %s`, logp, ns.Node.SysPath, err)
-				} else {
-					embedCount++
+					continue
 				}
+
+				err = ciigoConv.ToHtmlFile(fmarkup)
+				if err != nil {
+					mlog.Errf(`%s: %s: %s`, logp, ns.Node.SysPath, err)
+					continue
+				}
+
+				embedCount++
 
 			case strings.HasSuffix(ns.Node.SysPath, `.ts`) || strings.HasSuffix(ns.Node.SysPath, `tsconfig.json`):
 				mlog.Outf(`%s: update %s`, logp, ns.Node.SysPath)
@@ -184,8 +190,8 @@ func buildTypeScript(esBuildOptions *api.BuildOptions) (err error) {
 	return fmt.Errorf(`%s: %v`, logp, buildResult.Errors[0])
 }
 
-// convertAdoc convert all .adoc files inside _www/doc directory to HTML.
-func convertAdoc() (err error) {
+// convertMarkup convert all markup files inside _www/doc directory to HTML.
+func convertMarkup() (err error) {
 	var opts = &ciigo.ConvertOptions{
 		Root: `_www/doc`,
 	}
