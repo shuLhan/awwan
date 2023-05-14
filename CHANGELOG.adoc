@@ -7,9 +7,9 @@
 
 
 [#v0_7_0]
-==  awwan v0.7.0-dev (2023-04-xx)
+==  awwan v0.7.0 (2023-05-14)
 
-===  New features
+===  Breaking changes
 
 all: changes the line number arguments for "local" and "play" command::
 +
@@ -37,16 +37,42 @@ Or to execute multiple lines and line range,
 
 ===  Chores
 
-all: replace golangci-lint with revive::
+all: convert README from Asciidoc to Markdown::
 +
 --
-The golangci-lint become unusable if we build it with Go tip and
-sometimes it does not provide any hint anymore.
+I use two remote repositories: GitHub and SourceHut.
+GitHub support rendering README using asciidoc while SourceHut not.
+This cause the repository that use README.adoc rendered as text in
+SourceHut which make the repository page less readable.
 
-While [revive] can run when building with Go tip and provide hints where
-we can improve.
+Also, the pkg.go.dev now render README but only support Markdown.
 
-[revive]: https://github.com/mgechev/revive
+Since we cannot control the SourceHut and go.dev, the only option is
+to support converting Markdown in ciigo so I can write README using
+Markdown and the rest of documentation using Asciidoc.
+--
+
+all: move code for development to package internal::
+
+all: add configuration for golangci-lint::
++
+--
+With configuration we can enable or disable specific linters and
+customize it without touching the Makefile.
+
+While at it, enable linter presets for bugs, comment, metalinter,
+module, performance, unused and fix the reported issues.
+--
+
+all: move _doc to directory _www::
++
+--
+Previously, the /_www/doc is a symlink to /_adoc.
+To minimize symlinks in this repository, we replace the _www/doc with its
+actual directory.
+
+While at it, move CHANGELOG.adoc to root directory for better view
+ability.
 --
 
 go.mod: set the Go module version to 1.19::

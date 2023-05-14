@@ -18,7 +18,7 @@ import (
 )
 
 // Version current version of this module (library and program).
-const Version = `0.7.0-dev`
+const Version = `0.7.0`
 
 // List of command available for program awwan.
 const (
