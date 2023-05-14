@@ -1,23 +1,16 @@
-// SPDX-FileCopyrightText: 2019 M. Shulhan <ms@kilabit.info>
-// SPDX-License-Identifier: GPL-3.0-or-later
-= awwan
-Shulhan <ms@kilabit.info>
-:toc:
-:sectanchors:
-:sectlinks:
-:url-godoc: https://pkg.go.dev/git.sr.ht/~shulhan/awwan
+# awwan
 
-image:https://img.shields.io/badge/go.dev-reference-007d9c?logo=go&logoColor=white&style=flat-square[GoDoc, link={url-godoc}]
+[GoDoc](https://pkg.go.dev/git.sr.ht/~shulhan/awwan)
 
-==  NAME
+##  NAME
 
 awwan - Configuration management software, infrastructure as file and
 directory layout.
 
 
-==  SYNOPSIS
+##  SYNOPSIS
 
-----
+```
 awwan <command> <arguments>
 
 command = "help" / "local" / "play" / "serve" / "version"
@@ -57,16 +50,16 @@ line-range = start [ "-" [end] ] *("," line-range)
 	end = 1*DIGITS
 		The end of line number.
 		Its value either empty, equal, or greater than start.
-----
+```
 
 
-==  DESCRIPTION
+##  DESCRIPTION
 
 `awwan` is command-line interface to execute multiple lines of command in
 the local or remote server using shell or SSH.
 
 
-==  BACKGROUND
+##  BACKGROUND
 
 Do you have a collection of shell scripts to manage one more similar server?
 Do you ever want to execute only part of your script?
@@ -76,7 +69,7 @@ your own server, while you need is a handful of shell script?
 If yes, awwan is the right tools for you.
 
 
-==  THE COMMAND
+##  THE COMMAND
 
 The awwan tool have three commands: local, play, or serve.
 
@@ -88,7 +81,9 @@ base directory.
 
 The "local" and "play" command has the same arguments,
 
-	<script> <start> ["-" <end>] *(start ["-" <end>])
+```
+<script> <start> ["-" <end>] *(start ["-" <end>])
+```
 
 The <script> argument is the path to the awwan script file.
 
@@ -102,7 +97,9 @@ only single line.
 
 The "serve" command have only single argument,
 
-    <workspace>
+```
+<workspace>
+```
 
 The <workspace> argument is the awwan workspace directory that contains the
 .ssh directory.
@@ -111,28 +108,28 @@ The <workspace> argument is the awwan workspace directory that contains the
 Here is some examples of how to execute script,
 
 * Execute line 5, 7, and 10 until 15 of "script.aww" in local system,
-+
-----
+
+```
 $ awwan local myserver/script.aww 5,7,10-15
-----
+```
 
 * Execute line 6 and line 12 until the end of line of "script.aww" in remote
   server known as "myserver",
-+
-----
+
+```
 $ awwan play myserver/script.aww 6,12-
-----
+```
 
 * Run the web-user interface using the current directory as workspace,
-+
-----
+
+```
 $ awwan serve .
 --- BaseDir: .
 --- Starting HTTP server at 127.0.0.1:17600
-----
+```
 
 
-==  THE SCRIPT
+##  THE SCRIPT
 
 The awwan script is similar to shell script.
 Each line started with '#' is a comment, except for special, magic words.
@@ -145,64 +142,64 @@ Magic word `#require:` ensure that the statement after it always executed even
 if its skipped by line-start number argument.
 For example, given following script with line number
 
-----
+```
 1: #require: echo a
 2: echo b
 3: #require: echo c
 4: echo d
-----
+```
 
 Executing "awwan local script.aww 2", always execute "require:" at line number
 1 `echo a`, so the output would be
 
-----
+```
 a
 b
-----
+```
 
 Executing "awwan local script.aww 4", always execute "require:" line number 1
 and 3, so the output would be
 
-----
+```
 a
 c
 d
-----
+```
 
 Magic word `#get:` copy file from remote server to your local file system.
 For example,
 
-----
+```
 #get: /etc/os-release os-release
-----
+```
 
 Magic word `#get!` copy file from remote server, that can be accessed only by
 using sudo, to your local file.
 For example,
 
-----
+```
 #get! /etc/nginx/ssl/my.crt server.crt
-----
+```
 
 Magic word `#put:` copy file from your local to remote server.
 For example,
 
-----
+```
 #put: /etc/locale.conf /tmp/locale.conf
-----
+```
 
 Magic word `#put!` copy file from your local system to remote server using
 sudo.
 For example,
 
-----
+```
 #put! /etc/locale.conf /etc/locale.conf
-----
+```
 
 Here is an example of script that install Nginx on remote Arch Linux server
 using configuration from your local computer,
 
-----
+```
 sudo pacman -Sy --noconfirm nginx
 sudo systemctl enable nginx
 
@@ -210,9 +207,9 @@ sudo systemctl enable nginx
 
 sudo systemctl restart nginx
 sudo systemctl status nginx
-----
+```
 
-==  ENVIRONMENT FILE
+##  ENVIRONMENT FILE
 
 The environment file is a file named `awwan.env` that contains variables using
 the form "key=value" that can be used for templating.
@@ -222,15 +219,15 @@ directory, and in each sub-directory, until the script directory.
 
 The environment file use the ini file format,
 
-----
+```
 [section "subsection"]
 key = value
-----
+```
 
 We will explain how to use and get the environment variables below.
 
 
-==  TEMPLATING
+##  TEMPLATING
 
 Template file is any text or script files that dynamically generated using
 values from variables defined in environment files.
@@ -246,12 +243,12 @@ There are six global variables that shared to all template or script files,
 
 To get the value wrap the variable using '{{}}' for example,
 
-----
+```
 #put! {{.BaseDir}}/templates/etc/hosts /etc/
 #put! {{.ScriptDir}}/etc/hosts /etc/
 
 scp -i {{.SSHKey}} src {{.SSHUser}}@{{.SSHHost}}:{{.SSHPort}}/dst
-----
+```
 
 To get the value of variable in environment file you put the string ".Val"
 followed by section, subsection and key names, each separated by colon ":".
@@ -262,21 +259,21 @@ copy.
 
 For example, given the following environment file,
 
-----
+```
 [all]
 user = arch
 
 [whitelist "ip"]
 alpha = 1.2.3.4/32
 beta  = 2.3.4.5/32
-----
+```
 
 * `{{.Val "all::user"}}` result to "arch" (without double quote), and
 * `{{.Val "whitelist:ip:alpha"}}` result to "1.2.3.4/32"
   (without double quote)
 
 
-==  THE SSH CONFIG
+##  THE SSH CONFIG
 
 After we learn about the command, script, variables, and templating; we need
 to explain some file and directory structure that required by `awwan` so it
@@ -292,7 +289,7 @@ It is matched with `Host` or `Match` section in the ssh_config(5) file.
 
 For example, given the following directory structure,
 
-----
+```
 .
 |
 +-- .ssh/
@@ -301,13 +298,13 @@ For example, given the following directory structure,
 +-- development
     |
     --- script.aww
-----
+```
 
 If we execute the "development/script.aww", awwan search for the Host that
 match with "development" in current ".ssh/config" or in "~/.ssh/config".
 
 
-==  EXAMPLE
+##  EXAMPLE
 
 To give you the taste of the idea, we will show you an example using the
 working directory $WORKDIR as our base directory.
@@ -317,7 +314,7 @@ Let say that we have the working remote server named "myserver" at IP address
 
 In the $WORKDIR, create directory ".ssh" and "config" file,
 
-----
+```
 $ mkdir -p .ssh
 $ cat > .ssh/config <<EOF
 Host myserver
@@ -326,11 +323,11 @@ Host myserver
 	Port 2222
 	IdentityFile .ssh/myserver
 EOF
-----
+```
 
 Still in the $WORKDIR, create  the environment file "awwan.env"
 
-----
+```
 $ cat > awwan.env <<EOF
 [all]
 user = arch
@@ -340,37 +337,37 @@ host = myserver
 alpha = 1.2.3.4/32
 beta  = 2.3.4.5/32
 EOF
-----
+```
 
 Inside the $WORKDIR we create the directory that match with our server name
 and a script file "test.aww",
 
-----
+```
 $ mkdir -p myserver
 $ cat > myserver/test.aww <<EOF
 echo {{.Val "all::host"}}`
 #put: {{.ScriptDir}}/test /tmp/
 cat /tmp/test
 EOF
-----
+```
 
 and a template file "test",
 
-----
+```
 $ cat > myserver/test <<EOF
 Hi {{.Val "all::user"}}!
 EOF
-----
+```
 
 When executed from start to end like these,
 
-----
+```
 $ awwan play myserver/test.aww 1-
-----
+```
 
 it prints the following output to terminal,
 
-----
+```
 >>> arch@1.2.3.4:2222: 1: echo myserver
 
 myserver
@@ -378,14 +375,14 @@ test                                                  100%    9     0.4KB/s   00
 >>> arch@1.2.3.4:2222: 3: cat /tmp/test
 
 Hi arch!
-----
+```
 
 That's it.
 
 
-==  FAQ
+##  FAQ
 
-===  Workspace structure
+###  Workspace structure
 
 Beside ".ssh" directory and directory as host name, `awwan` did not require
 any other special directory but we really recommend that you use sub directory
@@ -393,9 +390,9 @@ to group several nodes on several cloud services.
 For example, if you use cloud services with several nodes inside it, we
 recommend the following directory structures,
 
-----
+```
 <cloud-service>/<project-name>/<service-name>/<node-name>
-----
+```
 
 The `<cloud-service>` is the name of your remote server, it could be "AWS",
 "GCP", "DO", and others.
@@ -409,7 +406,7 @@ directory.
 
 Here is an example of directory structures,
 
-----
+```
 .
 ├── commons
 ├── gcp
@@ -434,7 +431,7 @@ Here is an example of directory structures,
     │   ├── pacman.d
     │   └── ssh
     └── home
-----
+```
 
 The `commons` directory contains common script that can be executed in any
 server.
@@ -446,7 +443,7 @@ The `gcp` directory is cloud service with two accounts "development" and
 "production", and the rest are node names and templates used in that node.
 
 
-=== What happened if two variables declared inside two environment files?
+### What happened if two variables declared inside two environment files?
 
 When executing the script `awwan` merge the variables from current directory
 with variables from script directory.
@@ -454,7 +451,7 @@ Any keys that are duplicate will be merged and the last one overwrite the
 previous one.
 
 
-=== Use case of magic command `#require:`
+### Use case of magic command `#require:`
 
 The magic command `#require:` is added to prevent running local command using
 different project or configuration.
@@ -465,7 +462,7 @@ command that you run is using correct configuration.
 
 Here is the example of deploying Cloud Functions using local awwan script,
 
-----
+```
 1: #require: gcloud config configurations activate {{.Val "gcloud::config"}}
 3:
 4: ## Create PubSub topic.
@@ -494,13 +491,13 @@ Here is the example of deploying Cloud Functions using local awwan script,
 27: gcloud pubsub topics \
 28:	publish {{.Val "CloudFunctions:log2slack:pubsub_topic"}} \
 29:	--message='Hello World!'
-----
+```
 
 When executing statement at line number 6, 10, 16 or 27 we need to make sure
 that it always using the correct environment "gcloud::config",
 
 
-----
+```
 $ awwan local awwan/playground/CloudFunctions/log2slack/local.deploy.aww 27
 2020/06/04 01:48:38 >>> loading "/xxx/awwan.env" ...
 2020/06/04 01:48:38 >>> loading "/xxx/awwan/dev/awwan.env" ...
@@ -509,9 +506,9 @@ $ awwan local awwan/playground/CloudFunctions/log2slack/local.deploy.aww 27
 Activated [dev].
 2020/06/04 01:48:38 >>> local 29: gcloud pubsub topics publish logs
 --message='Hello World!'
-----
+```
 
-==  BUGS
+##  BUGS
 
 Known bugs,
 
@@ -519,7 +516,7 @@ Known bugs,
   executing the required statement.
 
 
-==  LINKS
+##  LINKS
 
 The source codes for this software project can be viewed at
 https://sr.ht/~shulhan/awwan/ .
@@ -528,7 +525,7 @@ For request of features and/or bugs report please submitted through web at
 https://todo.sr.ht/~shulhan/awwan .
 
 
-==  DEVELOPMENT
+##  DEVELOPMENT
 
 This project require git, GNU make, Go compiler, and TypeScript compiler.
 
@@ -542,9 +539,9 @@ To run development server that watch changes on _www, run
     $ make serve-dev
 
 
-==  LICENSE
+##  LICENSE
 
-Copyright (C) 2019-2022 M. Shulhan <ms@kilabit.info>
+Copyright (C) 2019-2023 M. Shulhan <ms@kilabit.info>
 
 This program is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the Free
@@ -558,3 +555,8 @@ See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License along with
 this program.
 If not, see <http://www.gnu.org/licenses/>.
+
+<!--
+SPDX-FileCopyrightText: 2019 M. Shulhan <ms@kilabit.info>
+SPDX-License-Identifier: GPL-3.0-or-later
+-->
