@@ -100,12 +100,7 @@ func parseScript(ses *Session, content []byte, isLocal bool) (script *Script, er
 		return nil, fmt.Errorf("%s: %w", logp, err)
 	}
 
-	if isLocal {
-		// Apply the environment variables into script content.
-		raw = []byte(os.ExpandEnv(buf.String()))
-	} else {
-		raw = buf.Bytes()
-	}
+	raw = buf.Bytes()
 
 	raw = bytes.TrimRight(raw, " \t\r\n\v")
 	splits = bytes.Split(raw, newLine)
