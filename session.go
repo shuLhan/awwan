@@ -360,7 +360,7 @@ func (ses *Session) executeRequires(req *Request, pos linePosition) (err error) 
 		x    int64
 	)
 
-	for x = 0; x < pos.start; x++ {
+	for x = 0; x <= pos.start; x++ {
 		stmt = req.script.requires[x]
 		if stmt == nil {
 			continue
