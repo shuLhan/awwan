@@ -62,16 +62,16 @@ func NewScriptForRemote(ses *Session, path string) (script *Script, err error) {
 // ParseScriptForLocal parse the script content by applying the session and
 // environment variables and splitting it into Statement.
 func ParseScriptForLocal(ses *Session, content []byte) (s *Script, err error) {
-	return parseScript(ses, content, true)
+	return parseScript(ses, content)
 }
 
 // ParseScriptForRemote parse the script content by applying the session
 // variables and splitting it into Statement.
 func ParseScriptForRemote(ses *Session, content []byte) (s *Script, err error) {
-	return parseScript(ses, content, false)
+	return parseScript(ses, content)
 }
 
-func parseScript(ses *Session, content []byte, isLocal bool) (script *Script, err error) {
+func parseScript(ses *Session, content []byte) (script *Script, err error) {
 	var (
 		logp = "parseScript"
 
