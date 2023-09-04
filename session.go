@@ -397,7 +397,7 @@ func (ses *Session) executeScriptOnLocal(req *Request, pos linePosition) {
 			continue
 		}
 
-		fmt.Fprintf(req.stdout, "\n>>> local: %3d: %s %s\n", x, stmt.cmd, stmt.args)
+		fmt.Fprintf(req.stdout, "\n>>> local: %3d: %s\n", x, stmt.raw)
 
 		var err error
 		switch stmt.kind {
@@ -507,11 +507,10 @@ func (ses *Session) initSSHClient(req *Request, sshSection *config.Section) (err
 		lastIdentFile = sshSection.IdentityFile[len(sshSection.IdentityFile)-1]
 	}
 
-	fmt.Fprintf(req.stdout, "--- SSH connection: %s@%s:%s\n",
-		sshSection.User, sshSection.Hostname, sshSection.Port)
-	fmt.Fprintf(req.stdout, "--- SSH identity file: %s\n", lastIdentFile)
+	fmt.Fprintf(req.stdout, "--- SSH connection: %s@%s:%s\n", sshSection.User(), sshSection.Hostname(), sshSection.Port())
+	fmt.Fprintf(req.stdout, "--- SSH identity file: %v\n", sshSection.IdentityFile)
 
-	ses.sshClient, err = ssh.NewClientFromConfig(sshSection)
+	ses.sshClient, err = ssh.NewClientInteractive(sshSection)
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
@@ -525,9 +524,9 @@ func (ses *Session) initSSHClient(req *Request, sshSection *config.Section) (err
 	ses.sshClient.SetSessionOutputError(req.stdout, req.stderr)
 
 	ses.SSHKey = lastIdentFile
-	ses.SSHUser = sshSection.User
-	ses.SSHHost = sshSection.Hostname
-	ses.SSHPort = sshSection.Port
+	ses.SSHUser = sshSection.User()
+	ses.SSHHost = sshSection.Hostname()
+	ses.SSHPort = sshSection.Port()
 
 	return nil
 }
