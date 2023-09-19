@@ -30,7 +30,15 @@ layout.
 
 awwan <command> <arguments>
 
-command = "help" / "local" / "play" / "serve" / "version"
+command = "encrypt" / "help" / "local" / "play" / "serve" / "version"
+
+	encrypt <file>
+		Encrypt the file using RSA private key at
+		"{{.BaseDir}}/.awwan.key".
+		The encrypted file will have ".vault" extension.
+
+		REMINDER: the private key should not be committed into
+		VCS if its not protected with passphrase.
 
 	help
 		Display the command usage and its description.
@@ -100,13 +108,22 @@ func main() {
 
 	var (
 		cmdMode = strings.ToLower(flag.Arg(0))
+
 		req     *awwan.Request
 		baseDir string
+		file    string
 		err     error
 	)
 
 	// Check for valid command and flags.
 	switch cmdMode {
+	case awwan.CommandModeEncrypt:
+		if flag.NArg() <= 1 {
+			err = fmt.Errorf(`%s: missing file argument`, cmdMode)
+		} else {
+			file = flag.Arg(1)
+		}
+
 	case cmdHelp:
 		usage()
 		os.Exit(0)
@@ -141,6 +158,8 @@ func main() {
 	}
 
 	switch cmdMode {
+	case awwan.CommandModeEncrypt:
+		err = aww.Encrypt(file)
 	case awwan.CommandModeLocal:
 		err = aww.Local(req)
 	case awwan.CommandModePlay:
