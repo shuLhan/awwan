@@ -5,12 +5,10 @@ package awwan
 
 import (
 	"fmt"
-	"math/rand"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/shuLhan/share/lib/ascii"
 	"github.com/shuLhan/share/lib/ini"
@@ -60,7 +58,6 @@ func NewSession(baseDir, sessionDir string) (ses *Session, err error) {
 		return nil, fmt.Errorf("%s: %w", logp, err)
 	}
 
-	rand.Seed(time.Now().Unix())
 	randomString = string(ascii.Random([]byte(ascii.LettersNumber), 16))
 	ses.tmpDir = filepath.Join(defTmpDir, randomString)
 
