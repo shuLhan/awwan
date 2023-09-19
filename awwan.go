@@ -5,16 +5,21 @@ package awwan
 
 import (
 	"bytes"
+	"crypto"
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/sha256"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
 
+	"git.sr.ht/~shulhan/awwan/internal"
+	libcrypto "github.com/shuLhan/share/lib/crypto"
 	"github.com/shuLhan/share/lib/http"
 	"github.com/shuLhan/share/lib/memfs"
 	"github.com/shuLhan/share/lib/ssh/config"
-
-	"git.sr.ht/~shulhan/awwan/internal"
 )
 
 // Version current version of this module (library and program).
@@ -36,6 +41,9 @@ const (
 	defTmpDir        = "/tmp"
 )
 
+// defFilePrivateKey define the default private key file name.
+const defFilePrivateKey = `.awwan.key`
+
 var (
 	cmdMagicGet     = []byte("#get:")
 	cmdMagicPut     = []byte("#put:")
@@ -55,6 +63,14 @@ type Awwan struct {
 
 	httpd     *http.Server // The HTTP server.
 	memfsBase *memfs.MemFS // The files caches.
+
+	// privateKey define the key for encrypt and decrypt command.
+	privateKey *rsa.PrivateKey
+
+	// termrw define the ReadWriter to prompt and read passphrase for
+	// privateKey.
+	// This field should be nil, only used during testing.
+	termrw io.ReadWriter
 
 	bufout bytes.Buffer
 	buferr bytes.Buffer
@@ -85,6 +101,49 @@ func New(baseDir string) (aww *Awwan, err error) {
 	fmt.Printf("--- BaseDir: %s\n", aww.BaseDir)
 
 	return aww, nil
+}
+
+// Encrypt the file using private key from file "{{.BaseDir}}/.awwan.key".
+// The encrypted file output will be on the same file path with ".vault"
+// extension.
+func (aww *Awwan) Encrypt(file string) (err error) {
+	var (
+		logp      = `Encrypt`
+		fileVault = file + `.vault`
+	)
+
+	if aww.privateKey == nil {
+		err = aww.loadPrivateKey()
+		if err != nil {
+			return fmt.Errorf(`%s: %w`, logp, err)
+		}
+	}
+
+	var src []byte
+
+	src, err = os.ReadFile(file)
+	if err != nil {
+		return fmt.Errorf(`%s: %w`, logp, err)
+	}
+
+	var (
+		hash  = sha256.New()
+		label = []byte(`awwan`)
+
+		ciphertext []byte
+	)
+
+	ciphertext, err = rsa.EncryptOAEP(hash, rand.Reader, &aww.privateKey.PublicKey, src, label)
+	if err != nil {
+		return fmt.Errorf(`%s: %w`, logp, err)
+	}
+
+	err = os.WriteFile(fileVault, ciphertext, 0600)
+	if err != nil {
+		return fmt.Errorf(`%s: %w`, logp, err)
+	}
+
+	return nil
 }
 
 // Local execute the script in the local machine using shell.
@@ -321,6 +380,28 @@ func (aww *Awwan) loadSshConfig() (err error) {
 		return nil
 	}
 	aww.sshConfig.Prepend(baseDirConfig)
+
+	return nil
+}
+
+// loadPrivateKey from file "{{.BaseDir}}/.awwan.key".
+func (aww *Awwan) loadPrivateKey() (err error) {
+	var (
+		fileKey = filepath.Join(aww.BaseDir, defFilePrivateKey)
+
+		pkey crypto.PrivateKey
+		ok   bool
+	)
+
+	pkey, err = libcrypto.LoadPrivateKeyInteractive(aww.termrw, fileKey)
+	if err != nil {
+		return err
+	}
+
+	aww.privateKey, ok = pkey.(*rsa.PrivateKey)
+	if !ok {
+		return fmt.Errorf(`the private key type must be RSA, got %T`, pkey)
+	}
 
 	return nil
 }
