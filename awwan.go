@@ -14,6 +14,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"git.sr.ht/~shulhan/awwan/internal"
 	libcrypto "github.com/shuLhan/share/lib/crypto"
@@ -41,6 +42,9 @@ const (
 	defSshDir        = ".ssh"   // The default SSH config directory name.
 	defTmpDir        = "/tmp"
 )
+
+// defEncryptExt default file extension for encrypted file.
+const defEncryptExt = `.vault`
 
 // defFilePrivateKey define the default private key file name.
 const defFilePrivateKey = `.awwan.key`
@@ -102,6 +106,57 @@ func New(baseDir string) (aww *Awwan, err error) {
 	fmt.Printf("--- BaseDir: %s\n", aww.BaseDir)
 
 	return aww, nil
+}
+
+// Decrypt the file using private key from file "{{.BaseDir}}/.awwan.key".
+// The encrypted file must have extension ".vault", otherwise it will return
+// an error.
+// The decrypted file output will be written in the same directory without
+// the ".vault" extension in filePlain.
+func (aww *Awwan) Decrypt(fileVault string) (filePlain string, err error) {
+	var (
+		logp = `Decrypt`
+		ext  = filepath.Ext(fileVault)
+	)
+
+	if ext != defEncryptExt {
+		return ``, fmt.Errorf(`%s: invalid extension, expecting %s, got %s`, logp, defEncryptExt, ext)
+	}
+
+	if aww.privateKey == nil {
+		err = aww.loadPrivateKey()
+		if err != nil {
+			return ``, fmt.Errorf(`%s: %w`, logp, err)
+		}
+	}
+
+	var ciphertext []byte
+
+	ciphertext, err = os.ReadFile(fileVault)
+	if err != nil {
+		return ``, fmt.Errorf(`%s: %w`, logp, err)
+	}
+
+	var (
+		hash  = sha256.New()
+		label = []byte(`awwan`)
+
+		plaintext []byte
+	)
+
+	plaintext, err = rsa.DecryptOAEP(hash, rand.Reader, aww.privateKey, ciphertext, label)
+	if err != nil {
+		return ``, fmt.Errorf(`%s: %w`, logp, err)
+	}
+
+	filePlain = strings.TrimSuffix(fileVault, defEncryptExt)
+
+	err = os.WriteFile(filePlain, plaintext, 0600)
+	if err != nil {
+		return ``, fmt.Errorf(`%s: %w`, logp, err)
+	}
+
+	return filePlain, nil
 }
 
 // Encrypt the file using private key from file "{{.BaseDir}}/.awwan.key".
