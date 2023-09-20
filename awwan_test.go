@@ -34,7 +34,7 @@ func TestAwwanDecrypt(t *testing.T) {
 		baseDir:    filepath.Join(`testdata`, `decrypt-wrong-privatekey`),
 		fileVault:  `.awwan.env.vault`,
 		passphrase: "news3cret\r",
-		expError:   `Decrypt: crypto/rsa: decryption error`,
+		expError:   `Decrypt: DecryptOaep: crypto/rsa: decryption error`,
 	}}
 
 	var (

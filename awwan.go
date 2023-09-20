@@ -145,7 +145,7 @@ func (aww *Awwan) Decrypt(fileVault string) (filePlain string, err error) {
 		plaintext []byte
 	)
 
-	plaintext, err = rsa.DecryptOAEP(hash, rand.Reader, aww.privateKey, ciphertext, label)
+	plaintext, err = libcrypto.DecryptOaep(hash, rand.Reader, aww.privateKey, ciphertext, label)
 	if err != nil {
 		return ``, fmt.Errorf(`%s: %w`, logp, err)
 	}
@@ -190,7 +190,7 @@ func (aww *Awwan) Encrypt(file string) (err error) {
 		ciphertext []byte
 	)
 
-	ciphertext, err = rsa.EncryptOAEP(hash, rand.Reader, &aww.privateKey.PublicKey, src, label)
+	ciphertext, err = libcrypto.EncryptOaep(hash, rand.Reader, &aww.privateKey.PublicKey, src, label)
 	if err != nil {
 		return fmt.Errorf(`%s: %w`, logp, err)
 	}
