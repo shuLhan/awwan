@@ -30,7 +30,16 @@ layout.
 
 awwan <command> <arguments>
 
-command = "encrypt" / "help" / "local" / "play" / "serve" / "version"
+command = "decrypt" / "encrypt" / "help" / "local" / "play" / "serve" / "version"
+
+	decrypt <file.vault>
+
+		Decrypt the file using RSA private key at
+		"{{.BaseDir}}/.awwan.key".
+		The encrypted file must have extension ".vault", otherwise
+		it will return an error.
+		The decrypted file output will be written in the same
+		directory without the ".vault" extension.
 
 	encrypt <file>
 		Encrypt the file using RSA private key at
@@ -117,6 +126,13 @@ func main() {
 
 	// Check for valid command and flags.
 	switch cmdMode {
+	case awwan.CommandModeDecrypt:
+		if flag.NArg() <= 1 {
+			err = fmt.Errorf(`%s: missing file argument`, cmdMode)
+		} else {
+			file = flag.Arg(1)
+		}
+
 	case awwan.CommandModeEncrypt:
 		if flag.NArg() <= 1 {
 			err = fmt.Errorf(`%s: missing file argument`, cmdMode)
@@ -158,6 +174,16 @@ func main() {
 	}
 
 	switch cmdMode {
+	case awwan.CommandModeDecrypt:
+		var filePlain string
+
+		filePlain, err = aww.Decrypt(file)
+		if err != nil {
+			log.Fatalf(`%s: %s`, logp, err)
+		}
+		fmt.Printf(`Decrypted file output: %s`, filePlain)
+		return
+
 	case awwan.CommandModeEncrypt:
 		err = aww.Encrypt(file)
 	case awwan.CommandModeLocal:

@@ -28,6 +28,7 @@ const Version = `0.7.0`
 
 // List of command available for program awwan.
 const (
+	CommandModeDecrypt = `decrypt`
 	CommandModeEncrypt = `encrypt`
 	CommandModeLocal   = `local`
 	CommandModePlay    = `play`

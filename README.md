@@ -14,6 +14,14 @@ directory layout.
 awwan <command> <arguments>
 
 command = "encrypt" / "help" / "local" / "play" / "serve" / "version"
+	decrypt <file.vault>
+
+		Decrypt the file using RSA private key at
+		"{{.BaseDir}}/.awwan.key".
+		The encrypted file must have extension ".vault", otherwise
+		it will return an error.
+		The decrypted file output will be written in the same
+		directory without the ".vault" extension.
 
 	encrypt <file>
 		Encrypt the file using RSA private key at
@@ -568,4 +576,5 @@ If not, see <http://www.gnu.org/licenses/>.
 SPDX-FileCopyrightText: 2019 M. Shulhan <ms@kilabit.info>
 SPDX-License-Identifier: GPL-3.0-or-later
 -->
-<!-- vim: set noexpandtab tabstop=8 shiftwidth=8 textwidth=72: -->
+<!-- vim: noexpandtab:tabstop=8:shiftwidth=8:textwidth=76:
+-->

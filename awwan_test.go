@@ -118,8 +118,6 @@ func TestAwwanEncrypt(t *testing.T) {
 			fileVault = filepath.Join(c.baseDir, `.awwan.env.vault`)
 		)
 
-		_ = os.Remove(fileVault)
-
 		aww, err = New(c.baseDir)
 		if err != nil {
 			t.Fatal(err)
