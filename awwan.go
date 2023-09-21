@@ -49,6 +49,9 @@ const (
 // defEncryptExt default file extension for encrypted file.
 const defEncryptExt = `.vault`
 
+// defFileEnvVault default awwan environment file name that is encrypted.
+const defFileEnvVault = `.awwan.env.vault`
+
 // defFilePrivateKey define the default private key file name.
 const defFilePrivateKey = `.awwan.key`
 
@@ -225,7 +228,7 @@ func (aww *Awwan) Local(req *Request) (err error) {
 
 	sessionDir = filepath.Dir(req.scriptPath)
 
-	ses, err = NewSession(aww.BaseDir, sessionDir)
+	ses, err = NewSession(aww, sessionDir)
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
@@ -294,7 +297,7 @@ func (aww *Awwan) Play(req *Request) (err error) {
 
 	sessionDir = filepath.Dir(req.scriptPath)
 
-	ses, err = NewSession(aww.BaseDir, sessionDir)
+	ses, err = NewSession(aww, sessionDir)
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
 	}

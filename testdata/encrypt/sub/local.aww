@@ -1,0 +1,1 @@
+echo {{.Val "secret::pass"}}

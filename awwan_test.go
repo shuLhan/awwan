@@ -1,6 +1,7 @@
 package awwan
 
 import (
+	"bytes"
 	"os"
 	"path/filepath"
 	"testing"
@@ -140,5 +141,68 @@ func TestAwwanEncrypt(t *testing.T) {
 		if err != nil {
 			test.Assert(t, `os.Stat`, c.expError, err.Error())
 		}
+	}
+}
+
+func TestAwwanLocal_withEncryption(t *testing.T) {
+	type testCase struct {
+		script    string
+		lineRange string
+		tdataOut  string
+	}
+
+	var (
+		tdata *test.Data
+		err   error
+	)
+
+	tdata, err = test.LoadData(`testdata/encrypt/test.data`)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var (
+		basedir = filepath.Join(`testdata`, `encrypt`)
+		mockout = bytes.Buffer{}
+		mockerr = bytes.Buffer{}
+		mockrw  = mock.ReadWriter{}
+		aww     = Awwan{}
+	)
+
+	// Mock terminal to read passphrase for private key.
+	mockrw.BufRead.WriteString("s3cret\r")
+	aww.termrw = &mockrw
+
+	err = aww.init(basedir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var cases = []testCase{{
+		script:    filepath.Join(basedir, `local.aww`),
+		lineRange: `1`,
+		tdataOut:  `local.aww:1`,
+	}, {
+		script:    filepath.Join(basedir, `sub`, `local.aww`),
+		lineRange: `1`,
+		tdataOut:  `sub/local.aww:1`,
+	}}
+
+	var c testCase
+
+	for _, c = range cases {
+		var req = NewRequest(CommandModeLocal, c.script, c.lineRange)
+
+		mockout.Reset()
+		mockerr.Reset()
+		req.stdout = &mockout
+		req.stderr = &mockerr
+
+		err = aww.Local(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		test.Assert(t, `stdout`, string(tdata.Output[c.tdataOut]), mockout.String())
 	}
 }

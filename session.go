@@ -4,6 +4,7 @@
 package awwan
 
 import (
+	"crypto/rsa"
 	"fmt"
 	"os"
 	"os/exec"
@@ -21,9 +22,11 @@ import (
 // Session manage and cache SSH client and list of scripts.
 // One session have one SSH client, but may contains more than one script.
 type Session struct {
-	sftpc     *sftp.Client
-	sshClient *ssh.Client
-	vars      *ini.Ini
+	privateKey *rsa.PrivateKey
+	sftpc      *sftp.Client
+	sshClient  *ssh.Client
+
+	vars ini.Ini
 
 	BaseDir   string
 	ScriptDir string
@@ -40,7 +43,7 @@ type Session struct {
 
 // NewSession create and initialize the new session based on Awwan base
 // directory and the session directory.
-func NewSession(baseDir, sessionDir string) (ses *Session, err error) {
+func NewSession(aww *Awwan, sessionDir string) (ses *Session, err error) {
 	var (
 		logp = "newSession"
 
@@ -48,7 +51,9 @@ func NewSession(baseDir, sessionDir string) (ses *Session, err error) {
 	)
 
 	ses = &Session{
-		BaseDir:   baseDir,
+		privateKey: aww.privateKey,
+
+		BaseDir:   aww.BaseDir,
 		ScriptDir: sessionDir,
 		hostname:  filepath.Base(sessionDir),
 	}
@@ -394,7 +399,7 @@ func (ses *Session) executeScriptOnLocal(req *Request, pos linePosition) {
 			continue
 		}
 
-		fmt.Fprintf(req.stdout, "\n>>> local: %3d: %s\n", x, stmt.raw)
+		fmt.Fprintf(req.stdout, "\n--> local: %3d: %s\n", x, stmt.raw)
 
 		var err error
 		switch stmt.kind {
@@ -437,7 +442,7 @@ func (ses *Session) executeScriptOnRemote(req *Request, pos linePosition) {
 			continue
 		}
 
-		fmt.Fprintf(req.stdout, "\n>>> %s: %3d: %s %s\n",
+		fmt.Fprintf(req.stdout, "\n--> %s: %3d: %s %s\n",
 			ses.sshClient, x, stmt.cmd, stmt.args)
 
 		var err error
@@ -535,42 +540,66 @@ func (ses *Session) loadEnvFromPaths() (err error) {
 
 		path     string
 		awwanEnv string
-		content  []byte
 	)
 
 	for _, path = range ses.paths {
+		// Load unencrypted "awwan.env".
 		awwanEnv = filepath.Join(path, defEnvFileName)
 
-		content, err = os.ReadFile(awwanEnv)
+		err = ses.loadFileEnv(awwanEnv, false)
 		if err != nil {
-			if os.IsNotExist(err) {
-				continue
-			}
-			return fmt.Errorf("%s: %s: %w", logp, awwanEnv, err)
+			return fmt.Errorf(`%s: %w`, logp, err)
 		}
 
-		fmt.Printf(">>> loading %q ...\n", awwanEnv)
-		err = ses.loadEnvFromBytes(content)
+		// Load encrypted ".awwan.env.vault".
+		awwanEnv = filepath.Join(path, defFileEnvVault)
+
+		err = ses.loadFileEnv(awwanEnv, true)
 		if err != nil {
-			return fmt.Errorf("%s: %w", logp, err)
+			return fmt.Errorf(`%s: %w`, logp, err)
 		}
 	}
 	return nil
 }
 
-func (ses *Session) loadEnvFromBytes(content []byte) (err error) {
-	in, err := ini.Parse(content)
+func (ses *Session) loadFileEnv(awwanEnv string, isVault bool) (err error) {
+	var content []byte
+
+	content, err = os.ReadFile(awwanEnv)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return fmt.Errorf(`%s: %w`, awwanEnv, err)
+	}
+
+	fmt.Printf("--- loading %q ...\n", awwanEnv)
+
+	if isVault {
+		content, err = decrypt(ses.privateKey, content)
+		if err != nil {
+			return err
+		}
+	}
+
+	err = ses.loadRawEnv(content)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (ses *Session) loadRawEnv(content []byte) (err error) {
+	var in *ini.Ini
+
+	in, err = ini.Parse(content)
 	if err != nil {
 		return err
 	}
 
 	in.Prune()
-
-	if ses.vars == nil {
-		ses.vars = in
-		return nil
-	}
-
 	ses.vars.Rebase(in)
+
 	return nil
 }

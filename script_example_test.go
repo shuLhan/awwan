@@ -28,7 +28,7 @@ end;
 		stmt []byte
 	)
 
-	err = ses.loadEnvFromBytes([]byte(envContent))
+	err = ses.loadRawEnv([]byte(envContent))
 	if err != nil {
 		log.Fatal(err)
 	}
