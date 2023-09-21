@@ -9,8 +9,10 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
+	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"log"
 	"os"
 	"path/filepath"
@@ -92,21 +94,35 @@ func New(baseDir string) (aww *Awwan, err error) {
 
 	aww = &Awwan{}
 
+	err = aww.init(baseDir)
+	if err != nil {
+		return nil, fmt.Errorf(`%s: %w`, logp, err)
+	}
+
+	return aww, nil
+}
+
+func (aww *Awwan) init(baseDir string) (err error) {
 	if len(baseDir) > 0 {
 		baseDir, err = filepath.Abs(baseDir)
 		if err != nil {
-			return nil, fmt.Errorf("%s: %w", logp, err)
+			return err
 		}
 	}
 
 	aww.BaseDir, err = lookupBaseDir(baseDir)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", logp, err)
+		return err
 	}
 
 	fmt.Printf("--- BaseDir: %s\n", aww.BaseDir)
 
-	return aww, nil
+	err = aww.loadPrivateKey()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Decrypt the file using private key from file "{{.BaseDir}}/.awwan.key".
@@ -125,10 +141,7 @@ func (aww *Awwan) Decrypt(fileVault string) (filePlain string, err error) {
 	}
 
 	if aww.privateKey == nil {
-		err = aww.loadPrivateKey()
-		if err != nil {
-			return ``, fmt.Errorf(`%s: %w`, logp, err)
-		}
+		return ``, fmt.Errorf(`%s: missing private key %s`, logp, defFilePrivateKey)
 	}
 
 	var ciphertext []byte
@@ -167,10 +180,7 @@ func (aww *Awwan) Encrypt(file string) (fileVault string, err error) {
 	var logp = `Encrypt`
 
 	if aww.privateKey == nil {
-		err = aww.loadPrivateKey()
-		if err != nil {
-			return ``, fmt.Errorf(`%s: %w`, logp, err)
-		}
+		return ``, fmt.Errorf(`%s: missing private key %s`, logp, defFilePrivateKey)
 	}
 
 	var src []byte
@@ -440,7 +450,7 @@ func (aww *Awwan) loadSshConfig() (err error) {
 	return nil
 }
 
-// loadPrivateKey from file "{{.BaseDir}}/.awwan.key".
+// loadPrivateKey from file "{{.BaseDir}}/.awwan.key" if its exist.
 func (aww *Awwan) loadPrivateKey() (err error) {
 	var (
 		fileKey = filepath.Join(aww.BaseDir, defFilePrivateKey)
@@ -451,6 +461,9 @@ func (aww *Awwan) loadPrivateKey() (err error) {
 
 	pkey, err = libcrypto.LoadPrivateKeyInteractive(aww.termrw, fileKey)
 	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return nil
+		}
 		return err
 	}
 
