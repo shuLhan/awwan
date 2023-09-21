@@ -140,10 +140,6 @@ func (aww *Awwan) Decrypt(fileVault string) (filePlain string, err error) {
 		return ``, fmt.Errorf(`%s: invalid extension, expecting %s, got %s`, logp, defEncryptExt, ext)
 	}
 
-	if aww.privateKey == nil {
-		return ``, fmt.Errorf(`%s: missing private key %s`, logp, defFilePrivateKey)
-	}
-
 	var ciphertext []byte
 
 	ciphertext, err = os.ReadFile(fileVault)
@@ -151,14 +147,9 @@ func (aww *Awwan) Decrypt(fileVault string) (filePlain string, err error) {
 		return ``, fmt.Errorf(`%s: %w`, logp, err)
 	}
 
-	var (
-		hash  = sha256.New()
-		label = []byte(`awwan`)
+	var plaintext []byte
 
-		plaintext []byte
-	)
-
-	plaintext, err = libcrypto.DecryptOaep(hash, rand.Reader, aww.privateKey, ciphertext, label)
+	plaintext, err = decrypt(aww.privateKey, ciphertext)
 	if err != nil {
 		return ``, fmt.Errorf(`%s: %w`, logp, err)
 	}
@@ -473,6 +464,24 @@ func (aww *Awwan) loadPrivateKey() (err error) {
 	}
 
 	return nil
+}
+
+func decrypt(pkey *rsa.PrivateKey, cipher []byte) (plain []byte, err error) {
+	if pkey == nil {
+		return nil, fmt.Errorf(`missing private key file %q`, defFilePrivateKey)
+	}
+
+	var (
+		hash  = sha256.New()
+		label = []byte(`awwan`)
+	)
+
+	plain, err = libcrypto.DecryptOaep(hash, rand.Reader, pkey, cipher, label)
+	if err != nil {
+		return nil, err
+	}
+
+	return plain, nil
 }
 
 // lookupBaseDir find the directory that contains ".ssh" directory from
