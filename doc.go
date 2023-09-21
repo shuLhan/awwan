@@ -6,7 +6,7 @@ Package awwan provide the library for loading environment files, creating SSH
 client, and executing the script.
 
 This documentation describe the design of awwan library.
-For documentation about awwan as CLI see the README.adoc on the root of
+For documentation about awwan as CLI see the README.md on the root of
 repository.
 
 # Terminology
