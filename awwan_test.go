@@ -107,16 +107,15 @@ func TestAwwanEncrypt(t *testing.T) {
 	var (
 		mockrw = mock.ReadWriter{}
 
-		c   testCase
-		aww *Awwan
-		err error
+		c         testCase
+		aww       *Awwan
+		err       error
+		filePlain string
+		fileVault string
 	)
 
 	for _, c = range cases {
-		var (
-			filePlain = filepath.Join(c.baseDir, c.file)
-			fileVault = filepath.Join(c.baseDir, `.awwan.env.vault`)
-		)
+		filePlain = filepath.Join(c.baseDir, c.file)
 
 		aww, err = New(c.baseDir)
 		if err != nil {
@@ -132,7 +131,7 @@ func TestAwwanEncrypt(t *testing.T) {
 			aww.termrw = nil
 		}
 
-		err = aww.Encrypt(filePlain)
+		fileVault, err = aww.Encrypt(filePlain)
 		if err != nil {
 			test.Assert(t, `Encrypt`, c.expError, err.Error())
 			continue

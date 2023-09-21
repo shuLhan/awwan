@@ -185,7 +185,15 @@ func main() {
 		return
 
 	case awwan.CommandModeEncrypt:
-		err = aww.Encrypt(file)
+		var fileVault string
+
+		fileVault, err = aww.Encrypt(file)
+		if err != nil {
+			log.Fatalf(`%s: %s`, logp, err)
+		}
+		fmt.Printf(`Encrypted file output: %s`, fileVault)
+		return
+
 	case awwan.CommandModeLocal:
 		err = aww.Local(req)
 	case awwan.CommandModePlay:

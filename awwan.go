@@ -162,17 +162,14 @@ func (aww *Awwan) Decrypt(fileVault string) (filePlain string, err error) {
 
 // Encrypt the file using private key from file "{{.BaseDir}}/.awwan.key".
 // The encrypted file output will be on the same file path with ".vault"
-// extension.
-func (aww *Awwan) Encrypt(file string) (err error) {
-	var (
-		logp      = `Encrypt`
-		fileVault = file + `.vault`
-	)
+// extension in fileVault.
+func (aww *Awwan) Encrypt(file string) (fileVault string, err error) {
+	var logp = `Encrypt`
 
 	if aww.privateKey == nil {
 		err = aww.loadPrivateKey()
 		if err != nil {
-			return fmt.Errorf(`%s: %w`, logp, err)
+			return ``, fmt.Errorf(`%s: %w`, logp, err)
 		}
 	}
 
@@ -180,7 +177,7 @@ func (aww *Awwan) Encrypt(file string) (err error) {
 
 	src, err = os.ReadFile(file)
 	if err != nil {
-		return fmt.Errorf(`%s: %w`, logp, err)
+		return ``, fmt.Errorf(`%s: %w`, logp, err)
 	}
 
 	var (
@@ -192,15 +189,17 @@ func (aww *Awwan) Encrypt(file string) (err error) {
 
 	ciphertext, err = libcrypto.EncryptOaep(hash, rand.Reader, &aww.privateKey.PublicKey, src, label)
 	if err != nil {
-		return fmt.Errorf(`%s: %w`, logp, err)
+		return ``, fmt.Errorf(`%s: %w`, logp, err)
 	}
+
+	fileVault = file + `.vault`
 
 	err = os.WriteFile(fileVault, ciphertext, 0600)
 	if err != nil {
-		return fmt.Errorf(`%s: %w`, logp, err)
+		return ``, fmt.Errorf(`%s: %w`, logp, err)
 	}
 
-	return nil
+	return fileVault, nil
 }
 
 // Local execute the script in the local machine using shell.
