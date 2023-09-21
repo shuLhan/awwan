@@ -9,12 +9,12 @@ import (
 )
 
 // Request for executing local or remote script.
-// Each request define the script file to be executed and the line number
-// range in form of BeginAt and EndAt.
-//
-// Each request may set the Writer where the command output and error will be
-// written.  If its nil, it will default to os.Stdout and os.Stderr.
+// Each request define the Mode of execution, Script file to be executed,
+// and the lineRange -- list of line numbers to be executed.
 type Request struct {
+	// Each request may set the Writer where the command output and
+	// error will be written.
+	// If its nil, it will default to os.Stdout and os.Stderr.
 	stdout     io.Writer
 	stderr     io.Writer
 	scriptPath string // The actual or cleaned up path of the Script.
