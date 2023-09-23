@@ -5,21 +5,13 @@ package awwan
 
 import (
 	"bytes"
-	"crypto"
-	"crypto/rand"
-	"crypto/rsa"
-	"crypto/sha256"
-	"errors"
 	"fmt"
-	"io"
-	"io/fs"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"git.sr.ht/~shulhan/awwan/internal"
-	libcrypto "github.com/shuLhan/share/lib/crypto"
 	"github.com/shuLhan/share/lib/http"
 	"github.com/shuLhan/share/lib/memfs"
 	"github.com/shuLhan/share/lib/ssh/config"
@@ -64,28 +56,18 @@ var (
 	newLine         = []byte("\n")
 )
 
-// errPrivateKeyMissing returned when private key file is missing or not
-// loaded when command require loading encrypted file.
-var errPrivateKeyMissing = errors.New(`private key is missing or not loaded`)
-
 // Awwan is the service that run script in local or remote.
 // Awwan contains cache of sessions and cache of environment files.
 type Awwan struct {
 	BaseDir string
+
+	cryptoc *cryptoContext
 
 	// All the Host values from SSH config files.
 	sshConfig *config.Config
 
 	httpd     *http.Server // The HTTP server.
 	memfsBase *memfs.MemFS // The files caches.
-
-	// privateKey define the key for encrypt and decrypt command.
-	privateKey *rsa.PrivateKey
-
-	// termrw define the ReadWriter to prompt and read passphrase for
-	// privateKey.
-	// This field should be nil, only used during testing.
-	termrw io.ReadWriter
 
 	bufout bytes.Buffer
 	buferr bytes.Buffer
@@ -124,10 +106,7 @@ func (aww *Awwan) init(baseDir string) (err error) {
 
 	fmt.Printf("--- BaseDir: %s\n", aww.BaseDir)
 
-	err = aww.loadPrivateKey()
-	if err != nil {
-		return err
-	}
+	aww.cryptoc = newCryptoContext(aww.BaseDir)
 
 	return nil
 }
@@ -156,7 +135,7 @@ func (aww *Awwan) Decrypt(fileVault string) (filePlain string, err error) {
 
 	var plaintext []byte
 
-	plaintext, err = decrypt(aww.privateKey, ciphertext)
+	plaintext, err = aww.cryptoc.decrypt(ciphertext)
 	if err != nil {
 		return ``, fmt.Errorf(`%s: %w`, logp, err)
 	}
@@ -177,10 +156,6 @@ func (aww *Awwan) Decrypt(fileVault string) (filePlain string, err error) {
 func (aww *Awwan) Encrypt(file string) (fileVault string, err error) {
 	var logp = `Encrypt`
 
-	if aww.privateKey == nil {
-		return ``, fmt.Errorf(`%s: %w`, logp, errPrivateKeyMissing)
-	}
-
 	var src []byte
 
 	src, err = os.ReadFile(file)
@@ -188,14 +163,9 @@ func (aww *Awwan) Encrypt(file string) (fileVault string, err error) {
 		return ``, fmt.Errorf(`%s: %w`, logp, err)
 	}
 
-	var (
-		hash  = sha256.New()
-		label = []byte(`awwan`)
+	var ciphertext []byte
 
-		ciphertext []byte
-	)
-
-	ciphertext, err = libcrypto.EncryptOaep(hash, rand.Reader, &aww.privateKey.PublicKey, src, label)
+	ciphertext, err = aww.cryptoc.encrypt(src)
 	if err != nil {
 		return ``, fmt.Errorf(`%s: %w`, logp, err)
 	}
@@ -446,62 +416,6 @@ func (aww *Awwan) loadSshConfig() (err error) {
 	aww.sshConfig.Prepend(baseDirConfig)
 
 	return nil
-}
-
-// loadPrivateKey from file "{{.BaseDir}}/.awwan.key" if its exist.
-func (aww *Awwan) loadPrivateKey() (err error) {
-	var (
-		fileKey = filepath.Join(aww.BaseDir, defFilePrivateKey)
-
-		pkey crypto.PrivateKey
-		ok   bool
-	)
-
-	_, err = os.Stat(fileKey)
-	if err != nil {
-		if errors.Is(err, fs.ErrNotExist) {
-			return nil
-		}
-		return err
-	}
-
-	fmt.Printf("--- Loading private key file %q (enter to skip passphrase) ...\n", fileKey)
-
-	pkey, err = libcrypto.LoadPrivateKeyInteractive(aww.termrw, fileKey)
-	if err != nil {
-		if errors.Is(err, libcrypto.ErrEmptyPassphrase) {
-			// Ignore empty passphrase error, in case the
-			// command does not need to decrypt files when
-			// running.
-			return nil
-		}
-		return err
-	}
-
-	aww.privateKey, ok = pkey.(*rsa.PrivateKey)
-	if !ok {
-		return fmt.Errorf(`the private key type must be RSA, got %T`, pkey)
-	}
-
-	return nil
-}
-
-func decrypt(pkey *rsa.PrivateKey, cipher []byte) (plain []byte, err error) {
-	if pkey == nil {
-		return nil, errPrivateKeyMissing
-	}
-
-	var (
-		hash  = sha256.New()
-		label = []byte(`awwan`)
-	)
-
-	plain, err = libcrypto.DecryptOaep(hash, rand.Reader, pkey, cipher, label)
-	if err != nil {
-		return nil, err
-	}
-
-	return plain, nil
 }
 
 // lookupBaseDir find the directory that contains ".ssh" directory from

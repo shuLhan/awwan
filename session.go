@@ -5,7 +5,6 @@ package awwan
 
 import (
 	"bytes"
-	"crypto/rsa"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -27,9 +26,9 @@ import (
 // Session manage and cache SSH client and list of scripts.
 // One session have one SSH client, but may contains more than one script.
 type Session struct {
-	privateKey *rsa.PrivateKey
-	sftpc      *sftp.Client
-	sshClient  *ssh.Client
+	cryptoc   *cryptoContext
+	sftpc     *sftp.Client
+	sshClient *ssh.Client
 
 	vars ini.Ini
 
@@ -56,7 +55,7 @@ func NewSession(aww *Awwan, sessionDir string) (ses *Session, err error) {
 	)
 
 	ses = &Session{
-		privateKey: aww.privateKey,
+		cryptoc: aww.cryptoc,
 
 		BaseDir:   aww.BaseDir,
 		ScriptDir: sessionDir,
@@ -667,7 +666,7 @@ func (ses *Session) loadFileEnv(awwanEnv string, isVault bool) (err error) {
 	fmt.Printf("--- loading %q ...\n", awwanEnv)
 
 	if isVault {
-		content, err = decrypt(ses.privateKey, content)
+		content, err = ses.cryptoc.decrypt(content)
 		if err != nil {
 			return err
 		}
@@ -703,7 +702,7 @@ func (ses *Session) loadFileInput(path string) (content []byte, isVault bool, er
 		return nil, false, err
 	}
 
-	content, err = decrypt(ses.privateKey, content)
+	content, err = ses.cryptoc.decrypt(content)
 	if err != nil {
 		return nil, false, err
 	}

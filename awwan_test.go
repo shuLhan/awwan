@@ -59,16 +59,16 @@ func TestAwwanDecrypt(t *testing.T) {
 		var aww = Awwan{}
 		fileVault = filepath.Join(c.baseDir, c.fileVault)
 
-		// Write the passphrase to standard input to be read
-		// interactively.
-		mockrw.BufRead.WriteString(c.passphrase)
-		aww.termrw = &mockrw
-
 		err = aww.init(c.baseDir)
 		if err != nil {
 			test.Assert(t, `Decrypt`, c.expError, err.Error())
 			continue
 		}
+
+		// Write the passphrase to standard input to be read
+		// interactively.
+		mockrw.BufRead.WriteString(c.passphrase)
+		aww.cryptoc.termrw = &mockrw
 
 		filePlain, err = aww.Decrypt(fileVault)
 		if err != nil {
@@ -103,12 +103,12 @@ func TestAwwanEncrypt(t *testing.T) {
 		baseDir:    filepath.Join(`testdata`, `encrypt-with-passphrase`),
 		file:       `.awwan.env`,
 		passphrase: "invalids3cret\r",
-		expError:   `LoadPrivateKeyInteractive: x509: decryption password incorrect`,
+		expError:   `Encrypt: LoadPrivateKeyInteractive: x509: decryption password incorrect`,
 	}, {
 		baseDir:    filepath.Join(`testdata`, `encrypt-without-rsa`),
 		file:       `.awwan.env`,
 		passphrase: "s3cret\r",
-		expError:   `the private key type must be RSA, got *ed25519.PrivateKey`,
+		expError:   `Encrypt: the private key type must be RSA, got *ed25519.PrivateKey`,
 	}, {
 		baseDir: filepath.Join(`testdata`, `encrypt-without-passphrase`),
 		file:    `.awwan.env`,
@@ -127,16 +127,16 @@ func TestAwwanEncrypt(t *testing.T) {
 		var aww = Awwan{}
 		filePlain = filepath.Join(c.baseDir, c.file)
 
-		// Write the passphrase to standard input to be read
-		// interactively.
-		mockrw.BufRead.WriteString(c.passphrase)
-		aww.termrw = &mockrw
-
 		err = aww.init(c.baseDir)
 		if err != nil {
 			test.Assert(t, `Encrypt`, c.expError, err.Error())
 			continue
 		}
+
+		// Write the passphrase to standard input to be read
+		// interactively.
+		mockrw.BufRead.WriteString(c.passphrase)
+		aww.cryptoc.termrw = &mockrw
 
 		fileVault, err = aww.Encrypt(filePlain)
 		if err != nil {
@@ -176,14 +176,14 @@ func TestAwwanLocal_withEncryption(t *testing.T) {
 		aww     = Awwan{}
 	)
 
-	// Mock terminal to read passphrase for private key.
-	mockrw.BufRead.WriteString("s3cret\r")
-	aww.termrw = &mockrw
-
 	err = aww.init(basedir)
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	// Mock terminal to read passphrase for private key.
+	mockrw.BufRead.WriteString("s3cret\r")
+	aww.cryptoc.termrw = &mockrw
 
 	var cases = []testCase{{
 		script:    filepath.Join(basedir, `local.aww`),
@@ -221,8 +221,8 @@ func TestAwwanLocalPut_withEncryption(t *testing.T) {
 		passphrase string
 		expError   string
 
-		// If true, the Awwan.privateKey will be set to nil before
-		// running Local.
+		// If true, the Awwan.cryptoc.privateKey will be set to nil
+		// before running Local.
 		resetPrivateKey bool
 	}
 
@@ -246,14 +246,14 @@ func TestAwwanLocalPut_withEncryption(t *testing.T) {
 		aww     = Awwan{}
 	)
 
-	// Mock terminal to read passphrase for private key.
-	mockrw.BufRead.WriteString("s3cret\r")
-	aww.termrw = &mockrw
-
 	err = aww.init(baseDir)
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	// Mock terminal to read passphrase for private key.
+	mockrw.BufRead.WriteString("s3cret\r")
+	aww.cryptoc.termrw = &mockrw
 
 	var (
 		script    = filepath.Join(baseDir, `local.aww`)
@@ -270,7 +270,7 @@ func TestAwwanLocalPut_withEncryption(t *testing.T) {
 		}, {
 			desc:            `WithInvalidPassphrase`,
 			passphrase:      "invalid\r",
-			expError:        `Local: loadEnvFromPaths: private key is missing or not loaded`,
+			expError:        `Local: loadEnvFromPaths: LoadPrivateKeyInteractive: x509: decryption password incorrect`,
 			resetPrivateKey: true,
 		}}
 
@@ -283,7 +283,7 @@ func TestAwwanLocalPut_withEncryption(t *testing.T) {
 			_ = os.Remove(fileDest)
 
 			if c.resetPrivateKey {
-				aww.privateKey = nil
+				aww.cryptoc.privateKey = nil
 
 				// Mock terminal to read passphrase for private key.
 				mockrw.BufRead.Reset()
