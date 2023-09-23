@@ -243,9 +243,9 @@ func (aww *Awwan) Local(req *Request) (err error) {
 	}
 
 	if len(req.Content) == 0 {
-		req.script, err = NewScriptForLocal(ses, req.scriptPath)
+		req.script, err = NewScript(ses, req.scriptPath)
 	} else {
-		req.script, err = ParseScriptForLocal(ses, req.Content)
+		req.script, err = ParseScript(ses, req.Content)
 	}
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
@@ -329,9 +329,9 @@ func (aww *Awwan) Play(req *Request) (err error) {
 	}
 
 	if len(req.Content) == 0 {
-		req.script, err = NewScriptForRemote(ses, req.scriptPath)
+		req.script, err = NewScript(ses, req.scriptPath)
 	} else {
-		req.script, err = ParseScriptForRemote(ses, req.Content)
+		req.script, err = ParseScript(ses, req.Content)
 	}
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)

@@ -17,33 +17,12 @@ type Script struct {
 	rawLines [][]byte
 }
 
-// NewScriptForLocal load the content of awwan script (".aww"), apply the
-// value of session and environment variables into the script content, and
-// split it into Statements.
-func NewScriptForLocal(ses *Session, path string) (script *Script, err error) {
-	var (
-		logp    = "NewScriptForLocal"
-		content []byte
-	)
-
-	content, err = os.ReadFile(path)
-	if err != nil {
-		return nil, fmt.Errorf("%s: %w", logp, err)
-	}
-
-	script, err = ParseScriptForLocal(ses, content)
-	if err != nil {
-		return nil, fmt.Errorf("%s: %w", logp, err)
-	}
-	return script, nil
-}
-
-// NewScriptForRemote load the content of awwan script (".aww"), apply the
+// NewScript load the content of awwan script (".aww"), apply the
 // value of session variables into the script content, and split it into
 // Statements.
-func NewScriptForRemote(ses *Session, path string) (script *Script, err error) {
+func NewScript(ses *Session, path string) (script *Script, err error) {
 	var (
-		logp    = "NewScriptForRemote"
+		logp    = `NewScript`
 		content []byte
 	)
 
@@ -52,28 +31,18 @@ func NewScriptForRemote(ses *Session, path string) (script *Script, err error) {
 		return nil, fmt.Errorf("%s: %w", logp, err)
 	}
 
-	script, err = ParseScriptForRemote(ses, content)
+	script, err = ParseScript(ses, content)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", logp, err)
 	}
 	return script, nil
 }
 
-// ParseScriptForLocal parse the script content by applying the session and
-// environment variables and splitting it into Statement.
-func ParseScriptForLocal(ses *Session, content []byte) (s *Script, err error) {
-	return parseScript(ses, content)
-}
-
-// ParseScriptForRemote parse the script content by applying the session
+// ParseScript parse the script content by applying the session
 // variables and splitting it into Statement.
-func ParseScriptForRemote(ses *Session, content []byte) (s *Script, err error) {
-	return parseScript(ses, content)
-}
-
-func parseScript(ses *Session, content []byte) (script *Script, err error) {
+func ParseScript(ses *Session, content []byte) (script *Script, err error) {
 	var (
-		logp = "parseScript"
+		logp = `ParseScript`
 
 		tmpl     *template.Template
 		buf      bytes.Buffer

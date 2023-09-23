@@ -8,7 +8,7 @@ import (
 	"log"
 )
 
-func ExampleParseScriptForLocal() {
+func ExampleParseScript() {
 	var (
 		envContent = `
 [section]
@@ -33,7 +33,7 @@ end;
 		log.Fatal(err)
 	}
 
-	s, err = ParseScriptForLocal(ses, []byte(scriptContent))
+	s, err = ParseScript(ses, []byte(scriptContent))
 	if err != nil {
 		log.Fatal(err)
 	}
