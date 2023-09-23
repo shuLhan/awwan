@@ -5,11 +5,14 @@ package awwan
 
 import (
 	"crypto/rsa"
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"text/template"
 
 	"github.com/shuLhan/share/lib/ascii"
 	"github.com/shuLhan/share/lib/ini"
@@ -108,7 +111,7 @@ func (ses *Session) Copy(stmt *Statement) (err error) {
 		return fmt.Errorf("%s: two or more destination arguments is given", logp)
 	}
 
-	src, err = parseTemplate(ses, stmt.cmd)
+	src, err = ses.generateFileInput(stmt.cmd)
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
@@ -174,7 +177,7 @@ func (ses *Session) Put(stmt *Statement) (err error) {
 		return fmt.Errorf("%s: two or more destination arguments is given", logp)
 	}
 
-	local, err = parseTemplate(ses, stmt.cmd)
+	local, err = ses.generateFileInput(stmt.cmd)
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
@@ -212,7 +215,7 @@ func (ses *Session) SudoCopy(req *Request, stmt *Statement, withParseInput bool)
 	}
 
 	if withParseInput {
-		src, err = parseTemplate(ses, stmt.cmd)
+		src, err = ses.generateFileInput(stmt.cmd)
 		if err != nil {
 			return fmt.Errorf("%s: %w", logp, err)
 		}
@@ -315,7 +318,7 @@ func (ses *Session) SudoPut(stmt *Statement) (err error) {
 
 	// Apply the session variables into local file to be copied first, and
 	// save them into cache directory.
-	local, err = parseTemplate(ses, stmt.cmd)
+	local, err = ses.generateFileInput(stmt.cmd)
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
@@ -463,6 +466,58 @@ func (ses *Session) executeScriptOnRemote(req *Request, pos linePosition) {
 			break
 		}
 	}
+}
+
+// generateFileInput read the content of file input "in", apply the session
+// variables, and write the result to ".cache" directory, and return the
+// output file path as "out".
+//
+// For example, if the input file path is "{{.BaseDir}}/a/b/script" then the
+// output file path would be "{{.BaseDir}}/.cache/a/b/script".
+func (ses *Session) generateFileInput(in string) (out string, err error) {
+	var (
+		logp = `generateFileInput`
+
+		tmpl   *template.Template
+		f      *os.File
+		outDir string
+		base   string
+	)
+
+	if libos.IsBinary(in) {
+		return in, nil
+	}
+
+	outDir = filepath.Join(ses.BaseDir, defCacheDir, filepath.Dir(in))
+	base = filepath.Base(in)
+	out = filepath.Join(outDir, base)
+
+	err = os.MkdirAll(outDir, 0700)
+	if err != nil {
+		return "", fmt.Errorf("%s %s: %w", logp, in, err)
+	}
+
+	tmpl, err = template.ParseFiles(in)
+	if err != nil {
+		return "", fmt.Errorf("%s %s: %w", logp, in, err)
+	}
+
+	f, err = os.Create(out)
+	if err != nil {
+		return "", fmt.Errorf("%s %s: %w", logp, in, err)
+	}
+
+	err = tmpl.Execute(f, ses)
+	if err != nil {
+		return "", fmt.Errorf("%s %s: %w", logp, in, err)
+	}
+
+	err = f.Close()
+	if err != nil {
+		return "", fmt.Errorf("%s %s: %w", logp, in, err)
+	}
+
+	return out, nil
 }
 
 // generatePaths using baseDir return all paths from BaseDir to ScriptDir.
