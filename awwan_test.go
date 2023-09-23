@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2023 M. Shulhan <ms@kilabit.info>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 package awwan
 
 import (
@@ -208,5 +211,111 @@ func TestAwwanLocal_withEncryption(t *testing.T) {
 		}
 
 		test.Assert(t, `stdout`, string(tdata.Output[c.tdataOut]), mockout.String())
+	}
+}
+
+func TestAwwanLocalPut_withEncryption(t *testing.T) {
+	type testCase struct {
+		desc       string
+		tdataOut   string
+		passphrase string
+		expError   string
+
+		// If true, the Awwan.privateKey will be set to nil before
+		// running Local.
+		resetPrivateKey bool
+	}
+
+	// Load the test data output.
+	var (
+		baseDir = filepath.Join(`testdata`, `encrypt`)
+
+		tdata *test.Data
+		err   error
+	)
+	tdata, err = test.LoadData(filepath.Join(baseDir, `test.data`))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Create the Awwan instance.
+	var (
+		mockout = bytes.Buffer{}
+		mockerr = bytes.Buffer{}
+		mockrw  = mock.ReadWriter{}
+		aww     = Awwan{}
+	)
+
+	// Mock terminal to read passphrase for private key.
+	mockrw.BufRead.WriteString("s3cret\r")
+	aww.termrw = &mockrw
+
+	err = aww.init(baseDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var (
+		script    = filepath.Join(baseDir, `local.aww`)
+		lineRange = `3`
+		fileDest  = filepath.Join(baseDir, `file.txt.decrypted`)
+
+		cases = []testCase{{
+			desc:     `WithSuccess`,
+			tdataOut: `local.aww:3:exp_file_content`,
+		}, {
+			desc:            `WithEmptyPrivateKey`,
+			expError:        `Local: loadEnvFromPaths: private key is missing or not loaded`,
+			resetPrivateKey: true,
+		}, {
+			desc:            `WithInvalidPassphrase`,
+			passphrase:      "invalid\r",
+			expError:        `Local: loadEnvFromPaths: private key is missing or not loaded`,
+			resetPrivateKey: true,
+		}}
+
+		c          testCase
+		expContent string
+		gotContent []byte
+	)
+	for _, c = range cases {
+		t.Run(c.desc, func(tt *testing.T) {
+			_ = os.Remove(fileDest)
+
+			if c.resetPrivateKey {
+				aww.privateKey = nil
+
+				// Mock terminal to read passphrase for private key.
+				mockrw.BufRead.Reset()
+				mockrw.BufRead.WriteString(c.passphrase)
+			}
+
+			var req = NewRequest(CommandModeLocal, script, lineRange)
+
+			mockout.Reset()
+			mockerr.Reset()
+			req.stdout = &mockout
+			req.stderr = &mockerr
+
+			err = aww.Local(req)
+			if err != nil {
+				test.Assert(tt, c.desc, c.expError, err.Error())
+				return
+			}
+
+			// We cannot assert the stdout since its print dynamic
+			// paths.
+
+			test.Assert(tt, `stderr`, ``, mockerr.String())
+
+			gotContent, err = os.ReadFile(fileDest)
+			if err != nil {
+				tt.Fatal(err)
+			}
+
+			expContent = string(tdata.Output[c.tdataOut])
+
+			test.Assert(tt, `content`, expContent, string(gotContent))
+		})
 	}
 }
