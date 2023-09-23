@@ -64,6 +64,10 @@ var (
 	newLine         = []byte("\n")
 )
 
+// errPrivateKeyMissing returned when private key file is missing or not
+// loaded when command require loading encrypted file.
+var errPrivateKeyMissing = errors.New(`private key is missing or not loaded`)
+
 // Awwan is the service that run script in local or remote.
 // Awwan contains cache of sessions and cache of environment files.
 type Awwan struct {
@@ -174,7 +178,7 @@ func (aww *Awwan) Encrypt(file string) (fileVault string, err error) {
 	var logp = `Encrypt`
 
 	if aww.privateKey == nil {
-		return ``, fmt.Errorf(`%s: missing private key %s`, logp, defFilePrivateKey)
+		return ``, fmt.Errorf(`%s: %w`, logp, errPrivateKeyMissing)
 	}
 
 	var src []byte
@@ -453,9 +457,22 @@ func (aww *Awwan) loadPrivateKey() (err error) {
 		ok   bool
 	)
 
-	pkey, err = libcrypto.LoadPrivateKeyInteractive(aww.termrw, fileKey)
+	_, err = os.Stat(fileKey)
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
+			return nil
+		}
+		return err
+	}
+
+	fmt.Printf("--- Loading private key file %q (enter to skip passphrase) ...\n", fileKey)
+
+	pkey, err = libcrypto.LoadPrivateKeyInteractive(aww.termrw, fileKey)
+	if err != nil {
+		if errors.Is(err, libcrypto.ErrEmptyPassphrase) {
+			// Ignore empty passphrase error, in case the
+			// command does not need to decrypt files when
+			// running.
 			return nil
 		}
 		return err
@@ -471,7 +488,7 @@ func (aww *Awwan) loadPrivateKey() (err error) {
 
 func decrypt(pkey *rsa.PrivateKey, cipher []byte) (plain []byte, err error) {
 	if pkey == nil {
-		return nil, fmt.Errorf(`missing private key file %q`, defFilePrivateKey)
+		return nil, errPrivateKeyMissing
 	}
 
 	var (

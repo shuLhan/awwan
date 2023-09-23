@@ -37,6 +37,10 @@ func TestAwwanDecrypt(t *testing.T) {
 		fileVault:  `.awwan.env.vault`,
 		passphrase: "news3cret\r",
 		expError:   `Decrypt: DecryptOaep: crypto/rsa: decryption error`,
+	}, {
+		baseDir:   filepath.Join(`testdata`, `decrypt-with-passphrase`),
+		fileVault: `.awwan.env.vault`,
+		expError:  `Decrypt: private key is missing or not loaded`,
 	}}
 
 	var (
@@ -89,6 +93,10 @@ func TestAwwanEncrypt(t *testing.T) {
 		file:       `.awwan.env`,
 		passphrase: "s3cret\r",
 	}, {
+		baseDir:  filepath.Join(`testdata`, `encrypt-with-passphrase`),
+		file:     `.awwan.env`,
+		expError: `Encrypt: private key is missing or not loaded`,
+	}, {
 		baseDir:    filepath.Join(`testdata`, `encrypt-with-passphrase`),
 		file:       `.awwan.env`,
 		passphrase: "invalids3cret\r",
@@ -116,14 +124,10 @@ func TestAwwanEncrypt(t *testing.T) {
 		var aww = Awwan{}
 		filePlain = filepath.Join(c.baseDir, c.file)
 
-		if len(c.passphrase) != 0 {
-			// Write the passphrase to standard input to be read
-			// interactively.
-			mockrw.BufRead.WriteString(c.passphrase)
-			aww.termrw = &mockrw
-		} else {
-			aww.termrw = nil
-		}
+		// Write the passphrase to standard input to be read
+		// interactively.
+		mockrw.BufRead.WriteString(c.passphrase)
+		aww.termrw = &mockrw
 
 		err = aww.init(c.baseDir)
 		if err != nil {
