@@ -265,12 +265,12 @@ func TestAwwanLocalPut_withEncryption(t *testing.T) {
 			tdataOut: `local.aww:3:exp_file_content`,
 		}, {
 			desc:            `WithEmptyPrivateKey`,
-			expError:        `Local: loadEnvFromPaths: private key is missing or not loaded`,
+			expError:        `Local: NewSession: loadEnvFromPaths: private key is missing or not loaded`,
 			resetPrivateKey: true,
 		}, {
 			desc:            `WithInvalidPassphrase`,
 			passphrase:      "invalid\r",
-			expError:        `Local: loadEnvFromPaths: LoadPrivateKeyInteractive: x509: decryption password incorrect`,
+			expError:        `Local: NewSession: loadEnvFromPaths: LoadPrivateKeyInteractive: x509: decryption password incorrect`,
 			resetPrivateKey: true,
 		}}
 

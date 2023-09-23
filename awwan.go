@@ -207,11 +207,6 @@ func (aww *Awwan) Local(req *Request) (err error) {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
 
-	err = ses.loadEnvFromPaths()
-	if err != nil {
-		return fmt.Errorf("%s: %w", logp, err)
-	}
-
 	if len(req.Content) == 0 {
 		req.script, err = NewScript(ses, req.scriptPath)
 	} else {
@@ -272,11 +267,6 @@ func (aww *Awwan) Play(req *Request) (err error) {
 	sessionDir = filepath.Dir(req.scriptPath)
 
 	ses, err = NewSession(aww, sessionDir)
-	if err != nil {
-		return fmt.Errorf("%s: %w", logp, err)
-	}
-
-	err = ses.loadEnvFromPaths()
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
 	}

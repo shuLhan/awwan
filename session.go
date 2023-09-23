@@ -49,7 +49,7 @@ type Session struct {
 // directory and the session directory.
 func NewSession(aww *Awwan, sessionDir string) (ses *Session, err error) {
 	var (
-		logp = "newSession"
+		logp = `NewSession`
 
 		randomString string
 	)
@@ -65,6 +65,11 @@ func NewSession(aww *Awwan, sessionDir string) (ses *Session, err error) {
 	err = ses.generatePaths()
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", logp, err)
+	}
+
+	err = ses.loadEnvFromPaths()
+	if err != nil {
+		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
 
 	randomString = string(ascii.Random([]byte(ascii.LettersNumber), 16))
