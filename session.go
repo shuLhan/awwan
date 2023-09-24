@@ -18,17 +18,15 @@ import (
 	"github.com/shuLhan/share/lib/ascii"
 	"github.com/shuLhan/share/lib/ini"
 	libos "github.com/shuLhan/share/lib/os"
-	"github.com/shuLhan/share/lib/ssh"
 	"github.com/shuLhan/share/lib/ssh/config"
-	"github.com/shuLhan/share/lib/ssh/sftp"
 )
 
 // Session manage and cache SSH client and list of scripts.
 // One session have one SSH client, but may contains more than one script.
 type Session struct {
-	cryptoc   *cryptoContext
-	sftpc     *sftp.Client
-	sshClient *ssh.Client
+	cryptoc *cryptoContext
+
+	sshc *sshClient
 
 	vars ini.Ini
 
@@ -138,12 +136,7 @@ func (ses *Session) Copy(stmt *Statement) (err error) {
 
 // Get copy file from remote to local.
 func (ses *Session) Get(stmt *Statement) (err error) {
-	var (
-		logp = "Get"
-
-		remote string
-		local  string
-	)
+	var logp = "Get"
 
 	if len(stmt.cmd) == 0 {
 		return fmt.Errorf("%s: missing source argument", logp)
@@ -155,17 +148,11 @@ func (ses *Session) Get(stmt *Statement) (err error) {
 		return fmt.Errorf("%s: two or more destination arguments is given", logp)
 	}
 
-	remote = stmt.cmd
-	local = stmt.args[0]
-
-	if ses.sftpc == nil {
-		err = ses.sshClient.ScpGet(remote, local)
-	} else {
-		err = ses.sftpc.Get(remote, local)
-	}
+	err = ses.sshc.get(stmt.cmd, stmt.args[0])
 	if err != nil {
-		return fmt.Errorf("%s: %w", logp, err)
+		return fmt.Errorf(`%s: %w`, logp, err)
 	}
+
 	return nil
 }
 
@@ -193,13 +180,7 @@ func (ses *Session) Put(stmt *Statement) (err error) {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
 
-	var remote = stmt.args[0]
-
-	if ses.sftpc == nil {
-		err = ses.sshClient.ScpPut(local, remote)
-	} else {
-		err = ses.sftpc.Put(local, remote)
-	}
+	err = ses.sshc.put(local, stmt.args[0])
 	if isVault {
 		var errRemove = os.Remove(local)
 		if errRemove != nil {
@@ -231,16 +212,10 @@ func (ses *Session) SudoCopy(req *Request, stmt *Statement, withParseInput bool)
 		return fmt.Errorf("%s: two or more destination arguments is given", logp)
 	}
 
-	if withParseInput {
-		var isVault bool
+	var isVault bool
 
+	if withParseInput {
 		src, isVault, err = ses.generateFileInput(stmt.cmd)
-		if isVault {
-			var errRemove = os.Remove(src)
-			if errRemove != nil {
-				log.Printf(`%s: %s`, logp, errRemove)
-			}
-		}
 		if err != nil {
 			return fmt.Errorf("%s: %w", logp, err)
 		}
@@ -256,6 +231,12 @@ func (ses *Session) SudoCopy(req *Request, stmt *Statement, withParseInput bool)
 	}
 
 	err = ses.ExecLocal(req, sudoCp)
+	if isVault {
+		var errRemove = os.Remove(src)
+		if errRemove != nil {
+			log.Printf(`%s: %s`, logp, errRemove)
+		}
+	}
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
@@ -265,16 +246,7 @@ func (ses *Session) SudoCopy(req *Request, stmt *Statement, withParseInput bool)
 // SudoGet copy file from remote that can be accessed by root on remote, to
 // local.
 func (ses *Session) SudoGet(stmt *Statement) (err error) {
-	var (
-		logp = "SudoGet"
-
-		remoteSrc     string
-		remoteBase    string
-		remoteTmp     string
-		cpRemoteToTmp string
-		chmod         string
-		local         string
-	)
+	var logp = `SudoGet`
 
 	if len(stmt.cmd) == 0 {
 		return fmt.Errorf("%s: missing source argument", logp)
@@ -286,33 +258,7 @@ func (ses *Session) SudoGet(stmt *Statement) (err error) {
 		return fmt.Errorf("%s: two or more destination arguments is given", logp)
 	}
 
-	// Copy file in the remote to temporary directory first, so user can
-	// read them.
-	remoteSrc = stmt.cmd
-	remoteBase = filepath.Base(remoteSrc)
-	remoteTmp = filepath.Join(ses.tmpDir, remoteBase)
-
-	cpRemoteToTmp = fmt.Sprintf("sudo cp -f %s %s", remoteSrc, remoteTmp)
-
-	err = ses.sshClient.Execute(cpRemoteToTmp)
-	if err != nil {
-		return fmt.Errorf("%s: %w", logp, err)
-	}
-
-	chmod = fmt.Sprintf("sudo chown %s %s", ses.SSHUser, remoteTmp)
-
-	err = ses.sshClient.Execute(chmod)
-	if err != nil {
-		return fmt.Errorf("%s: %w", logp, err)
-	}
-
-	// Get temporary file in the remote to local.
-	local = stmt.args[0]
-	if ses.sftpc == nil {
-		err = ses.sshClient.ScpGet(remoteTmp, local)
-	} else {
-		err = ses.sftpc.Get(remoteTmp, local)
-	}
+	err = ses.sshc.sudoGet(stmt.cmd, stmt.args[0])
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
@@ -321,14 +267,7 @@ func (ses *Session) SudoGet(stmt *Statement) (err error) {
 
 // SudoPut copy file from local to remote using sudo.
 func (ses *Session) SudoPut(stmt *Statement) (err error) {
-	var (
-		logp = `SudoPut`
-
-		baseName string
-		tmp      string
-		remote   string
-		moveStmt string
-	)
+	var logp = `SudoPut`
 
 	if len(stmt.cmd) == 0 {
 		return fmt.Errorf("%s: missing source argument", logp)
@@ -344,9 +283,13 @@ func (ses *Session) SudoPut(stmt *Statement) (err error) {
 		local   string
 		isVault bool
 	)
-	// Apply the session variables into local file to be copied first, and
-	// save them into cache directory.
+
 	local, isVault, err = ses.generateFileInput(stmt.cmd)
+	if err != nil {
+		return fmt.Errorf("%s: %w", logp, err)
+	}
+
+	err = ses.sshc.sudoPut(local, stmt.args[0])
 	if isVault {
 		var errRemove = os.Remove(local)
 		if errRemove != nil {
@@ -357,26 +300,7 @@ func (ses *Session) SudoPut(stmt *Statement) (err error) {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
 
-	baseName = filepath.Base(stmt.cmd)
-
-	// Copy file from local to temporary directory first in remote.
-	tmp = filepath.Join(ses.tmpDir, baseName)
-	remote = string(stmt.args[0])
-
-	if ses.sftpc == nil {
-		err = ses.sshClient.ScpPut(local, tmp)
-	} else {
-		err = ses.sftpc.Put(local, tmp)
-	}
-	if err != nil {
-		return fmt.Errorf("%s: %w", logp, err)
-	}
-
-	// Finally, move the file from the temporary directory to original
-	// destination.
-	moveStmt = fmt.Sprintf("sudo mv -f %s %s", tmp, remote)
-
-	return ses.sshClient.Execute(moveStmt)
+	return nil
 }
 
 // ExecLocal execute the command with its arguments in local environment where
@@ -480,12 +404,12 @@ func (ses *Session) executeScriptOnRemote(req *Request, pos linePosition) {
 		}
 
 		fmt.Fprintf(req.stdout, "\n--> %s: %3d: %s %s\n",
-			ses.sshClient, x, stmt.cmd, stmt.args)
+			ses.sshc.conn, x, stmt.cmd, stmt.args)
 
 		var err error
 		switch stmt.kind {
 		case statementKindDefault:
-			err = ses.sshClient.Execute(string(stmt.raw))
+			err = ses.sshc.conn.Execute(string(stmt.raw))
 		case statementKindGet:
 			err = ses.Get(stmt)
 		case statementKindPut:
@@ -604,21 +528,10 @@ func (ses *Session) initSSHClient(req *Request, sshSection *config.Section) (err
 		lastIdentFile = sshSection.IdentityFile[len(sshSection.IdentityFile)-1]
 	}
 
-	fmt.Fprintf(req.stdout, "--- SSH connection: %s@%s:%s\n", sshSection.User(), sshSection.Hostname(), sshSection.Port())
-	fmt.Fprintf(req.stdout, "--- SSH identity file: %v\n", sshSection.IdentityFile)
-
-	ses.sshClient, err = ssh.NewClientInteractive(sshSection)
+	ses.sshc, err = newSshClient(sshSection, ses.tmpDir, req.stdout, req.stderr)
 	if err != nil {
-		return fmt.Errorf("%s: %w", logp, err)
+		return fmt.Errorf(`%s: %w`, logp, err)
 	}
-
-	// Try initialize the sftp client.
-	ses.sftpc, err = sftp.NewClient(ses.sshClient.Client)
-	if err != nil {
-		fmt.Fprintf(req.stderr, "%s: %s\n", logp, err)
-	}
-
-	ses.sshClient.SetSessionOutputError(req.stdout, req.stderr)
 
 	ses.SSHKey = lastIdentFile
 	ses.SSHUser = sshSection.User()

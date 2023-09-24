@@ -254,8 +254,6 @@ func (aww *Awwan) Play(req *Request) (err error) {
 		sessionDir string
 		ses        *Session
 		sshSection *config.Section
-		mkdirStmt  string
-		rmdirStmt  string
 	)
 
 	req.scriptPath = filepath.Clean(req.Script)
@@ -297,20 +295,7 @@ func (aww *Awwan) Play(req *Request) (err error) {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
 
-	// Create temporary directory ...
-	mkdirStmt = fmt.Sprintf("mkdir %s", ses.tmpDir)
-
-	err = ses.sshClient.Execute(mkdirStmt)
-	if err != nil {
-		return fmt.Errorf("%s: %s: %w", logp, mkdirStmt, err)
-	}
-	defer func() {
-		rmdirStmt = fmt.Sprintf("rm -rf %s", ses.tmpDir)
-		err = ses.sshClient.Execute(rmdirStmt)
-		if err != nil {
-			log.Printf("%s: %s", logp, err)
-		}
-	}()
+	defer ses.sshc.rmdirAll(ses.sshc.dirTmp)
 
 	var pos linePosition
 	for _, pos = range req.lineRange.list {
