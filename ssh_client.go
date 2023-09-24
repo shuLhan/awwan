@@ -70,7 +70,7 @@ func newSshClient(section *config.Section, dirTmp string, stdout, stderr io.Writ
 
 	if len(dirTmp) == 0 {
 		var randomString = string(ascii.Random([]byte(ascii.LettersNumber), 16))
-		sshc.dirTmp = filepath.Join(defTmpDir, randomString)
+		sshc.dirTmp = filepath.Join(defTmpDir, defDirTmpPrefix+randomString)
 	}
 
 	err = sshc.mkdir(sshc.dirTmp, 0700)

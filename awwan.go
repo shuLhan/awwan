@@ -217,12 +217,12 @@ func (aww *Awwan) Local(req *Request) (err error) {
 	}
 
 	// Create temporary directory.
-	err = os.MkdirAll(ses.tmpDir, 0700)
+	err = os.MkdirAll(ses.dirTmp, 0700)
 	if err != nil {
-		return fmt.Errorf("%s: %s: %w", logp, ses.tmpDir, err)
+		return fmt.Errorf("%s: %s: %w", logp, ses.dirTmp, err)
 	}
 	defer func() {
-		err = os.RemoveAll(ses.tmpDir)
+		err = os.RemoveAll(ses.dirTmp)
 		if err != nil {
 			log.Printf("%s: %s", logp, err)
 		}

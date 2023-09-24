@@ -21,6 +21,9 @@ import (
 	"github.com/shuLhan/share/lib/ssh/config"
 )
 
+// defDirTmpPrefix default prefix for temporary directory.
+const defDirTmpPrefix = `awwan.`
+
 // Session manage and cache SSH client and list of scripts.
 // One session have one SSH client, but may contains more than one script.
 type Session struct {
@@ -39,7 +42,7 @@ type Session struct {
 	SSHPort string // The value of "Port" in configuration.
 
 	hostname string
-	tmpDir   string
+	dirTmp   string
 	paths    []string
 }
 
@@ -71,7 +74,7 @@ func NewSession(aww *Awwan, sessionDir string) (ses *Session, err error) {
 	}
 
 	randomString = string(ascii.Random([]byte(ascii.LettersNumber), 16))
-	ses.tmpDir = filepath.Join(defTmpDir, randomString)
+	ses.dirTmp = filepath.Join(defTmpDir, defDirTmpPrefix+randomString)
 
 	return ses, nil
 }
@@ -528,7 +531,7 @@ func (ses *Session) initSSHClient(req *Request, sshSection *config.Section) (err
 		lastIdentFile = sshSection.IdentityFile[len(sshSection.IdentityFile)-1]
 	}
 
-	ses.sshc, err = newSshClient(sshSection, ses.tmpDir, req.stdout, req.stderr)
+	ses.sshc, err = newSshClient(sshSection, ses.dirTmp, req.stdout, req.stderr)
 	if err != nil {
 		return fmt.Errorf(`%s: %w`, logp, err)
 	}
