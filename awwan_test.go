@@ -214,16 +214,15 @@ func TestAwwanLocal_withEncryption(t *testing.T) {
 	}
 }
 
-func TestAwwanLocalPut_withEncryption(t *testing.T) {
+func TestAwwanLocalPut(t *testing.T) {
 	type testCase struct {
-		desc       string
-		tdataOut   string
-		passphrase string
-		expError   string
-
-		// If true, the Awwan.cryptoc.privateKey will be set to nil
-		// before running Local.
-		resetPrivateKey bool
+		desc         string
+		passphrase   string
+		lineRange    string
+		fileDest     string
+		tdataStdout  string
+		tdataFileOut string
+		expError     string
 	}
 
 	// Load the test data output.
@@ -238,84 +237,82 @@ func TestAwwanLocalPut_withEncryption(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Create the Awwan instance.
+	var cases = []testCase{{
+		desc:         `With text file`,
+		lineRange:    `3`,
+		fileDest:     filepath.Join(baseDir, `tmp`, `plain.txt`),
+		tdataFileOut: `tmp/plain.txt`,
+	}, {
+		desc:         `With encrypted file`,
+		lineRange:    `5`,
+		fileDest:     filepath.Join(baseDir, `tmp`, `decrypted.txt`),
+		tdataFileOut: `tmp/decrypted.txt`,
+		passphrase:   "s3cret\r",
+	}, {
+		desc:      `With encrypted file, empty passphrase`,
+		expError:  "!!! Copy: generateFileInput: private key is missing or not loaded\n",
+		lineRange: `5`,
+	}, {
+		desc:       `With encrypted file, invalid passphrase`,
+		passphrase: "invalid\r",
+		lineRange:  `5`,
+		expError:   `Local: NewSession: loadEnvFromPaths: LoadPrivateKeyInteractive: x509: decryption password incorrect`,
+	}}
+
 	var (
+		script  = filepath.Join(baseDir, `local.aww`)
 		mockout = bytes.Buffer{}
 		mockerr = bytes.Buffer{}
 		mockrw  = mock.ReadWriter{}
-		aww     = Awwan{}
-	)
 
-	err = aww.init(baseDir)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	// Mock terminal to read passphrase for private key.
-	mockrw.BufRead.WriteString("s3cret\r")
-	aww.cryptoc.termrw = &mockrw
-
-	var (
-		script    = filepath.Join(baseDir, `local.aww`)
-		lineRange = `3`
-		fileDest  = filepath.Join(baseDir, `file.txt.decrypted`)
-
-		cases = []testCase{{
-			desc:     `WithSuccess`,
-			tdataOut: `local.aww:3:exp_file_content`,
-		}, {
-			desc:            `WithEmptyPrivateKey`,
-			expError:        `Local: NewSession: loadEnvFromPaths: private key is missing or not loaded`,
-			resetPrivateKey: true,
-		}, {
-			desc:            `WithInvalidPassphrase`,
-			passphrase:      "invalid\r",
-			expError:        `Local: NewSession: loadEnvFromPaths: LoadPrivateKeyInteractive: x509: decryption password incorrect`,
-			resetPrivateKey: true,
-		}}
-
+		aww        *Awwan
 		c          testCase
-		expContent string
+		expContent []byte
 		gotContent []byte
 	)
 	for _, c = range cases {
-		t.Run(c.desc, func(tt *testing.T) {
-			_ = os.Remove(fileDest)
+		t.Log(c.desc)
 
-			if c.resetPrivateKey {
-				aww.cryptoc.privateKey = nil
+		aww, err = New(baseDir)
+		if err != nil {
+			t.Fatal(err)
+		}
 
-				// Mock terminal to read passphrase for private key.
-				mockrw.BufRead.Reset()
-				mockrw.BufRead.WriteString(c.passphrase)
-			}
+		// Mock terminal to read passphrase for private key.
+		mockrw.BufRead.Reset()
+		mockrw.BufRead.WriteString(c.passphrase)
+		aww.cryptoc.termrw = &mockrw
 
-			var req = NewRequest(CommandModeLocal, script, lineRange)
+		if len(c.fileDest) != 0 {
+			_ = os.Remove(c.fileDest)
+		}
 
-			mockout.Reset()
-			mockerr.Reset()
-			req.stdout = &mockout
-			req.stderr = &mockerr
+		var req = NewRequest(CommandModeLocal, script, c.lineRange)
 
-			err = aww.Local(req)
+		mockout.Reset()
+		mockerr.Reset()
+		req.stdout = &mockout
+		req.stderr = &mockerr
+
+		err = aww.Local(req)
+		if err != nil {
+			test.Assert(t, c.desc, c.expError, err.Error())
+			return
+		}
+
+		// The stdout cannot be asserted since its print dynamic
+		// paths.
+
+		test.Assert(t, `stderr`, c.expError, mockerr.String())
+
+		if len(c.fileDest) != 0 {
+			gotContent, err = os.ReadFile(c.fileDest)
 			if err != nil {
-				test.Assert(tt, c.desc, c.expError, err.Error())
-				return
+				t.Fatal(err)
 			}
 
-			// We cannot assert the stdout since its print dynamic
-			// paths.
-
-			test.Assert(tt, `stderr`, ``, mockerr.String())
-
-			gotContent, err = os.ReadFile(fileDest)
-			if err != nil {
-				tt.Fatal(err)
-			}
-
-			expContent = string(tdata.Output[c.tdataOut])
-
-			test.Assert(tt, `content`, expContent, string(gotContent))
-		})
+			expContent = tdata.Output[c.tdataFileOut]
+			test.Assert(t, `content`, string(expContent), string(gotContent))
+		}
 	}
 }

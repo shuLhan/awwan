@@ -567,6 +567,10 @@ func (ses *Session) loadEnvFromPaths() (err error) {
 
 		err = ses.loadFileEnv(awwanEnv, true)
 		if err != nil {
+			if errors.Is(err, errPrivateKeyMissing) {
+				log.Printf(`%s: %s: %s`, logp, awwanEnv, err)
+				continue
+			}
 			return fmt.Errorf(`%s: %w`, logp, err)
 		}
 	}
