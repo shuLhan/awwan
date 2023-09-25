@@ -163,13 +163,13 @@ func TestAwwanLocal_withEncryption(t *testing.T) {
 		err   error
 	)
 
-	tdata, err = test.LoadData(`testdata/encrypt/test.data`)
+	tdata, err = test.LoadData(`testdata/local/test.data`)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	var (
-		basedir = filepath.Join(`testdata`, `encrypt`)
+		basedir = filepath.Join(`testdata`, `local`)
 		mockout = bytes.Buffer{}
 		mockerr = bytes.Buffer{}
 		mockrw  = mock.ReadWriter{}
@@ -227,7 +227,7 @@ func TestAwwanLocalPut(t *testing.T) {
 
 	// Load the test data output.
 	var (
-		baseDir = filepath.Join(`testdata`, `encrypt`)
+		baseDir = filepath.Join(`testdata`, `local`)
 
 		tdata *test.Data
 		err   error
