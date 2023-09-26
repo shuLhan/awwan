@@ -109,7 +109,8 @@ func (cryptoc *cryptoContext) loadPrivateKey() (err error) {
 		return err
 	}
 
-	fmt.Printf("--- Loading private key file %q (enter to skip passphrase) ...\n", fileKey)
+	fmt.Printf("--- Loading private key file %q (enter to skip passphrase) ...\n",
+		relativePath(cryptoc.baseDir, fileKey))
 
 	pkey, err = libcrypto.LoadPrivateKeyInteractive(cryptoc.termrw, fileKey)
 	if err != nil {

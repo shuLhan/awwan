@@ -468,7 +468,7 @@ func (ses *Session) generateFileInput(in string) (out string, isVault bool, err 
 
 	contentInput, isVault, err = ses.loadFileInput(in)
 	if err != nil {
-		return ``, false, fmt.Errorf(`%s: %w`, logp, err)
+		return ``, false, err
 	}
 
 	var contentOut []byte
@@ -558,8 +558,6 @@ func (ses *Session) initSSHClient(req *Request, sshSection *config.Section) (err
 // loadEnvFromPaths load environment file from each directory in paths.
 func (ses *Session) loadEnvFromPaths() (err error) {
 	var (
-		logp = "loadEnvFromPaths"
-
 		path     string
 		awwanEnv string
 	)
@@ -570,7 +568,7 @@ func (ses *Session) loadEnvFromPaths() (err error) {
 
 		err = ses.loadFileEnv(awwanEnv, false)
 		if err != nil {
-			return fmt.Errorf(`%s: %w`, logp, err)
+			return err
 		}
 
 		// Load encrypted ".awwan.env.vault".
@@ -579,38 +577,42 @@ func (ses *Session) loadEnvFromPaths() (err error) {
 		err = ses.loadFileEnv(awwanEnv, true)
 		if err != nil {
 			if errors.Is(err, errPrivateKeyMissing) {
-				log.Printf(`%s: %s: %s`, logp, awwanEnv, err)
+				log.Println(err)
 				continue
 			}
-			return fmt.Errorf(`%s: %w`, logp, err)
+			return err
 		}
 	}
 	return nil
 }
 
 func (ses *Session) loadFileEnv(awwanEnv string, isVault bool) (err error) {
-	var content []byte
+	var (
+		relPath = relativePath(ses.BaseDir, awwanEnv)
+
+		content []byte
+	)
 
 	content, err = os.ReadFile(awwanEnv)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil
 		}
-		return fmt.Errorf(`%s: %w`, awwanEnv, err)
+		return fmt.Errorf(`%s: %w`, relPath, err)
 	}
 
-	fmt.Printf("--- loading %q ...\n", awwanEnv)
+	fmt.Printf("--- Loading %q ...\n", relativePath(ses.BaseDir, awwanEnv))
 
 	if isVault {
 		content, err = ses.cryptoc.decrypt(content)
 		if err != nil {
-			return err
+			return fmt.Errorf(`%s: %w`, relPath, err)
 		}
 	}
 
 	err = ses.loadRawEnv(content)
 	if err != nil {
-		return err
+		return fmt.Errorf(`%s: %w`, relPath, err)
 	}
 
 	return nil
@@ -623,24 +625,27 @@ func (ses *Session) loadFileEnv(awwanEnv string, isVault bool) (err error) {
 // On success, it will return the content of file and true if the file is
 // from encrypted file .vault.
 func (ses *Session) loadFileInput(path string) (content []byte, isVault bool, err error) {
+	var relPath = relativePath(ses.BaseDir, path)
+
 	content, err = os.ReadFile(path)
 	if err == nil {
 		return content, false, nil
 	}
 	if !errors.Is(err, fs.ErrNotExist) {
-		return nil, false, err
+		return nil, false, fmt.Errorf(`%s: %s`, relPath, err)
 	}
 
 	path = path + defEncryptExt
+	relPath += defEncryptExt
 
 	content, err = os.ReadFile(path)
 	if err != nil {
-		return nil, false, err
+		return nil, false, fmt.Errorf(`%s: %s`, relPath, err)
 	}
 
 	content, err = ses.cryptoc.decrypt(content)
 	if err != nil {
-		return nil, false, err
+		return nil, false, fmt.Errorf(`%s: %s`, relPath, err)
 	}
 
 	return content, true, nil

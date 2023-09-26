@@ -431,3 +431,15 @@ func lookupBaseDir(baseDir string) (dir string, err error) {
 	}
 	return dir, nil
 }
+
+// relativePath return the relative path based on baseDir.
+// It will return path without baseDir prefix on success, or unchanged path
+// if no baseDir.
+func relativePath(baseDir, path string) (relpath string) {
+	var err error
+	relpath, err = filepath.Rel(baseDir, path)
+	if err != nil {
+		relpath = path
+	}
+	return relpath
+}

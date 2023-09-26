@@ -10,7 +10,7 @@ The host name is encrypt.
 The secret password is this_is_a_secret.
 
 <<< encrypted_empty_passphrase.stderr
-!!! Copy: generateFileInput: private key is missing or not loaded
+!!! Copy: encrypted.txt.vault: private key is missing or not loaded
 
 <<< encrypted_invalid_passphrase
-Local: NewSession: loadEnvFromPaths: LoadPrivateKeyInteractive: x509: decryption password incorrect
+Local: NewSession: .awwan.env.vault: LoadPrivateKeyInteractive: x509: decryption password incorrect
