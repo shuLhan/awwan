@@ -85,18 +85,36 @@ func (ses *Session) Subs(secName string) (subs []*ini.Section) {
 }
 
 // Vars return all variables in section and/or subsection as map of string.
+// It will panic if the no variables found.
 func (ses *Session) Vars(path string) (vars map[string]string) {
-	return ses.vars.Vars(path)
+	vars = ses.vars.Vars(path)
+	if len(vars) == 0 {
+		var msg = fmt.Sprintf(`%q is empty`, path)
+		panic(msg)
+	}
+	return vars
 }
 
 // Val return the last variable value defined in key path.
-func (ses *Session) Val(keyPath string) string {
-	return ses.vars.Val(keyPath)
+// It will panic if the value is empty.
+func (ses *Session) Val(keyPath string) (val string) {
+	val = ses.vars.Val(keyPath)
+	if len(val) == 0 {
+		var msg = fmt.Sprintf(`%q is empty`, keyPath)
+		panic(msg)
+	}
+	return val
 }
 
 // Vals return all variable values as slice of string.
-func (ses *Session) Vals(keyPath string) []string {
-	return ses.vars.Vals(keyPath)
+// It will panic if the no variables found.
+func (ses *Session) Vals(keyPath string) (list []string) {
+	list = ses.vars.Vals(keyPath)
+	if len(list) == 0 {
+		var msg = fmt.Sprintf(`%q is empty`, keyPath)
+		panic(msg)
+	}
+	return list
 }
 
 // Copy file in local system.
@@ -453,16 +471,9 @@ func (ses *Session) generateFileInput(in string) (out string, isVault bool, err 
 		return ``, false, fmt.Errorf(`%s: %w`, logp, err)
 	}
 
-	var tmpl = template.New(in)
+	var contentOut []byte
 
-	tmpl, err = tmpl.Parse(string(contentInput))
-	if err != nil {
-		return ``, false, fmt.Errorf(`%s: %w`, logp, err)
-	}
-
-	var contentOut bytes.Buffer
-
-	err = tmpl.Execute(&contentOut, ses)
+	contentOut, err = ses.render(in, contentInput)
 	if err != nil {
 		return ``, false, fmt.Errorf(`%s: %w`, logp, err)
 	}
@@ -479,7 +490,7 @@ func (ses *Session) generateFileInput(in string) (out string, isVault bool, err 
 
 	out = filepath.Join(outDir, base)
 
-	err = os.WriteFile(out, contentOut.Bytes(), 0600)
+	err = os.WriteFile(out, contentOut, 0600)
 	if err != nil {
 		return ``, false, fmt.Errorf(`%s: %s: %w`, logp, out, err)
 	}
@@ -647,4 +658,34 @@ func (ses *Session) loadRawEnv(content []byte) (err error) {
 	ses.vars.Rebase(in)
 
 	return nil
+}
+
+// render apply the session and environment variables into input stream `in`
+// and return the result.
+// It will return an error if the input cannot be parsed or one variable
+// is not exists.
+func (ses *Session) render(path string, in []byte) (out []byte, err error) {
+	var relpath string
+
+	relpath, err = filepath.Rel(ses.BaseDir, path)
+	if err != nil {
+		relpath = path
+	}
+
+	var tmpl = template.New(relpath)
+
+	tmpl, err = tmpl.Parse(string(in))
+	if err != nil {
+		return nil, err
+	}
+
+	var buf bytes.Buffer
+	err = tmpl.Execute(&buf, ses)
+	if err != nil {
+		return nil, err
+	}
+
+	out = buf.Bytes()
+
+	return out, nil
 }

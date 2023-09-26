@@ -1,5 +1,1 @@
 echo {{.Val "secret::pass"}}
-
-#put: {{.ScriptDir}}/plain.txt {{.ScriptDir}}/tmp/plain.txt
-
-#put: {{.ScriptDir}}/encrypted.txt {{.ScriptDir}}/tmp/decrypted.txt

@@ -7,7 +7,6 @@ import (
 	"bytes"
 	"fmt"
 	"os"
-	"text/template"
 )
 
 // Script define the content of ".aww" file, line by line.
@@ -31,7 +30,7 @@ func NewScript(ses *Session, path string) (script *Script, err error) {
 		return nil, fmt.Errorf("%s: %w", logp, err)
 	}
 
-	script, err = ParseScript(ses, content)
+	script, err = ParseScript(ses, path, content)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", logp, err)
 	}
@@ -40,12 +39,10 @@ func NewScript(ses *Session, path string) (script *Script, err error) {
 
 // ParseScript parse the script content by applying the session
 // variables and splitting it into Statement.
-func ParseScript(ses *Session, content []byte) (script *Script, err error) {
+func ParseScript(ses *Session, path string, content []byte) (script *Script, err error) {
 	var (
 		logp = `ParseScript`
 
-		tmpl     *template.Template
-		buf      bytes.Buffer
 		stmt     *Statement
 		line     []byte
 		raw      []byte
@@ -56,20 +53,10 @@ func ParseScript(ses *Session, content []byte) (script *Script, err error) {
 		x        int
 	)
 
-	// Apply the session variables.
-	tmpl = template.New("aww")
-
-	tmpl, err = tmpl.Parse(string(content))
+	raw, err = ses.render(path, content)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", logp, err)
+		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
-
-	err = tmpl.Execute(&buf, ses)
-	if err != nil {
-		return nil, fmt.Errorf("%s: %w", logp, err)
-	}
-
-	raw = buf.Bytes()
 
 	raw = bytes.TrimRight(raw, " \t\r\n\v")
 	splits = bytes.Split(raw, newLine)

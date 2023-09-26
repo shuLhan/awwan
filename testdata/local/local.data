@@ -7,11 +7,3 @@ this_is_a_secret
 
 --> local:   1: echo this_is_a_secret_in_sub
 this_is_a_secret_in_sub
-
-<<< tmp/plain.txt
-The host name is encrypt.
-The secret password is .
-
-<<< tmp/decrypted.txt
-The host name is encrypt.
-The secret password is this_is_a_secret.

@@ -163,7 +163,7 @@ func TestAwwanLocal_withEncryption(t *testing.T) {
 		err   error
 	)
 
-	tdata, err = test.LoadData(`testdata/local/test.data`)
+	tdata, err = test.LoadData(`testdata/local/local.data`)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -216,58 +216,63 @@ func TestAwwanLocal_withEncryption(t *testing.T) {
 
 func TestAwwanLocalPut(t *testing.T) {
 	type testCase struct {
-		desc         string
-		passphrase   string
-		lineRange    string
-		fileDest     string
-		tdataStdout  string
-		tdataFileOut string
-		expError     string
+		desc       string
+		passphrase string
+		lineRange  string
+		fileDest   string
+		expError   string
+		expStderr  string
+		expContent string
 	}
 
 	// Load the test data output.
 	var (
 		baseDir = filepath.Join(`testdata`, `local`)
+		script  = filepath.Join(baseDir, `put.aww`)
 
 		tdata *test.Data
 		err   error
 	)
-	tdata, err = test.LoadData(filepath.Join(baseDir, `test.data`))
+
+	tdata, err = test.LoadData(filepath.Join(baseDir, `put.data`))
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	var cases = []testCase{{
-		desc:         `With text file`,
-		lineRange:    `3`,
-		fileDest:     filepath.Join(baseDir, `tmp`, `plain.txt`),
-		tdataFileOut: `tmp/plain.txt`,
+		desc:       `With text file`,
+		lineRange:  `1`,
+		fileDest:   filepath.Join(baseDir, `tmp`, `plain.txt`),
+		expContent: string(tdata.Output[`tmp/plain.txt`]),
 	}, {
-		desc:         `With encrypted file`,
-		lineRange:    `5`,
-		fileDest:     filepath.Join(baseDir, `tmp`, `decrypted.txt`),
-		tdataFileOut: `tmp/decrypted.txt`,
-		passphrase:   "s3cret\r",
+
+		desc:      `With text file, one of value is encrypted`,
+		lineRange: `3`,
+		expStderr: string(tdata.Output[`missing_val_encrypted`]),
+	}, {
+		desc:       `With encrypted file`,
+		lineRange:  `5`,
+		passphrase: "s3cret\r",
+		fileDest:   filepath.Join(baseDir, `tmp`, `decrypted.txt`),
+		expContent: string(tdata.Output[`tmp/decrypted.txt`]),
 	}, {
 		desc:      `With encrypted file, empty passphrase`,
-		expError:  "!!! Copy: generateFileInput: private key is missing or not loaded\n",
 		lineRange: `5`,
+		expStderr: string(tdata.Output[`encrypted_empty_passphrase.stderr`]),
 	}, {
 		desc:       `With encrypted file, invalid passphrase`,
 		passphrase: "invalid\r",
 		lineRange:  `5`,
-		expError:   `Local: NewSession: loadEnvFromPaths: LoadPrivateKeyInteractive: x509: decryption password incorrect`,
+		expError:   string(tdata.Output[`encrypted_invalid_passphrase`]),
 	}}
 
 	var (
-		script  = filepath.Join(baseDir, `local.aww`)
 		mockout = bytes.Buffer{}
 		mockerr = bytes.Buffer{}
 		mockrw  = mock.ReadWriter{}
 
 		aww        *Awwan
 		c          testCase
-		expContent []byte
 		gotContent []byte
 	)
 	for _, c = range cases {
@@ -296,14 +301,14 @@ func TestAwwanLocalPut(t *testing.T) {
 
 		err = aww.Local(req)
 		if err != nil {
-			test.Assert(t, c.desc, c.expError, err.Error())
-			return
+			test.Assert(t, `Local error`, c.expError, err.Error())
+			continue
 		}
 
 		// The stdout cannot be asserted since its print dynamic
 		// paths.
 
-		test.Assert(t, `stderr`, c.expError, mockerr.String())
+		test.Assert(t, `stderr`, c.expStderr, mockerr.String())
 
 		if len(c.fileDest) != 0 {
 			gotContent, err = os.ReadFile(c.fileDest)
@@ -311,8 +316,7 @@ func TestAwwanLocalPut(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			expContent = tdata.Output[c.tdataFileOut]
-			test.Assert(t, `content`, string(expContent), string(gotContent))
+			test.Assert(t, `content`, c.expContent, string(gotContent))
 		}
 	}
 }

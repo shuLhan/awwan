@@ -1,0 +1,5 @@
+#put: {{.ScriptDir}}/plain.txt {{.ScriptDir}}/tmp/plain.txt
+
+#put: {{.ScriptDir}}/missing_val_encrypted.txt {{.ScriptDir}}/tmp/missing_val_encrypted.txt
+
+#put: {{.ScriptDir}}/encrypted.txt {{.ScriptDir}}/tmp/decrypted.txt

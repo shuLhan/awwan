@@ -1,0 +1,2 @@
+The host name is {{.Val "host::name"}}.
+The secret password is {{.Val "secret::pass"}}.

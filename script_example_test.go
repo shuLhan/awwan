@@ -33,7 +33,7 @@ end;
 		log.Fatal(err)
 	}
 
-	s, err = ParseScript(ses, []byte(scriptContent))
+	s, err = ParseScript(ses, `scriptContent`, []byte(scriptContent))
 	if err != nil {
 		log.Fatal(err)
 	}

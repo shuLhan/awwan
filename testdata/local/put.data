@@ -1,0 +1,16 @@
+<<< tmp/plain.txt
+The host name is encrypt.
+
+
+<<< missing_val_encrypted
+!!! Copy: generateFileInput: template: missing_val_encrypted.txt:2:25: executing "missing_val_encrypted.txt" at <.Val>: error calling Val: "secret::pass" is empty
+
+<<< tmp/decrypted.txt
+The host name is encrypt.
+The secret password is this_is_a_secret.
+
+<<< encrypted_empty_passphrase.stderr
+!!! Copy: generateFileInput: private key is missing or not loaded
+
+<<< encrypted_invalid_passphrase
+Local: NewSession: loadEnvFromPaths: LoadPrivateKeyInteractive: x509: decryption password incorrect
