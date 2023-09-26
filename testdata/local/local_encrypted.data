@@ -1,0 +1,15 @@
+<<< echo_encrypted
+
+--> local:   3: echo this_is_a_secret
+this_is_a_secret
+
+<<< echo_encrypted_no_pass
+Local: NewScript: ParseScript: template: local_encrypted.aww:3:7: executing "local_encrypted.aww" at <.Val>: error calling Val: "secret::pass" is empty
+
+<<< echo_encrypted_invalid_pass
+Local: NewSession: loadEnvFromPaths: LoadPrivateKeyInteractive: x509: decryption password incorrect
+
+<<< sub_echo_encrypted
+
+--> local:   1: echo this_is_a_secret_in_sub
+this_is_a_secret_in_sub

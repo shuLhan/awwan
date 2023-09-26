@@ -1,9 +1,0 @@
-<<< local.aww:1
-
---> local:   1: echo this_is_a_secret
-this_is_a_secret
-
-<<< sub/local.aww:1
-
---> local:   1: echo this_is_a_secret_in_sub
-this_is_a_secret_in_sub

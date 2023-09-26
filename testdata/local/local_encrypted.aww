@@ -1,0 +1,5 @@
+echp {{.Val "host::name"}}
+
+echo {{.Val "secret::pass"}}
+
+echo {{.Val "host::name"}} {{.Val "secret::pass"}}

@@ -153,9 +153,13 @@ func TestAwwanEncrypt(t *testing.T) {
 
 func TestAwwanLocal_withEncryption(t *testing.T) {
 	type testCase struct {
+		desc      string
 		script    string
 		lineRange string
-		tdataOut  string
+		pass      string
+		expError  string
+		expStdout string
+		expStderr string
 	}
 
 	var (
@@ -163,7 +167,7 @@ func TestAwwanLocal_withEncryption(t *testing.T) {
 		err   error
 	)
 
-	tdata, err = test.LoadData(`testdata/local/local.data`)
+	tdata, err = test.LoadData(`testdata/local/local_encrypted.data`)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -181,23 +185,38 @@ func TestAwwanLocal_withEncryption(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Mock terminal to read passphrase for private key.
-	mockrw.BufRead.WriteString("s3cret\r")
 	aww.cryptoc.termrw = &mockrw
 
 	var cases = []testCase{{
-		script:    filepath.Join(basedir, `local.aww`),
-		lineRange: `1`,
-		tdataOut:  `local.aww:1`,
+		desc:      `With encrypted value`,
+		script:    filepath.Join(basedir, `local_encrypted.aww`),
+		lineRange: `3`,
+		pass:      "s3cret\r",
+		expStdout: string(tdata.Output[`echo_encrypted`]),
 	}, {
-		script:    filepath.Join(basedir, `sub`, `local.aww`),
+		desc:      `With encrypted value, no passphrase`,
+		script:    filepath.Join(basedir, `local_encrypted.aww`),
+		lineRange: `3`,
+		expError:  string(tdata.Output[`echo_encrypted_no_pass`]),
+	}, {
+		desc:      `With encrypted value, invalid passphrase`,
+		script:    filepath.Join(basedir, `local_encrypted.aww`),
+		lineRange: `3`,
+		pass:      "invalid\r",
+		expError:  string(tdata.Output[`echo_encrypted_invalid_pass`]),
+	}, {
+		desc:      `With encrypted value in sub`,
+		script:    filepath.Join(basedir, `sub`, `local_encrypted.aww`),
 		lineRange: `1`,
-		tdataOut:  `sub/local.aww:1`,
+		pass:      "s3cret\r",
+		expStdout: string(tdata.Output[`sub_echo_encrypted`]),
 	}}
 
 	var c testCase
 
 	for _, c = range cases {
+		t.Logf(c.desc)
+
 		var req = NewRequest(CommandModeLocal, c.script, c.lineRange)
 
 		mockout.Reset()
@@ -205,12 +224,18 @@ func TestAwwanLocal_withEncryption(t *testing.T) {
 		req.stdout = &mockout
 		req.stderr = &mockerr
 
+		// Mock terminal to read passphrase for private key.
+		mockrw.BufRead.Reset()
+		mockrw.BufRead.WriteString(c.pass)
+		aww.cryptoc.privateKey = nil
+
 		err = aww.Local(req)
 		if err != nil {
-			t.Fatal(err)
+			test.Assert(t, `Local error`, c.expError, err.Error())
 		}
 
-		test.Assert(t, `stdout`, string(tdata.Output[c.tdataOut]), mockout.String())
+		test.Assert(t, `stderr`, c.expStderr, mockerr.String())
+		test.Assert(t, `stdout`, c.expStdout, mockout.String())
 	}
 }
 
