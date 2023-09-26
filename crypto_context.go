@@ -19,6 +19,9 @@ import (
 	libcrypto "github.com/shuLhan/share/lib/crypto"
 )
 
+// defFilePrivateKey define the default private key file name.
+const defFilePrivateKey = `awwan.key`
+
 // errPrivateKeyMissing returned when private key file is missing or not
 // loaded when command require loading encrypted file.
 var errPrivateKeyMissing = errors.New(`private key is missing or not loaded`)
@@ -89,10 +92,10 @@ func (cryptoc *cryptoContext) encrypt(plain []byte) (cipher []byte, err error) {
 	return cipher, nil
 }
 
-// loadPrivateKey from file "{{baseDir}}/.awwan.key" if its exist.
+// loadPrivateKey from file "{{.BaseDir}}/.ssh/awwan.key" if its exist.
 func (cryptoc *cryptoContext) loadPrivateKey() (err error) {
 	var (
-		fileKey = filepath.Join(cryptoc.baseDir, defFilePrivateKey)
+		fileKey = filepath.Join(cryptoc.baseDir, `.ssh`, defFilePrivateKey)
 
 		pkey crypto.PrivateKey
 		ok   bool

@@ -17,7 +17,7 @@ command = "encrypt" / "help" / "local" / "play" / "serve" / "version"
 	decrypt <file.vault>
 
 		Decrypt the file using RSA private key at
-		"{{.BaseDir}}/.awwan.key".
+		"{{.BaseDir}}/.ssh/awwan.key".
 		The encrypted file must have extension ".vault", otherwise
 		it will return an error.
 		The decrypted file output will be written in the same
@@ -25,7 +25,7 @@ command = "encrypt" / "help" / "local" / "play" / "serve" / "version"
 
 	encrypt <file>
 		Encrypt the file using RSA private key at
-		"{{.BaseDir}}/.awwan.key".
+		"{{.BaseDir}}/.ssh/awwan.key".
 		The encrypted file will have ".vault" extension.
 
 		REMINDER: the private key should not be committed into

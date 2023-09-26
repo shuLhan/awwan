@@ -44,9 +44,6 @@ const defEncryptExt = `.vault`
 // defFileEnvVault default awwan environment file name that is encrypted.
 const defFileEnvVault = `.awwan.env.vault`
 
-// defFilePrivateKey define the default private key file name.
-const defFilePrivateKey = `.awwan.key`
-
 var (
 	cmdMagicGet     = []byte("#get:")
 	cmdMagicPut     = []byte("#put:")
@@ -111,7 +108,8 @@ func (aww *Awwan) init(baseDir string) (err error) {
 	return nil
 }
 
-// Decrypt the file using private key from file "{{.BaseDir}}/.awwan.key".
+// Decrypt the file using private key from file
+// "{{.BaseDir}}/.ssh/awwan.key".
 // The encrypted file must have extension ".vault", otherwise it will return
 // an error.
 // The decrypted file output will be written in the same directory without
@@ -150,7 +148,8 @@ func (aww *Awwan) Decrypt(fileVault string) (filePlain string, err error) {
 	return filePlain, nil
 }
 
-// Encrypt the file using private key from file "{{.BaseDir}}/.awwan.key".
+// Encrypt the file using private key from file
+// "{{.BaseDir}}/.ssh/awwan.key".
 // The encrypted file output will be on the same file path with ".vault"
 // extension in fileVault.
 func (aww *Awwan) Encrypt(file string) (fileVault string, err error) {
