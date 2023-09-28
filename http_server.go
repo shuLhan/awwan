@@ -13,7 +13,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	libbytes "github.com/shuLhan/share/lib/bytes"
 	libhttp "github.com/shuLhan/share/lib/http"
 	"github.com/shuLhan/share/lib/memfs"
 
@@ -37,9 +36,6 @@ type httpServer struct {
 	memfsBase *memfs.MemFS // The files caches.
 
 	baseDir string
-
-	bufout bytes.Buffer
-	buferr bytes.Buffer
 }
 
 // newHttpServer create and initialize HTTP server to serve awwan HTTP API
@@ -407,11 +403,13 @@ func (httpd *httpServer) awwanApiExecute(epr *libhttp.EndpointRequest) (resb []b
 	req.Script = filepath.Join(httpd.memfsBase.Opts.Root, req.Script)
 	req.lineRange = parseLineRange(req.LineRange)
 
-	httpd.bufout.Reset()
-	httpd.buferr.Reset()
+	var (
+		bufout bytes.Buffer
+		buferr bytes.Buffer
+	)
 
-	req.stdout = &httpd.bufout
-	req.stderr = &httpd.buferr
+	req.stdout = &bufout
+	req.stderr = &buferr
 
 	if req.Mode == CommandModeLocal {
 		err = httpd.aww.Local(req)
@@ -425,8 +423,8 @@ func (httpd *httpServer) awwanApiExecute(epr *libhttp.EndpointRequest) (resb []b
 
 	data = &HttpResponse{
 		Request: req,
-		Stdout:  libbytes.Copy(httpd.bufout.Bytes()),
-		Stderr:  libbytes.Copy(httpd.buferr.Bytes()),
+		Stdout:  bufout.Bytes(),
+		Stderr:  buferr.Bytes(),
 	}
 
 	res.Code = http.StatusOK
