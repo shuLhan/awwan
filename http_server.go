@@ -24,12 +24,6 @@ const (
 	paramNamePath = "path"
 )
 
-type fsRequest struct {
-	Path    string `json:"path"`
-	Content []byte `json:"content"`
-	IsDir   bool   `json:"is_dir"`
-}
-
 func (aww *Awwan) registerHttpApis() (err error) {
 	var (
 		logp = "registerHttpApis"
