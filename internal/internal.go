@@ -10,6 +10,7 @@ import (
 
 	"git.sr.ht/~shulhan/ciigo"
 	"github.com/evanw/esbuild/pkg/api"
+	esapi "github.com/evanw/esbuild/pkg/api"
 	"github.com/shuLhan/share/lib/memfs"
 	"github.com/shuLhan/share/lib/mlog"
 )
@@ -25,9 +26,20 @@ var MemfsWww *memfs.MemFS
 // Build compile all TypeScript files inside _www into JavaScript and embed
 // them into memfs_www.go.
 func Build() (err error) {
-	var logp = `Build`
+	var (
+		logp = `Build`
 
-	err = buildTypeScript(nil)
+		esctx esapi.BuildContext
+	)
+
+	esctx, err = newEsbuild()
+	if err != nil {
+		return fmt.Errorf(`%s: %w`, logp, err)
+	}
+
+	defer esctx.Dispose()
+
+	err = buildTypeScript(esctx)
 	if err != nil {
 		return fmt.Errorf(`%s: %w`, logp, err)
 	}
@@ -72,6 +84,15 @@ func Watch() {
 		log.Fatalf(`%s: %s`, logp, err)
 	}
 
+	var esctx esapi.BuildContext
+
+	esctx, err = newEsbuild()
+	if err != nil {
+		log.Fatalf(`%s: %s`, logp, err)
+	}
+
+	defer esctx.Dispose()
+
 	if MemfsWww == nil {
 		err = initMemfsWww()
 		if err != nil {
@@ -93,20 +114,13 @@ func Watch() {
 	}
 
 	var (
-		buildTicker    = time.NewTicker(3 * time.Second)
-		esBuildOptions = api.BuildOptions{
-			EntryPoints: []string{`_www/main.ts`},
-			Platform:    api.PlatformBrowser,
-			Outfile:     `_www/main.js`,
-			GlobalName:  `awwan`,
-			Bundle:      true,
-			Write:       true,
-		}
+		buildTicker = time.NewTicker(3 * time.Second)
 
 		ns         memfs.NodeState
 		tsCount    int
 		embedCount int
 	)
+
 	for {
 		select {
 		case ns = <-dw.C:
@@ -141,7 +155,7 @@ func Watch() {
 
 		case <-buildTicker.C:
 			if tsCount > 0 {
-				err = buildTypeScript(&esBuildOptions)
+				err = buildTypeScript(esctx)
 				if err != nil {
 					mlog.Errf(`%s`, err)
 				} else {
@@ -161,27 +175,16 @@ func Watch() {
 	}
 }
 
-func buildTypeScript(esBuildOptions *api.BuildOptions) (err error) {
+func buildTypeScript(esctx esapi.BuildContext) (err error) {
 	var logp = `buildTypeScript`
 
-	if esBuildOptions == nil {
-		esBuildOptions = &api.BuildOptions{
-			EntryPoints: []string{`_www/main.ts`},
-			Platform:    api.PlatformBrowser,
-			Outfile:     `_www/main.js`,
-			GlobalName:  `app`,
-			Bundle:      true,
-			Write:       true,
-		}
-	}
-
-	var buildResult = api.Build(*esBuildOptions)
+	var buildResult = esctx.Rebuild()
 	if len(buildResult.Errors) == 0 {
 		return nil
 	}
 
 	var (
-		msg api.Message
+		msg esapi.Message
 		x   int
 	)
 	for x, msg = range buildResult.Errors {
@@ -233,4 +236,28 @@ func initMemfsWww() (err error) {
 		return fmt.Errorf(`initMemfsWww: %w`, err)
 	}
 	return nil
+}
+
+// newEsbuild create new [esapi.BuildContext] for transpiling TypeScript with
+// esbuild.
+func newEsbuild() (esctx api.BuildContext, err error) {
+	var (
+		esBuildOptions = esapi.BuildOptions{
+			EntryPoints: []string{`_www/main.ts`},
+			Platform:    esapi.PlatformBrowser,
+			Outfile:     `_www/main.js`,
+			GlobalName:  `awwan`,
+			Bundle:      true,
+			Write:       true,
+		}
+
+		errctx *esapi.ContextError
+	)
+
+	esctx, errctx = esapi.Context(esBuildOptions)
+	if errctx != nil {
+		return nil, fmt.Errorf(`newEsbuild: %w`, errctx)
+	}
+
+	return esctx, nil
 }
