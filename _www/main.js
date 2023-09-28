@@ -1,4 +1,4 @@
-var app = (() => {
+var awwan = (() => {
   // _www/wui/editor/editor.js
   var WUI_EDITOR_CLASS = "wui_editor";
   var WUI_EDITOR_CLASS_LINE = "wui_editor_line";
@@ -874,110 +874,7 @@ var app = (() => {
     }()
   );
 
-  // _www/awwan.js
-  var __awaiter2 = function(thisArg, _arguments, P, generator) {
-    function adopt(value) {
-      return value instanceof P ? value : new P(function(resolve) {
-        resolve(value);
-      });
-    }
-    return new (P || (P = Promise))(function(resolve, reject) {
-      function fulfilled(value) {
-        try {
-          step(generator.next(value));
-        } catch (e) {
-          reject(e);
-        }
-      }
-      function rejected(value) {
-        try {
-          step(generator["throw"](value));
-        } catch (e) {
-          reject(e);
-        }
-      }
-      function step(result) {
-        result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected);
-      }
-      step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-  };
-  var __generator2 = function(thisArg, body) {
-    var _ = { label: 0, sent: function() {
-      if (t[0] & 1)
-        throw t[1];
-      return t[1];
-    }, trys: [], ops: [] }, f, y, t, g;
-    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() {
-      return this;
-    }), g;
-    function verb(n) {
-      return function(v) {
-        return step([n, v]);
-      };
-    }
-    function step(op) {
-      if (f)
-        throw new TypeError("Generator is already executing.");
-      while (_)
-        try {
-          if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done)
-            return t;
-          if (y = 0, t)
-            op = [op[0] & 2, t.value];
-          switch (op[0]) {
-            case 0:
-            case 1:
-              t = op;
-              break;
-            case 4:
-              _.label++;
-              return { value: op[1], done: false };
-            case 5:
-              _.label++;
-              y = op[1];
-              op = [0];
-              continue;
-            case 7:
-              op = _.ops.pop();
-              _.trys.pop();
-              continue;
-            default:
-              if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) {
-                _ = 0;
-                continue;
-              }
-              if (op[0] === 3 && (!t || op[1] > t[0] && op[1] < t[3])) {
-                _.label = op[1];
-                break;
-              }
-              if (op[0] === 6 && _.label < t[1]) {
-                _.label = t[1];
-                t = op;
-                break;
-              }
-              if (t && _.label < t[2]) {
-                _.label = t[2];
-                _.ops.push(op);
-                break;
-              }
-              if (t[2])
-                _.ops.pop();
-              _.trys.pop();
-              continue;
-          }
-          op = body.call(thisArg, _);
-        } catch (e) {
-          op = [6, e];
-          y = 0;
-        } finally {
-          f = t = 0;
-        }
-      if (op[0] & 5)
-        throw op[1];
-      return { value: op[0] ? op[1] : void 0, done: true };
-    }
-  };
+  // _www/awwan.ts
   var CLASS_EDITOR_ACTION = "editor_action";
   var ID_BTN_CLEAR_SELECTION = "com_btn_clear_selection";
   var ID_BTN_EXEC_LOCAL = "com_btn_local";
@@ -994,449 +891,407 @@ var app = (() => {
   var ID_STDERR = "stderr";
   var MAX_FILE_SIZE = 3e6;
   function renderHtml() {
-    var el = document.createElement("div");
+    let el = document.createElement("div");
     el.classList.add("awwan");
-    el.innerHTML = '\n			<div class="awwan_nav_left">\n				<div id="' + ID_VFS + '"></div>\n\n				<br/>\n				<div class="' + ID_INP_VFS_NEW + '">\n					<input id="' + ID_INP_VFS_NEW + '" />\n				</div>\n				<button id="' + ID_BTN_NEW_DIR + '">New directory</button>\n				<button id="' + ID_BTN_NEW_FILE + '">New file</button>\n				<button id="' + ID_BTN_REMOVE + '">Remove</button>\n			</div>\n			<div class="awwan_content">\n				<div class="editor_file">\n					File: <span id="' + ID_VFS_PATH + '">-</span>\n					<button id="' + ID_BTN_SAVE + '" disabled="true">Save</button>\n				</div>\n				<div id="' + ID_EDITOR + '"></div>\n				<div>\n					<div class="' + CLASS_EDITOR_ACTION + '">\n						<button id="' + ID_BTN_CLEAR_SELECTION + '">Clear selection</button>\n					</div>\n					<div class="' + CLASS_EDITOR_ACTION + '">\n						Execute script on\n						<button id="' + ID_BTN_EXEC_LOCAL + '" disabled="true">Local</button>\n						or\n						<button id="' + ID_BTN_EXEC_REMOTE + '" disabled="true">Remote</button>\n					</div>\n				</div>\n				<p>Hints:</p>\n				<ul>\n					<li>\n						Click and drag on the line numbers to select the specific line to be\n						executed.\n					</li>\n					<li>Press ESC to clear selection.</li>\n				</ul>\n				<div class="boxheader">Standard output:</div>\n				<div id="' + ID_STDOUT + '"></div>\n				<div class="boxheader">Standard error:</div>\n				<div id="' + ID_STDERR + '"></div>\n			</div>\n		';
+    el.innerHTML = `
+			<div class="awwan_nav_left">
+				<div id="${ID_VFS}"></div>
+
+				<br/>
+				<div class="${ID_INP_VFS_NEW}">
+					<input id="${ID_INP_VFS_NEW}" />
+				</div>
+				<button id="${ID_BTN_NEW_DIR}">New directory</button>
+				<button id="${ID_BTN_NEW_FILE}">New file</button>
+				<button id="${ID_BTN_REMOVE}">Remove</button>
+			</div>
+			<div class="awwan_content">
+				<div class="editor_file">
+					File: <span id="${ID_VFS_PATH}">-</span>
+					<button id="${ID_BTN_SAVE}" disabled="true">Save</button>
+				</div>
+				<div id="${ID_EDITOR}"></div>
+				<div>
+					<div class="${CLASS_EDITOR_ACTION}">
+						<button id="${ID_BTN_CLEAR_SELECTION}">Clear selection</button>
+					</div>
+					<div class="${CLASS_EDITOR_ACTION}">
+						Execute script on
+						<button id="${ID_BTN_EXEC_LOCAL}" disabled="true">Local</button>
+						or
+						<button id="${ID_BTN_EXEC_REMOTE}" disabled="true">Remote</button>
+					</div>
+				</div>
+				<p>Hints:</p>
+				<ul>
+					<li>
+						Click and drag on the line numbers to select the specific line to be
+						executed.
+					</li>
+					<li>Press ESC to clear selection.</li>
+				</ul>
+				<div class="boxheader">Standard output:</div>
+				<div id="${ID_STDOUT}"></div>
+				<div class="boxheader">Standard error:</div>
+				<div id="${ID_STDERR}"></div>
+			</div>
+		`;
     document.body.appendChild(el);
   }
-  var Awwan = (
-    /** @class */
-    function() {
-      function Awwan2() {
-        var _this = this;
-        this.current_node = null;
-        this.request = {
-          mode: "local",
-          script: "",
-          content: "",
-          begin_at: 0,
-          end_at: 0
+  var Awwan = class {
+    com_btn_clear;
+    com_btn_local;
+    com_btn_new_dir;
+    com_btn_new_file;
+    com_btn_remote;
+    com_btn_remove;
+    com_btn_save;
+    com_file_path;
+    com_inp_vfs_new;
+    com_stdout;
+    com_stderr;
+    current_node = null;
+    request = {
+      mode: "local",
+      script: "",
+      content: "",
+      line_range: 0
+    };
+    wui_editor;
+    wui_notif;
+    wui_vfs;
+    constructor() {
+      let el = document.getElementById(ID_BTN_CLEAR_SELECTION);
+      if (el) {
+        this.com_btn_clear = el;
+        this.com_btn_clear.onclick = () => {
+          this.wui_editor.ClearSelection();
         };
-        var el = document.getElementById(ID_BTN_CLEAR_SELECTION);
-        if (el) {
-          this.com_btn_clear = el;
-          this.com_btn_clear.onclick = function() {
-            _this.wui_editor.ClearSelection();
-          };
-        }
-        el = document.getElementById(ID_BTN_EXEC_LOCAL);
-        if (el) {
-          this.com_btn_local = el;
-          this.com_btn_local.onclick = function() {
-            _this.execLocal();
-          };
-        }
-        el = document.getElementById(ID_BTN_EXEC_REMOTE);
-        if (el) {
-          this.com_btn_remote = el;
-          this.com_btn_remote.onclick = function() {
-            _this.execRemote();
-          };
-        }
-        el = document.getElementById(ID_BTN_NEW_DIR);
-        if (el) {
-          this.com_btn_new_dir = el;
-          this.com_btn_new_dir.onclick = function() {
-            _this.newNode(true);
-          };
-        }
-        el = document.getElementById(ID_BTN_NEW_FILE);
-        if (el) {
-          this.com_btn_new_file = el;
-          this.com_btn_new_file.onclick = function() {
-            _this.newNode(false);
-          };
-        }
-        el = document.getElementById(ID_BTN_REMOVE);
-        if (el) {
-          this.com_btn_remove = el;
-          this.com_btn_remove.onclick = function() {
-            _this.onClickRemove();
-          };
-        }
-        el = document.getElementById(ID_BTN_SAVE);
-        if (el) {
-          this.com_btn_save = el;
-          this.com_btn_save.onclick = function() {
-            _this.onClickSave();
-          };
-        }
-        el = document.getElementById(ID_INP_VFS_NEW);
-        if (el) {
-          this.com_inp_vfs_new = el;
-        }
-        el = document.getElementById(ID_VFS_PATH);
-        if (el) {
-          this.com_file_path = el;
-        }
-        el = document.getElementById(ID_STDOUT);
-        if (el) {
-          this.com_stdout = el;
-        }
-        el = document.getElementById(ID_STDERR);
-        if (el) {
-          this.com_stderr = el;
-        }
-        var editor_opts = {
-          id: ID_EDITOR,
-          is_editable: true,
-          OnSelection: function(begin_at, end_at) {
-            _this.editorOnSelection(begin_at, end_at);
-          },
-          OnSave: this.editorOnSave
-        };
-        this.wui_editor = new WuiEditor(editor_opts);
-        this.wui_notif = new WuiNotif();
-        var wui_vfs_opts = {
-          id: ID_VFS,
-          Open: function(path, is_dir) {
-            return _this.Open(path, is_dir);
-          },
-          OpenNode: function(node) {
-            return _this.OpenNode(node);
-          }
-        };
-        this.wui_vfs = new WuiVfs(wui_vfs_opts);
-        window.onhashchange = function(ev) {
-          ev.preventDefault();
-          var hashchange = ev;
-          var url = new URL(hashchange.newURL);
-          _this.onHashChange(url.hash);
-        };
-        this.onHashChange(window.location.hash);
       }
-      Awwan2.prototype.onHashChange = function(hash) {
-        if (hash === "") {
-          hash = "#/";
-        }
-        hash = hash.substring(1);
-        this.wui_vfs.OpenDir(hash);
-      };
-      Awwan2.prototype.Open = function(path, is_dir) {
-        return __awaiter2(this, void 0, void 0, function() {
-          var http_res, res, node, resAllow;
-          return __generator2(this, function(_a) {
-            switch (_a.label) {
-              case 0:
-                return [4, fetch("/awwan/api/fs?path=" + path)];
-              case 1:
-                http_res = _a.sent();
-                return [4, http_res.json()];
-              case 2:
-                res = _a.sent();
-                if (res.code != 200) {
-                  this.wui_notif.Error("Failed to open " + path + ": " + res.message);
-                  return [2, res];
-                }
-                node = res.data;
-                this.com_inp_vfs_new.value = node.name;
-                if (is_dir) {
-                  this.current_node = node;
-                  window.location.hash = "#" + path;
-                  return [2, res];
-                }
-                resAllow = this.isEditAllowed(node);
-                if (resAllow.code != 200) {
-                  this.wui_notif.Error(resAllow.message);
-                  return [2, resAllow];
-                }
-                this.com_file_path.innerText = path;
-                this.request.script = path;
-                this.wui_editor.Open(node);
-                this.com_btn_local.disabled = false;
-                this.com_btn_remote.disabled = false;
-                this.com_btn_save.disabled = false;
-                return [2, res];
-            }
-          });
-        });
-      };
-      Awwan2.prototype.OpenNode = function(node) {
-        return __awaiter2(this, void 0, void 0, function() {
-          var resAllow, res;
-          return __generator2(this, function(_a) {
-            switch (_a.label) {
-              case 0:
-                resAllow = this.isEditAllowed(node);
-                if (resAllow.code != 200) {
-                  this.wui_notif.Error(resAllow.message);
-                  return [2, resAllow];
-                }
-                return [4, this.Open(node.path, node.is_dir)];
-              case 1:
-                res = _a.sent();
-                return [2, res];
-            }
-          });
-        });
-      };
-      Awwan2.prototype.isEditAllowed = function(node) {
-        var res = {
-          code: 412,
-          message: ""
+      el = document.getElementById(ID_BTN_EXEC_LOCAL);
+      if (el) {
+        this.com_btn_local = el;
+        this.com_btn_local.onclick = () => {
+          this.execLocal();
         };
-        var is_type_allowed = false;
-        if (node.content_type && (node.content_type.indexOf("json") >= 0 || node.content_type.indexOf("message") >= 0 || node.content_type.indexOf("script") >= 0 || node.content_type.indexOf("text") >= 0 || node.content_type.indexOf("xml") >= 0)) {
-          is_type_allowed = true;
+      }
+      el = document.getElementById(ID_BTN_EXEC_REMOTE);
+      if (el) {
+        this.com_btn_remote = el;
+        this.com_btn_remote.onclick = () => {
+          this.execRemote();
+        };
+      }
+      el = document.getElementById(ID_BTN_NEW_DIR);
+      if (el) {
+        this.com_btn_new_dir = el;
+        this.com_btn_new_dir.onclick = () => {
+          this.newNode(true);
+        };
+      }
+      el = document.getElementById(ID_BTN_NEW_FILE);
+      if (el) {
+        this.com_btn_new_file = el;
+        this.com_btn_new_file.onclick = () => {
+          this.newNode(false);
+        };
+      }
+      el = document.getElementById(ID_BTN_REMOVE);
+      if (el) {
+        this.com_btn_remove = el;
+        this.com_btn_remove.onclick = () => {
+          this.onClickRemove();
+        };
+      }
+      el = document.getElementById(ID_BTN_SAVE);
+      if (el) {
+        this.com_btn_save = el;
+        this.com_btn_save.onclick = () => {
+          this.onClickSave();
+        };
+      }
+      el = document.getElementById(ID_INP_VFS_NEW);
+      if (el) {
+        this.com_inp_vfs_new = el;
+      }
+      el = document.getElementById(ID_VFS_PATH);
+      if (el) {
+        this.com_file_path = el;
+      }
+      el = document.getElementById(ID_STDOUT);
+      if (el) {
+        this.com_stdout = el;
+      }
+      el = document.getElementById(ID_STDERR);
+      if (el) {
+        this.com_stderr = el;
+      }
+      let editor_opts = {
+        id: ID_EDITOR,
+        is_editable: true,
+        OnSelection: (begin_at, end_at) => {
+          this.editorOnSelection(begin_at, end_at);
+        },
+        OnSave: this.editorOnSave
+      };
+      this.wui_editor = new WuiEditor(editor_opts);
+      this.wui_notif = new WuiNotif();
+      let wui_vfs_opts = {
+        id: ID_VFS,
+        Open: (path, is_dir) => {
+          return this.Open(path, is_dir);
+        },
+        OpenNode: (node) => {
+          return this.OpenNode(node);
         }
-        if (!is_type_allowed) {
-          res.message = 'The file "' + node.name + '" with content type "' + node.content_type + '" is not allowed to be opened';
-          return res;
-        }
-        if (node.size && node.size > MAX_FILE_SIZE) {
-          res.message = 'The file "' + node.name + '" with size ' + node.size / 1e6 + "MB is greater than maximum " + MAX_FILE_SIZE / 1e6 + "MB.";
-          return res;
-        }
-        res.code = 200;
+      };
+      this.wui_vfs = new WuiVfs(wui_vfs_opts);
+      window.onhashchange = (ev) => {
+        ev.preventDefault();
+        let hashchange = ev;
+        let url = new URL(hashchange.newURL);
+        this.onHashChange(url.hash);
+      };
+      this.onHashChange(window.location.hash);
+    }
+    onHashChange(hash) {
+      if (hash === "") {
+        hash = "#/";
+      }
+      hash = hash.substring(1);
+      this.wui_vfs.OpenDir(hash);
+    }
+    // Open fetch the node content from remote server.
+    async Open(path, is_dir) {
+      let http_res = await fetch("/awwan/api/fs?path=" + path);
+      let res = await http_res.json();
+      if (res.code != 200) {
+        this.wui_notif.Error(`Failed to open ${path}: ${res.message}`);
         return res;
+      }
+      let node = res.data;
+      this.com_inp_vfs_new.value = node.name;
+      if (is_dir) {
+        this.current_node = node;
+        window.location.hash = "#" + path;
+        return res;
+      }
+      let resAllow = this.isEditAllowed(node);
+      if (resAllow.code != 200) {
+        this.wui_notif.Error(resAllow.message);
+        return resAllow;
+      }
+      this.com_file_path.innerText = path;
+      this.request.script = path;
+      this.wui_editor.Open(node);
+      this.com_btn_local.disabled = false;
+      this.com_btn_remote.disabled = false;
+      this.com_btn_save.disabled = false;
+      return res;
+    }
+    // OpenNode is an handler that will called when user click on of the
+    // item in the list.
+    async OpenNode(node) {
+      let resAllow = this.isEditAllowed(node);
+      if (resAllow.code != 200) {
+        this.wui_notif.Error(resAllow.message);
+        return resAllow;
+      }
+      let res = await this.Open(node.path, node.is_dir);
+      return res;
+    }
+    isEditAllowed(node) {
+      let res = {
+        code: 412,
+        message: ""
       };
-      Awwan2.prototype.onClickSave = function() {
-        if (this.request.script == "") {
-          return;
-        }
-        var content = this.wui_editor.GetContent();
-        var l = content.length;
-        if (l > 0 && content[l - 1] != "\n") {
-          content += "\n";
-        }
-        this.request.content = content;
-        this.doSaveFile(this.request.script, this.request.content);
+      let is_type_allowed = false;
+      if (node.content_type && (node.content_type.indexOf("json") >= 0 || node.content_type.indexOf("message") >= 0 || node.content_type.indexOf("script") >= 0 || node.content_type.indexOf("text") >= 0 || node.content_type.indexOf("xml") >= 0)) {
+        is_type_allowed = true;
+      }
+      if (!is_type_allowed) {
+        res.message = `The file "${node.name}" with content type "${node.content_type}" is not allowed to be opened`;
+        return res;
+      }
+      if (node.size && node.size > MAX_FILE_SIZE) {
+        res.message = `The file "${node.name}" with size ${node.size / 1e6}MB is greater than maximum ${MAX_FILE_SIZE / 1e6}MB.`;
+        return res;
+      }
+      res.code = 200;
+      return res;
+    }
+    onClickSave() {
+      if (this.request.script == "") {
+        return;
+      }
+      let content = this.wui_editor.GetContent();
+      let l = content.length;
+      if (l > 0 && content[l - 1] != "\n") {
+        content += "\n";
+      }
+      this.request.content = content;
+      this.doSaveFile(this.request.script, this.request.content);
+    }
+    editorOnSave(content) {
+      this.doSaveFile(this.request.script, content);
+    }
+    async doSaveFile(path, content) {
+      let req = {
+        path,
+        content: btoa(content)
       };
-      Awwan2.prototype.editorOnSave = function(content) {
-        this.doSaveFile(this.request.script, content);
+      let http_res = await fetch("/awwan/api/fs", {
+        method: "PUT",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(req)
+      });
+      let res = await http_res.json();
+      if (res.code != 200) {
+        this.wui_notif.Error(`Failed to save file ${path}: ${res.message}`);
+        return null;
+      }
+      this.wui_notif.Info(`File ${path} has been saved.`);
+      return res;
+    }
+    editorOnSelection(begin, end) {
+      let stmts = this.wui_editor.lines.slice(begin, end + 1);
+      for (const stmt of stmts) {
+        console.log("stmt:", stmt.x, stmt.text);
+      }
+    }
+    // execLocal request to execute the selected script on local system.
+    execLocal() {
+      if (this.request.script == "") {
+        this.wui_notif.Error(`Execute on local: no file selected`);
+        return;
+      }
+      this.httpApiExecute("local");
+    }
+    // execRemote request to execute the selected script on remote system.
+    execRemote() {
+      if (this.request.script == "") {
+        this.wui_notif.Error(`Execute on remote: no file selected`);
+        return;
+      }
+      this.httpApiExecute("remote");
+    }
+    async httpApiExecute(mode) {
+      let beginAt = 0;
+      let endAt = 0;
+      let selection_range = this.wui_editor.GetSelectionRange();
+      if (selection_range.begin_at > 0) {
+        beginAt = selection_range.begin_at + 1;
+      }
+      if (selection_range.end_at > 0) {
+        endAt = selection_range.end_at + 1;
+      }
+      this.com_stdout.innerText = "";
+      this.com_stderr.innerText = "";
+      this.request.mode = mode;
+      this.request.content = btoa(this.wui_editor.GetContent());
+      if (beginAt === endAt) {
+        this.request.line_range = `${beginAt}`;
+      } else {
+        this.request.line_range = `${beginAt}-${endAt}`;
+      }
+      let http_res = await fetch("/awwan/api/execute", {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(this.request)
+      });
+      let res = await http_res.json();
+      if (res.code != 200) {
+        this.wui_notif.Error(`Execute failed: ${res.message}`);
+        return;
+      }
+      if (res.data.stdout) {
+        this.com_stdout.innerText = atob(res.data.stdout);
+      }
+      if (res.data.stderr) {
+        this.com_stderr.innerText = atob(res.data.stderr);
+      }
+      this.wui_notif.Info(
+        `Successfully execute ${this.request.script} on ${mode}.`
+      );
+    }
+    async newNode(is_dir) {
+      if (!this.current_node) {
+        this.wui_notif.Error("No active directory loaded or selected.");
+        return;
+      }
+      let name = this.com_inp_vfs_new.value;
+      if (name === "") {
+        this.wui_notif.Error("Empty file name");
+        return;
+      }
+      let req = {
+        path: this.current_node.path + "/" + name,
+        name,
+        is_dir,
+        content_type: "",
+        mod_time: 0,
+        size: 0,
+        mode: "",
+        childs: [],
+        content: ""
       };
-      Awwan2.prototype.doSaveFile = function(path, content) {
-        return __awaiter2(this, void 0, void 0, function() {
-          var req, http_res, res;
-          return __generator2(this, function(_a) {
-            switch (_a.label) {
-              case 0:
-                req = {
-                  path,
-                  content: btoa(content)
-                };
-                return [4, fetch("/awwan/api/fs", {
-                  method: "PUT",
-                  headers: {
-                    Accept: "application/json",
-                    "Content-Type": "application/json"
-                  },
-                  body: JSON.stringify(req)
-                })];
-              case 1:
-                http_res = _a.sent();
-                return [4, http_res.json()];
-              case 2:
-                res = _a.sent();
-                if (res.code != 200) {
-                  this.wui_notif.Error("Failed to save file " + path + ": " + res.message);
-                  return [2, null];
-                }
-                this.wui_notif.Info("File " + path + " has been saved.");
-                return [2, res];
-            }
-          });
-        });
+      let http_res = await fetch("/awwan/api/fs", {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(req)
+      });
+      let res = await http_res.json();
+      if (res.code != 200) {
+        this.wui_notif.Error(`newNode: ${res.message}`);
+        return;
+      }
+      let node = res.data;
+      if (!this.current_node.childs) {
+        this.current_node.childs = [];
+      }
+      this.current_node.childs.push(node);
+      this.wui_vfs.Set(this.current_node);
+    }
+    async onClickRemove() {
+      console.log("onClickRemove: ", this.current_node);
+      if (!this.current_node) {
+        this.wui_notif.Error("No file selected.");
+        return;
+      }
+      let name = this.com_inp_vfs_new.value;
+      if (name === "") {
+        this.wui_notif.Error("Empty file name");
+        return;
+      }
+      let req = {
+        path: this.current_node.path + "/" + name,
+        is_dir: false,
+        content: ""
       };
-      Awwan2.prototype.editorOnSelection = function(begin, end) {
-        var stmts = this.wui_editor.lines.slice(begin, end + 1);
-        for (var _i = 0, stmts_1 = stmts; _i < stmts_1.length; _i++) {
-          var stmt = stmts_1[_i];
-          console.log("stmt:", stmt.x, stmt.text);
-        }
-      };
-      Awwan2.prototype.execLocal = function() {
-        if (this.request.script == "") {
-          this.wui_notif.Error("Execute on local: no file selected");
-          return;
-        }
-        this.httpApiExecute("local");
-      };
-      Awwan2.prototype.execRemote = function() {
-        if (this.request.script == "") {
-          this.wui_notif.Error("Execute on remote: no file selected");
-          return;
-        }
-        this.httpApiExecute("remote");
-      };
-      Awwan2.prototype.httpApiExecute = function(mode) {
-        return __awaiter2(this, void 0, void 0, function() {
-          var selection_range, http_res, res;
-          return __generator2(this, function(_a) {
-            switch (_a.label) {
-              case 0:
-                selection_range = this.wui_editor.GetSelectionRange();
-                if (selection_range.begin_at < 0) {
-                  this.request.begin_at = 0;
-                } else {
-                  this.request.begin_at = selection_range.begin_at + 1;
-                }
-                if (selection_range.end_at < 0) {
-                  this.request.end_at = 0;
-                } else {
-                  this.request.end_at = selection_range.end_at + 1;
-                }
-                this.com_stdout.innerText = "";
-                this.com_stderr.innerText = "";
-                this.request.mode = mode;
-                this.request.content = btoa(this.wui_editor.GetContent());
-                return [4, fetch("/awwan/api/execute", {
-                  method: "POST",
-                  headers: {
-                    Accept: "application/json",
-                    "Content-Type": "application/json"
-                  },
-                  body: JSON.stringify(this.request)
-                })];
-              case 1:
-                http_res = _a.sent();
-                return [4, http_res.json()];
-              case 2:
-                res = _a.sent();
-                if (res.code != 200) {
-                  this.wui_notif.Error("Execute failed: " + res.message);
-                  return [
-                    2
-                    /*return*/
-                  ];
-                }
-                this.com_stdout.innerText = atob(res.data.stdout);
-                if (res.data.stderr) {
-                  this.com_stderr.innerText = atob(res.data.stderr);
-                }
-                this.wui_notif.Info("Successfully execute " + this.request.script + " on " + mode + ".");
-                return [
-                  2
-                  /*return*/
-                ];
-            }
-          });
-        });
-      };
-      Awwan2.prototype.newNode = function(is_dir) {
-        return __awaiter2(this, void 0, void 0, function() {
-          var name, req, http_res, res, node;
-          return __generator2(this, function(_a) {
-            switch (_a.label) {
-              case 0:
-                if (!this.current_node) {
-                  this.wui_notif.Error("No active directory loaded or selected.");
-                  return [
-                    2
-                    /*return*/
-                  ];
-                }
-                name = this.com_inp_vfs_new.value;
-                if (name === "") {
-                  this.wui_notif.Error("Empty file name");
-                  return [
-                    2
-                    /*return*/
-                  ];
-                }
-                req = {
-                  path: this.current_node.path + "/" + name,
-                  name,
-                  is_dir,
-                  content_type: "",
-                  mod_time: 0,
-                  size: 0,
-                  mode: "",
-                  childs: [],
-                  content: ""
-                };
-                return [4, fetch("/awwan/api/fs", {
-                  method: "POST",
-                  headers: {
-                    Accept: "application/json",
-                    "Content-Type": "application/json"
-                  },
-                  body: JSON.stringify(req)
-                })];
-              case 1:
-                http_res = _a.sent();
-                return [4, http_res.json()];
-              case 2:
-                res = _a.sent();
-                if (res.code != 200) {
-                  this.wui_notif.Error("newNode: " + res.message);
-                  return [
-                    2
-                    /*return*/
-                  ];
-                }
-                node = res.data;
-                if (!this.current_node.childs) {
-                  this.current_node.childs = [];
-                }
-                this.current_node.childs.push(node);
-                this.wui_vfs.Set(this.current_node);
-                return [
-                  2
-                  /*return*/
-                ];
-            }
-          });
-        });
-      };
-      Awwan2.prototype.onClickRemove = function() {
-        return __awaiter2(this, void 0, void 0, function() {
-          var name, req, http_res, res;
-          return __generator2(this, function(_a) {
-            switch (_a.label) {
-              case 0:
-                console.log("onClickRemove: ", this.current_node);
-                if (!this.current_node) {
-                  this.wui_notif.Error("No file selected.");
-                  return [
-                    2
-                    /*return*/
-                  ];
-                }
-                name = this.com_inp_vfs_new.value;
-                if (name === "") {
-                  this.wui_notif.Error("Empty file name");
-                  return [
-                    2
-                    /*return*/
-                  ];
-                }
-                req = {
-                  path: this.current_node.path + "/" + name,
-                  is_dir: false,
-                  content: ""
-                };
-                return [4, fetch("/awwan/api/fs", {
-                  method: "DELETE",
-                  headers: {
-                    Accept: "application/json",
-                    "Content-Type": "application/json"
-                  },
-                  body: JSON.stringify(req)
-                })];
-              case 1:
-                http_res = _a.sent();
-                return [4, http_res.json()];
-              case 2:
-                res = _a.sent();
-                if (res.code != 200) {
-                  this.wui_notif.Error("remove: " + res.message);
-                  return [
-                    2
-                    /*return*/
-                  ];
-                }
-                return [
-                  2
-                  /*return*/
-                ];
-            }
-          });
-        });
-      };
-      return Awwan2;
-    }()
-  );
+      let http_res = await fetch("/awwan/api/fs", {
+        method: "DELETE",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(req)
+      });
+      let res = await http_res.json();
+      if (res.code != 200) {
+        this.wui_notif.Error(`remove: ${res.message}`);
+        return;
+      }
+    }
+  };
 
   // _www/main.ts
   renderHtml();
