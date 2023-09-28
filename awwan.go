@@ -4,17 +4,15 @@
 package awwan
 
 import (
-	"bytes"
 	"fmt"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
 
-	"git.sr.ht/~shulhan/awwan/internal"
-	"github.com/shuLhan/share/lib/http"
-	"github.com/shuLhan/share/lib/memfs"
 	"github.com/shuLhan/share/lib/ssh/config"
+
+	"git.sr.ht/~shulhan/awwan/internal"
 )
 
 // Version current version of this module (library and program).
@@ -30,12 +28,11 @@ const (
 )
 
 const (
-	defCacheDir      = ".cache"
-	defEnvFileName   = "awwan.env" // The default awwan environment file name.
-	defListenAddress = "127.0.0.1:17600"
-	defSshConfig     = "config" // The default SSH config file name.
-	defSshDir        = ".ssh"   // The default SSH config directory name.
-	defTmpDir        = "/tmp"
+	defCacheDir    = `.cache`
+	defEnvFileName = `awwan.env` // The default awwan environment file name.
+	defSshConfig   = `config`    // The default SSH config file name.
+	defSshDir      = `.ssh`      // The default SSH config directory name.
+	defTmpDir      = `/tmp`
 )
 
 // defEncryptExt default file extension for encrypted file.
@@ -56,18 +53,14 @@ var (
 // Awwan is the service that run script in local or remote.
 // Awwan contains cache of sessions and cache of environment files.
 type Awwan struct {
-	BaseDir string
-
 	cryptoc *cryptoContext
 
 	// All the Host values from SSH config files.
 	sshConfig *config.Config
 
-	httpd     *http.Server // The HTTP server.
-	memfsBase *memfs.MemFS // The files caches.
+	httpd *httpServer
 
-	bufout bytes.Buffer
-	buferr bytes.Buffer
+	BaseDir string
 }
 
 // New create and initialize new Awwan service using baseDir as the root of
@@ -312,48 +305,20 @@ func (aww *Awwan) Play(req *Request) (err error) {
 // Serve start the web-user interface that serve awwan actions through HTTP.
 func (aww *Awwan) Serve() (err error) {
 	var (
-		logp          = "Serve"
-		envDev        = os.Getenv(internal.EnvDevelopment)
-		memfsBaseOpts = &memfs.Options{
-			Root: aww.BaseDir,
-			Excludes: []string{
-				`.*/\.git`,
-				"node_modules",
-				"vendor",
-				`.*\.(bz|bz2|gz|iso|jar|tar|xz|zip)`,
-			},
-			TryDirect: true, // Only store the file structures in the memory.
-		}
-
-		serverOpts *http.ServerOptions
+		logp   = `Serve`
+		envDev = os.Getenv(internal.EnvDevelopment)
 	)
-
-	aww.memfsBase, err = memfs.New(memfsBaseOpts)
-	if err != nil {
-		return fmt.Errorf("%s: %w", logp, err)
-	}
 
 	if len(envDev) > 0 {
 		go internal.Watch()
 	}
 
-	serverOpts = &http.ServerOptions{
-		Memfs:   internal.MemfsWww,
-		Address: defListenAddress,
-	}
-	aww.httpd, err = http.NewServer(serverOpts)
+	aww.httpd, err = newHttpServer(aww)
 	if err != nil {
-		return fmt.Errorf("%s: %w", logp, err)
+		return fmt.Errorf(`%s: %w`, logp, err)
 	}
 
-	err = aww.registerHttpApis()
-	if err != nil {
-		return fmt.Errorf("%s: %w", logp, err)
-	}
-
-	fmt.Printf("--- Starting HTTP server at http://%s\n", serverOpts.Address)
-
-	return aww.httpd.Start()
+	return aww.httpd.start()
 }
 
 // loadSshConfig load all SSH config from user's home and the awwan base

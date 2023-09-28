@@ -4,6 +4,7 @@
 package awwan
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -15,70 +16,132 @@ import (
 	libbytes "github.com/shuLhan/share/lib/bytes"
 	libhttp "github.com/shuLhan/share/lib/http"
 	"github.com/shuLhan/share/lib/memfs"
+
+	"git.sr.ht/~shulhan/awwan/internal"
 )
 
 const (
-	httpApiFs      = "/awwan/api/fs"
-	httpApiExecute = "/awwan/api/execute"
-
-	paramNamePath = "path"
+	pathAwwanApiFs      = `/awwan/api/fs`
+	pathAwwanApiExecute = `/awwan/api/execute`
 )
 
-func (aww *Awwan) registerHttpApis() (err error) {
+const paramNamePath = `path`
+
+const defListenAddress = `127.0.0.1:17600`
+
+// httpServer awwan HTTP server for HTTP API and web user interface feature.
+type httpServer struct {
+	*libhttp.Server
+
+	aww       *Awwan
+	memfsBase *memfs.MemFS // The files caches.
+
+	baseDir string
+
+	bufout bytes.Buffer
+	buferr bytes.Buffer
+}
+
+// newHttpServer create and initialize HTTP server to serve awwan HTTP API
+// and web user interface.
+func newHttpServer(aww *Awwan) (httpd *httpServer, err error) {
 	var (
-		logp = "registerHttpApis"
+		logp = `newHttpServer`
 	)
 
-	err = aww.httpd.RegisterEndpoint(&libhttp.Endpoint{
+	httpd = &httpServer{
+		aww:     aww,
+		baseDir: aww.BaseDir,
+	}
+
+	var memfsBaseOpts = &memfs.Options{
+		Root: aww.BaseDir,
+		Excludes: []string{
+			`.*/\.git`,
+			`node_modules`,
+			`vendor`,
+			`.*\.(bz|bz2|gz|iso|jar|tar|xz|zip)`,
+		},
+		TryDirect: true, // Only store the file structures in the memory.
+	}
+
+	httpd.memfsBase, err = memfs.New(memfsBaseOpts)
+	if err != nil {
+		return nil, fmt.Errorf(`%s: %w`, logp, err)
+	}
+
+	var serverOpts = &libhttp.ServerOptions{
+		Memfs:   internal.MemfsWww,
+		Address: defListenAddress,
+	}
+
+	httpd.Server, err = libhttp.NewServer(serverOpts)
+	if err != nil {
+		return nil, fmt.Errorf(`%s: %w`, logp, err)
+	}
+
+	err = httpd.registerEndpoints()
+	if err != nil {
+		return nil, fmt.Errorf(`%s: %w`, logp, err)
+	}
+
+	return httpd, nil
+}
+
+// registerEndpoints register endpoint to be served by HTTP server.
+func (httpd *httpServer) registerEndpoints() (err error) {
+	var logp = `registerEndpoints`
+
+	err = httpd.RegisterEndpoint(&libhttp.Endpoint{
 		Method:       libhttp.RequestMethodGet,
-		Path:         httpApiFs,
+		Path:         pathAwwanApiFs,
 		RequestType:  libhttp.RequestTypeQuery,
 		ResponseType: libhttp.ResponseTypeJSON,
-		Call:         aww.httpApiFs,
+		Call:         httpd.awwanApiFsGet,
 	})
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
 
-	err = aww.httpd.RegisterEndpoint(&libhttp.Endpoint{
+	err = httpd.RegisterEndpoint(&libhttp.Endpoint{
 		Method:       libhttp.RequestMethodDelete,
-		Path:         httpApiFs,
+		Path:         pathAwwanApiFs,
 		RequestType:  libhttp.RequestTypeJSON,
 		ResponseType: libhttp.ResponseTypeJSON,
-		Call:         aww.httpApiFsDelete,
+		Call:         httpd.awwanApiFsDelete,
 	})
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
 
-	err = aww.httpd.RegisterEndpoint(&libhttp.Endpoint{
+	err = httpd.RegisterEndpoint(&libhttp.Endpoint{
 		Method:       libhttp.RequestMethodPost,
-		Path:         httpApiFs,
+		Path:         pathAwwanApiFs,
 		RequestType:  libhttp.RequestTypeJSON,
 		ResponseType: libhttp.ResponseTypeJSON,
-		Call:         aww.httpApiFsPost,
+		Call:         httpd.awwanApiFsPost,
 	})
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
 
-	err = aww.httpd.RegisterEndpoint(&libhttp.Endpoint{
+	err = httpd.RegisterEndpoint(&libhttp.Endpoint{
 		Method:       libhttp.RequestMethodPut,
-		Path:         httpApiFs,
+		Path:         pathAwwanApiFs,
 		RequestType:  libhttp.RequestTypeJSON,
 		ResponseType: libhttp.ResponseTypeJSON,
-		Call:         aww.httpApiFsPut,
+		Call:         httpd.awwanApiFsPut,
 	})
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
 
-	err = aww.httpd.RegisterEndpoint(&libhttp.Endpoint{
+	err = httpd.RegisterEndpoint(&libhttp.Endpoint{
 		Method:       libhttp.RequestMethodPost,
-		Path:         httpApiExecute,
+		Path:         pathAwwanApiExecute,
 		RequestType:  libhttp.RequestTypeJSON,
 		ResponseType: libhttp.ResponseTypeJSON,
-		Call:         aww.httpApiExecute,
+		Call:         httpd.awwanApiExecute,
 	})
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
@@ -87,9 +150,16 @@ func (aww *Awwan) registerHttpApis() (err error) {
 	return nil
 }
 
-// httpApiFs get the list of files or specific file using query parameter
-// "path".
-func (aww *Awwan) httpApiFs(epr *libhttp.EndpointRequest) (resb []byte, err error) {
+// start the HTTP server.
+func (httpd *httpServer) start() (err error) {
+	fmt.Printf("--- Starting HTTP server at http://%s\n", httpd.Server.Options.Address)
+
+	return httpd.Server.Start()
+}
+
+// awwanApiFsGet get the list of files or specific file using query
+// parameter "path".
+func (httpd *httpServer) awwanApiFsGet(epr *libhttp.EndpointRequest) (resb []byte, err error) {
 	var (
 		res = &libhttp.EndpointResponse{}
 
@@ -100,11 +170,11 @@ func (aww *Awwan) httpApiFs(epr *libhttp.EndpointRequest) (resb []byte, err erro
 	path = epr.HttpRequest.Form.Get(paramNamePath)
 	if len(path) == 0 {
 		res.Code = http.StatusOK
-		res.Data = aww.memfsBase
+		res.Data = httpd.memfsBase
 		return json.Marshal(res)
 	}
 
-	node, err = aww.memfsBase.Get(path)
+	node, err = httpd.memfsBase.Get(path)
 	if err != nil {
 		return nil, err
 	}
@@ -114,7 +184,7 @@ func (aww *Awwan) httpApiFs(epr *libhttp.EndpointRequest) (resb []byte, err erro
 	return json.Marshal(res)
 }
 
-// httpApiFsDelete an HTTP API to delete a file.
+// awwanApiFsDelete an HTTP API to delete a file.
 //
 // # Request
 //
@@ -144,9 +214,9 @@ func (aww *Awwan) httpApiFs(epr *libhttp.EndpointRequest) (resb []byte, err erro
 //   - 400: Bad request.
 //   - 401: Unauthorized.
 //   - 404: File not found.
-func (aww *Awwan) httpApiFsDelete(epr *libhttp.EndpointRequest) (resb []byte, err error) {
+func (httpd *httpServer) awwanApiFsDelete(epr *libhttp.EndpointRequest) (resb []byte, err error) {
 	var (
-		logp = "httpApiFsDelete"
+		logp = `awwanApiFsDelete`
 		res  = &libhttp.EndpointResponse{}
 		req  = &fsRequest{}
 
@@ -164,7 +234,7 @@ func (aww *Awwan) httpApiFsDelete(epr *libhttp.EndpointRequest) (resb []byte, er
 	}
 
 	parentPath = path.Dir(req.Path)
-	nodeParent = aww.memfsBase.PathNodes.Get(parentPath)
+	nodeParent = httpd.memfsBase.PathNodes.Get(parentPath)
 	if nodeParent == nil {
 		res.Message = fmt.Sprintf("%s: invalid path %s", logp, req.Path)
 		return nil, res
@@ -176,7 +246,7 @@ func (aww *Awwan) httpApiFsDelete(epr *libhttp.EndpointRequest) (resb []byte, er
 		res.Message = fmt.Sprintf("%s: %s", logp, err)
 		return nil, res
 	}
-	if !strings.HasPrefix(sysPath, aww.memfsBase.Opts.Root) {
+	if !strings.HasPrefix(sysPath, httpd.memfsBase.Opts.Root) {
 		res.Message = fmt.Sprintf("%s: invalid path %q", logp, sysPath)
 		return nil, res
 	}
@@ -194,7 +264,7 @@ func (aww *Awwan) httpApiFsDelete(epr *libhttp.EndpointRequest) (resb []byte, er
 	return json.Marshal(res)
 }
 
-// httpApiFsPost create new directory or file.
+// awwanApiFsPost create new directory or file.
 //
 // # Request
 //
@@ -207,9 +277,9 @@ func (aww *Awwan) httpApiFsDelete(epr *libhttp.EndpointRequest) (resb []byte, er
 //		"path": <string>, the path to new directory or file.
 //		"is_dir": <boolean>, true if its directory.
 //	}
-func (aww *Awwan) httpApiFsPost(epr *libhttp.EndpointRequest) (rawBody []byte, err error) {
+func (httpd *httpServer) awwanApiFsPost(epr *libhttp.EndpointRequest) (rawBody []byte, err error) {
 	var (
-		logp = "httpApiFsPost"
+		logp = `awwanApiFsPost`
 		res  = &libhttp.EndpointResponse{}
 		req  = &fsRequest{}
 
@@ -229,12 +299,12 @@ func (aww *Awwan) httpApiFsPost(epr *libhttp.EndpointRequest) (rawBody []byte, e
 	}
 
 	parentPath = path.Dir(req.Path)
-	nodeParent = aww.memfsBase.PathNodes.Get(parentPath)
+	nodeParent = httpd.memfsBase.PathNodes.Get(parentPath)
 	if nodeParent == nil {
 		res.Message = fmt.Sprintf("%s: invalid path %s", logp, req.Path)
 		return nil, res
 	}
-	node = aww.memfsBase.PathNodes.Get(req.Path)
+	node = httpd.memfsBase.PathNodes.Get(req.Path)
 	if node != nil {
 		res.Message = fmt.Sprintf("%s: file exist", logp)
 		return nil, res
@@ -248,7 +318,7 @@ func (aww *Awwan) httpApiFsPost(epr *libhttp.EndpointRequest) (rawBody []byte, e
 		res.Message = fmt.Sprintf("%s: %s", logp, err)
 		return nil, res
 	}
-	if !strings.HasPrefix(sysPath, aww.memfsBase.Opts.Root) {
+	if !strings.HasPrefix(sysPath, httpd.memfsBase.Opts.Root) {
 		res.Message = fmt.Sprintf("%s: invalid path %q", logp, sysPath)
 		return nil, res
 	}
@@ -268,7 +338,7 @@ func (aww *Awwan) httpApiFsPost(epr *libhttp.EndpointRequest) (rawBody []byte, e
 		return nil, res
 	}
 
-	node, err = aww.memfsBase.AddChild(nodeParent, fi)
+	node, err = httpd.memfsBase.AddChild(nodeParent, fi)
 	if err != nil {
 		res.Message = fmt.Sprintf("%s: %s", logp, err)
 		return nil, res
@@ -280,10 +350,10 @@ func (aww *Awwan) httpApiFsPost(epr *libhttp.EndpointRequest) (rawBody []byte, e
 	return json.Marshal(res)
 }
 
-// httpApiFsPut save the content of file.
-func (aww *Awwan) httpApiFsPut(epr *libhttp.EndpointRequest) (rawBody []byte, err error) {
+// awwanApiFsPut save the content of file.
+func (httpd *httpServer) awwanApiFsPut(epr *libhttp.EndpointRequest) (rawBody []byte, err error) {
 	var (
-		logp = "httpApiFsPut"
+		logp = "awwanApiFsPut"
 		res  = &libhttp.EndpointResponse{}
 		req  = &fsRequest{}
 
@@ -298,7 +368,7 @@ func (aww *Awwan) httpApiFsPut(epr *libhttp.EndpointRequest) (rawBody []byte, er
 		return nil, res
 	}
 
-	node = aww.memfsBase.PathNodes.Get(req.Path)
+	node = httpd.memfsBase.PathNodes.Get(req.Path)
 	if node == nil {
 		res.Code = http.StatusNotFound
 		res.Message = fmt.Sprintf("%s: invalid or empty path %s", logp, req.Path)
@@ -317,9 +387,9 @@ func (aww *Awwan) httpApiFsPut(epr *libhttp.EndpointRequest) (rawBody []byte, er
 	return json.Marshal(res)
 }
 
-func (aww *Awwan) httpApiExecute(epr *libhttp.EndpointRequest) (resb []byte, err error) {
+func (httpd *httpServer) awwanApiExecute(epr *libhttp.EndpointRequest) (resb []byte, err error) {
 	var (
-		logp = "httpApiExecute"
+		logp = "awwanApiExecute"
 		req  = &Request{}
 		res  = &libhttp.EndpointResponse{}
 
@@ -334,19 +404,19 @@ func (aww *Awwan) httpApiExecute(epr *libhttp.EndpointRequest) (resb []byte, err
 		return nil, res
 	}
 
-	req.Script = filepath.Join(aww.memfsBase.Opts.Root, req.Script)
+	req.Script = filepath.Join(httpd.memfsBase.Opts.Root, req.Script)
 	req.lineRange = parseLineRange(req.LineRange)
 
-	aww.bufout.Reset()
-	aww.buferr.Reset()
+	httpd.bufout.Reset()
+	httpd.buferr.Reset()
 
-	req.stdout = &aww.bufout
-	req.stderr = &aww.buferr
+	req.stdout = &httpd.bufout
+	req.stderr = &httpd.buferr
 
 	if req.Mode == CommandModeLocal {
-		err = aww.Local(req)
+		err = httpd.aww.Local(req)
 	} else {
-		err = aww.Play(req)
+		err = httpd.aww.Play(req)
 	}
 	if err != nil {
 		res.Message = fmt.Sprintf("%s: %s", logp, err)
@@ -355,8 +425,8 @@ func (aww *Awwan) httpApiExecute(epr *libhttp.EndpointRequest) (resb []byte, err
 
 	data = &HttpResponse{
 		Request: req,
-		Stdout:  libbytes.Copy(aww.bufout.Bytes()),
-		Stderr:  libbytes.Copy(aww.buferr.Bytes()),
+		Stdout:  libbytes.Copy(httpd.bufout.Bytes()),
+		Stderr:  libbytes.Copy(httpd.buferr.Bytes()),
 	}
 
 	res.Code = http.StatusOK
