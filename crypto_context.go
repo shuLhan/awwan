@@ -22,6 +22,10 @@ import (
 // defFilePrivateKey define the default private key file name.
 const defFilePrivateKey = `awwan.key`
 
+// defFilePassphrase define the file that contains passphrase for private
+// key.
+const defFilePassphrase = `awwan.pass`
+
 // errPrivateKeyMissing returned when private key file is missing or not
 // loaded when command require loading encrypted file.
 var errPrivateKeyMissing = errors.New(`private key is missing or not loaded`)
@@ -109,18 +113,32 @@ func (cryptoc *cryptoContext) loadPrivateKey() (err error) {
 		return err
 	}
 
+	var pass []byte
+
+	pass, err = cryptoc.loadPassphrase()
+	if err != nil {
+		return err
+	}
+
 	fmt.Printf("--- Loading private key file %q (enter to skip passphrase) ...\n",
 		relativePath(cryptoc.baseDir, fileKey))
 
-	pkey, err = libcrypto.LoadPrivateKeyInteractive(cryptoc.termrw, fileKey)
-	if err != nil {
-		if errors.Is(err, libcrypto.ErrEmptyPassphrase) {
-			// Ignore empty passphrase error, in case the
-			// command does not need to decrypt files when
-			// running.
-			return nil
+	if len(pass) == 0 {
+		pkey, err = libcrypto.LoadPrivateKeyInteractive(cryptoc.termrw, fileKey)
+		if err != nil {
+			if errors.Is(err, libcrypto.ErrEmptyPassphrase) {
+				// Ignore empty passphrase error, in case the
+				// command does not need to decrypt files when
+				// running.
+				return nil
+			}
+			return err
 		}
-		return err
+	} else {
+		pkey, err = libcrypto.LoadPrivateKey(fileKey, pass)
+		if err != nil {
+			return err
+		}
 	}
 
 	cryptoc.privateKey, ok = pkey.(*rsa.PrivateKey)
@@ -129,4 +147,30 @@ func (cryptoc *cryptoContext) loadPrivateKey() (err error) {
 	}
 
 	return nil
+}
+
+// loadPassphrase load passphrase from file ".ssh/awwan.pass"
+func (cryptoc *cryptoContext) loadPassphrase() (pass []byte, err error) {
+	var (
+		logp     = `loadPassphrase`
+		filePass = filepath.Join(cryptoc.baseDir, `.ssh`, defFilePassphrase)
+	)
+
+	_, err = os.Stat(filePass)
+	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf(`%s: %w`, logp, err)
+	}
+
+	fmt.Printf("--- Loading passphrase file %q ...\n",
+		relativePath(cryptoc.baseDir, filePass))
+
+	pass, err = os.ReadFile(filePass)
+	if err != nil {
+		return nil, fmt.Errorf(`%s: %w`, logp, err)
+	}
+
+	return pass, nil
 }

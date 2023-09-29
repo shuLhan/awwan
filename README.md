@@ -259,7 +259,8 @@ example
 #put! secret secret
 ```
 
-First, it will try to read file named "secret".
+First, "#put!" will try to read file named "secret".
+If its exist, it will copy the file as is, without decrypting it.
 If not exist, it will read file named "secret.vault", if it exist it will
 decrypt it and copy it to remote server un-encrypted.
 
@@ -376,6 +377,24 @@ For example, given the following directory structure,
 
 If we execute the "development/script.aww", awwan search for the Host that
 match with "development" in workspace ".ssh/config" or in "~/.ssh/config".
+
+
+##  SUPPORT FOR ENCRYPTION
+
+The command "encrypt" support encrypting file using RSA private key with or
+without passphrase by putting the file under ".ssh/awwan.key".
+The command "decrypt" un-encrypt the file produce by "encrypt" command.
+
+The awwan command also can read encrypted environment file with the name
+".awwan.env.vault", so any secret variables can stored there and the script
+that contains '{{.Val "..."}}' works as usual.
+
+Any magic put "#put" also can copy encrypted file without any changes, as
+long as the source file with ".vault" extension exist.
+
+For environment where awwan need to be operated automatically, for example
+in build system, awwan can read the private key's passphrase automatically
+from the file ".ssh/awwan.pass".
 
 
 ##  EXAMPLE

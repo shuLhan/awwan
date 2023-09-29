@@ -13,6 +13,7 @@
 /cover.html
 /cover.out
 /testdata/decrypt-with-passphrase/.awwan.env
+/testdata/encrypt-with-passfile/plain.txt.vault
 /testdata/encrypt-with-passphrase/.awwan.env.vault
 /testdata/encrypt-without-passphrase/.awwan.env.vault
 /testdata/local/.cache

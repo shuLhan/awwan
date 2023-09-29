@@ -1,0 +1,6 @@
+Test encrypt and decrypt with passhrase stored in ".ssh/awwan.pass".
+
+<<< plain.txt
+[secret]
+pass = thisisasecret
+

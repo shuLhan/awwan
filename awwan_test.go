@@ -151,6 +151,54 @@ func TestAwwanEncrypt(t *testing.T) {
 	}
 }
 
+func TestAwwanEncryptDecrypt_withPassFile(t *testing.T) {
+	var (
+		baseDir = filepath.Join(`testdata`, `encrypt-with-passfile`)
+
+		tdata *test.Data
+		err   error
+	)
+
+	tdata, err = test.LoadData(filepath.Join(baseDir, `test.data`))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var aww *Awwan
+
+	aww, err = New(baseDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var (
+		filePlain = filepath.Join(baseDir, `plain.txt`)
+		fileVault string
+	)
+
+	fileVault, err = aww.Encrypt(filePlain)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	filePlain, err = aww.Decrypt(fileVault)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var (
+		expContent = tdata.Output[`plain.txt`]
+		gotContent []byte
+	)
+
+	gotContent, err = os.ReadFile(filePlain)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	test.Assert(t, `content`, string(expContent), string(gotContent))
+}
+
 func TestAwwanLocal_withEncryption(t *testing.T) {
 	type testCase struct {
 		desc      string
