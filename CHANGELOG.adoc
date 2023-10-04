@@ -6,6 +6,72 @@
 :sectlinks:
 
 
+[#v0_8_0]
+==  awwan v0.8.0 (2023-10-04)
+
+This release add support for encryption, with two new commands "encrypt" and
+"decrypt" for encrypting and decrypting file with RSA private key.
+
+The awwan command also can read encrypted environment file with the name
+".awwan.env.vault", so any secret variables can stored there and the script
+that contains '{{.Val "..."}}' works as usual.
+
+Any magic put "#put" also can copy encrypted file without any changes, as
+long as the source file with ".vault" extension exist.
+
+For environment where awwan need to be operated automatically, for example
+in build system, awwan can read the private key's passphrase automatically
+from the file ".ssh/awwan.pass".
+
+[#v0_8_0__bug_fixes]
+=== Bug fixes
+
+all: do not expand environment during parseScript::
++
+Environment variables in the script may only expanded by shell on remote
+not always on local.
+
+all: fix #require does not get executed on the same start position::
++
+Previously, executing "local" or "play" command start from line "#require"
+will not run the "#require" on that line.
+This changes fix it.
+
+_www: fix execute request that still use "begin_at" and "end_at"::
++
+While at it, reformat the TypeScript files using prettier v3.0.3.
+
+[#v0_8_0__enhancements]
+=== Enhancements
+
+all: make .Vars, .Val, and .Vals panic if values is empty::
++
+--
+This is to prevent copying or executing command with value that are
+not defined or typo which make the result empty and may result in
+undefined behaviour.
+
+For example if we have "app_dir =" with empty variable and command in the
+script that remove that directory recursively,
+
+----
+sudo rm -r {{.Val "::app_dir"}}/bin
+----
+
+will result removing "/bin" entirely.
+--
+
+all: print any path relative to base directory::
++
+This is to minimize log length in stdout and stderr, which make it
+more readable.
+
+all: move field bufout and buferr out of httpServer struct::
++
+Those fields are used on each HTTP request to /awwan/api/execute, which
+make them not safe if two or more requests processed at the same time.
+
+
 [#v0_7_0]
 ==  awwan v0.7.0 (2023-05-14)
 
