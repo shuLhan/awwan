@@ -121,27 +121,25 @@ func (ses *Session) Vals(keyPath string) (list []string) {
 func (ses *Session) Copy(stmt *Statement) (err error) {
 	var logp = `Copy`
 
-	if len(stmt.cmd) == 0 {
-		return fmt.Errorf("%s: missing source argument", logp)
-	}
-	if len(stmt.args) == 0 {
-		return fmt.Errorf("%s: missing destination argument", logp)
-	}
-	if len(stmt.args) > 1 {
-		return fmt.Errorf("%s: two or more destination arguments is given", logp)
-	}
-
 	var (
-		src     string
+		src = stmt.cmd
+		dst = stmt.args[0]
+
 		isVault bool
 	)
 
-	src, isVault, err = ses.generateFileInput(stmt.cmd)
-	if err != nil {
-		return fmt.Errorf("%s: %w", logp, err)
+	switch stmt.kind {
+	case statementKindGet, statementKindSudoGet:
+		src = stmt.args[0]
+		dst = stmt.args[1]
+	case statementKindPut, statementKindSudoPut:
+		src, isVault, err = ses.generateFileInput(src)
+		if err != nil {
+			return fmt.Errorf(`%s: %w`, logp, err)
+		}
 	}
 
-	err = libos.Copy(stmt.args[0], src)
+	err = libos.Copy(dst, src)
 	if isVault {
 		// Delete the decrypted file on exit.
 		var errRemove = os.Remove(src)
@@ -159,17 +157,7 @@ func (ses *Session) Copy(stmt *Statement) (err error) {
 func (ses *Session) Get(stmt *Statement) (err error) {
 	var logp = "Get"
 
-	if len(stmt.cmd) == 0 {
-		return fmt.Errorf("%s: missing source argument", logp)
-	}
-	if len(stmt.args) == 0 {
-		return fmt.Errorf("%s: missing destination argument", logp)
-	}
-	if len(stmt.args) > 1 {
-		return fmt.Errorf("%s: two or more destination arguments is given", logp)
-	}
-
-	err = ses.sshc.get(stmt.cmd, stmt.args[0])
+	err = ses.sshc.get(stmt.args[0], stmt.args[1])
 	if err != nil {
 		return fmt.Errorf(`%s: %w`, logp, err)
 	}
@@ -215,40 +203,32 @@ func (ses *Session) Put(stmt *Statement) (err error) {
 }
 
 // SudoCopy copy file in local system using sudo.
-func (ses *Session) SudoCopy(req *Request, stmt *Statement, withParseInput bool) (err error) {
+func (ses *Session) SudoCopy(req *Request, stmt *Statement) (err error) {
 	var (
 		logp = "SudoCopy"
+		src  = stmt.cmd
+		dst  = stmt.args[0]
 
-		sudoCp *Statement
-		src    string
+		sudoCp  *Statement
+		isVault bool
 	)
 
-	if len(stmt.cmd) == 0 {
-		return fmt.Errorf("%s: missing source argument", logp)
-	}
-	if len(stmt.args) == 0 {
-		return fmt.Errorf("%s: missing destination argument", logp)
-	}
-	if len(stmt.args) > 1 {
-		return fmt.Errorf("%s: two or more destination arguments is given", logp)
-	}
-
-	var isVault bool
-
-	if withParseInput {
-		src, isVault, err = ses.generateFileInput(stmt.cmd)
+	switch stmt.kind {
+	case statementKindGet, statementKindSudoGet:
+		src = stmt.args[0]
+		dst = stmt.args[1]
+	case statementKindPut, statementKindSudoPut:
+		src, isVault, err = ses.generateFileInput(src)
 		if err != nil {
-			return fmt.Errorf("%s: %w", logp, err)
+			return fmt.Errorf(`%s: %w`, logp, err)
 		}
-	} else {
-		src = stmt.cmd
 	}
 
 	sudoCp = &Statement{
 		kind: statementKindDefault,
 		cmd:  "sudo",
-		args: []string{"cp", src, stmt.args[0]},
-		raw:  []byte("sudo cp " + src + " " + stmt.args[0]),
+		args: []string{"cp", src, dst},
+		raw:  []byte("sudo cp " + src + " " + dst),
 	}
 
 	err = ses.ExecLocal(req, sudoCp)
@@ -392,9 +372,9 @@ func (ses *Session) executeScriptOnLocal(req *Request, pos linePosition) {
 		case statementKindPut:
 			err = ses.Copy(stmt)
 		case statementKindSudoGet:
-			err = ses.SudoCopy(req, stmt, false)
+			err = ses.SudoCopy(req, stmt)
 		case statementKindSudoPut:
-			err = ses.SudoCopy(req, stmt, true)
+			err = ses.SudoCopy(req, stmt)
 		}
 		if err != nil {
 			fmt.Fprintf(req.stderr, "!!! %s\n", err)

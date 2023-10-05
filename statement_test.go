@@ -11,17 +11,49 @@ import (
 
 func TestParseStatement(t *testing.T) {
 	type testCase struct {
-		exp *Statement
-		raw []byte
+		exp      *Statement
+		expError string
+		raw      []byte
 	}
 
 	var cases = []testCase{{
+		raw:      []byte(`#get: `),
+		expError: `ParseStatement: "#get:": missing arguments`,
+	}, {
+		raw:      []byte(`#get: src `),
+		expError: `ParseStatement: "#get:": missing destination file`,
+	}, {
+		raw:      []byte(`#get: src dst dst2 `),
+		expError: `ParseStatement: "#get:": too many arguments`,
+	}, {
+		raw: []byte(`#get: src dst`),
+		exp: &Statement{
+			kind: statementKindGet,
+			args: []string{`src`, `dst`},
+			raw:  []byte(` src dst`),
+		},
+	}, {
 		raw: []byte(`#get: a\ b c`),
 		exp: &Statement{
 			kind: statementKindGet,
-			cmd:  `a b`,
-			args: []string{"c"},
+			args: []string{`a b`, `c`},
 			raw:  []byte(` a\ b c`),
+		},
+	}, {
+		raw:      []byte(`#get! `),
+		expError: `ParseStatement: "#get!": missing arguments`,
+	}, {
+		raw:      []byte(`#get! src `),
+		expError: `ParseStatement: "#get!": missing destination file`,
+	}, {
+		raw:      []byte(`#get! src dst dst2 `),
+		expError: `ParseStatement: "#get!": too many arguments`,
+	}, {
+		raw: []byte(`#get! a\	b	c`),
+		exp: &Statement{
+			kind: statementKindSudoGet,
+			args: []string{`a	b`, `c`},
+			raw:  []byte(` a\	b	c`),
 		},
 	}, {
 		raw: []byte(`#put: a b c\ `),
@@ -30,16 +62,6 @@ func TestParseStatement(t *testing.T) {
 			cmd:  "a",
 			args: []string{"b", `c`},
 			raw:  []byte(` a b c\`),
-		},
-	}, {
-		raw: []byte(`#get! a\	b	c`),
-		exp: &Statement{
-			kind: statementKindSudoGet,
-			cmd:  `a	b`,
-			args: []string{
-				"c",
-			},
-			raw: []byte(` a\	b	c`),
 		},
 	}, {
 		raw: []byte(`#put! a	bc `),
@@ -73,7 +95,8 @@ func TestParseStatement(t *testing.T) {
 	for _, c = range cases {
 		got, err = ParseStatement(c.raw)
 		if err != nil {
-			t.Fatal(err)
+			test.Assert(t, `error`, c.expError, err.Error())
+			continue
 		}
 		test.Assert(t, string(c.raw), c.exp, got)
 	}

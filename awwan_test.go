@@ -287,6 +287,77 @@ func TestAwwanLocal_withEncryption(t *testing.T) {
 	}
 }
 
+func TestAwwanLocal_Get(t *testing.T) {
+	type testCase struct {
+		desc       string
+		lineRange  string
+		fileDest   string
+		expContent string
+		expError   string
+	}
+
+	// Load the test data.
+	var (
+		baseDir      = filepath.Join(`testdata`, `local`)
+		testdataFile = filepath.Join(baseDir, `get.data`)
+
+		tdata *test.Data
+		err   error
+	)
+
+	tdata, err = test.LoadData(testdataFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var (
+		mockrw = mock.ReadWriter{}
+
+		aww *Awwan
+	)
+
+	aww, err = New(baseDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Mock terminal to read passphrase for private key.
+	aww.cryptoc.termrw = &mockrw
+
+	var cases = []testCase{{
+		desc:       `Get_PlainFile`,
+		lineRange:  `1`,
+		fileDest:   filepath.Join(baseDir, `tmp`, `get_plain.txt`),
+		expContent: string(tdata.Output[`tmp/get_plain.txt`]),
+	}}
+
+	var (
+		script = filepath.Join(baseDir, `get.aww`)
+
+		c          testCase
+		gotContent []byte
+	)
+
+	for _, c = range cases {
+		t.Log(c.desc)
+
+		var req = NewRequest(CommandModeLocal, script, c.lineRange)
+
+		err = aww.Local(req)
+		if err != nil {
+			test.Assert(t, `Local: error`, c.expError, err.Error())
+			continue
+		}
+
+		gotContent, err = os.ReadFile(c.fileDest)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		test.Assert(t, `content`, c.expContent, string(gotContent))
+	}
+}
+
 func TestAwwanLocalPut(t *testing.T) {
 	type testCase struct {
 		desc       string

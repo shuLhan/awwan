@@ -41,14 +41,7 @@ const defEncryptExt = `.vault`
 // defFileEnvVault default awwan environment file name that is encrypted.
 const defFileEnvVault = `.awwan.env.vault`
 
-var (
-	cmdMagicGet     = []byte("#get:")
-	cmdMagicPut     = []byte("#put:")
-	cmdMagicSudoGet = []byte("#get!")
-	cmdMagicSudoPut = []byte("#put!")
-	cmdMagicRequire = []byte("#require:")
-	newLine         = []byte("\n")
-)
+var newLine = []byte("\n")
 
 // Awwan is the service that run script in local or remote.
 // Awwan contains cache of sessions and cache of environment files.

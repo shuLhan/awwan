@@ -1,0 +1,5 @@
+Test on magic command "#get:".
+
+<<< tmp/get_plain.txt
+The host name is {{.Val "host::name"}}.
+
