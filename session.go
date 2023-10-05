@@ -228,7 +228,7 @@ func (ses *Session) SudoCopy(req *Request, stmt *Statement) (err error) {
 		kind: statementKindDefault,
 		cmd:  "sudo",
 		args: []string{"cp", src, dst},
-		raw:  []byte("sudo cp " + src + " " + dst),
+		raw:  []byte(`sudo cp "` + src + `" "` + dst + `"`),
 	}
 
 	err = ses.ExecLocal(req, sudoCp)
