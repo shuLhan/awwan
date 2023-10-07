@@ -31,6 +31,15 @@ var (
 	cmdMagicRequire = []byte(`#require:`)
 )
 
+// List of mapping between magic command kind and its command string for get
+// and put only.
+var magicCmdGetPut = map[int][]byte{
+	statementKindGet:     cmdMagicGet,
+	statementKindPut:     cmdMagicPut,
+	statementKindSudoGet: cmdMagicSudoGet,
+	statementKindSudoPut: cmdMagicSudoPut,
+}
+
 // Statement contains parsed raw line from the script.
 type Statement struct {
 	cmd  string
@@ -42,50 +51,35 @@ type Statement struct {
 // ParseStatement create and initialize new Statement from raw line.
 // It will return nil if raw line is empty.
 func ParseStatement(raw []byte) (stmt *Statement, err error) {
-	var (
-		logp = `ParseStatement`
-
-		cmd  string
-		args []string
-	)
+	var logp = `ParseStatement`
 
 	raw = bytes.TrimSpace(raw)
 	if len(raw) == 0 {
 		return nil, nil
 	}
 
-	if bytes.HasPrefix(raw, cmdMagicGet) {
-		raw = raw[len(cmdMagicGet):]
-		stmt, err = parseStatementGetPut(statementKindGet, raw)
+	var (
+		cmdKind  int
+		cmdMagic []byte
+	)
+
+	for cmdKind, cmdMagic = range magicCmdGetPut {
+		if !bytes.HasPrefix(raw, cmdMagic) {
+			continue
+		}
+		raw = raw[len(cmdMagic):]
+		stmt, err = parseStatementGetPut(cmdKind, raw)
 		if err != nil {
-			return nil, fmt.Errorf(`%s: %q: %w`, logp, cmdMagicGet, err)
+			return nil, fmt.Errorf(`%s: %q: %w`, logp, cmdMagic, err)
 		}
 		return stmt, nil
 	}
-	if bytes.HasPrefix(raw, cmdMagicPut) {
-		raw = raw[len(cmdMagicPut):]
-		stmt, err = parseStatementGetPut(statementKindPut, raw)
-		if err != nil {
-			return nil, fmt.Errorf(`%s: %q: %w`, logp, cmdMagicPut, err)
-		}
-		return stmt, nil
-	}
-	if bytes.HasPrefix(raw, cmdMagicSudoGet) {
-		raw = raw[len(cmdMagicSudoGet):]
-		stmt, err = parseStatementGetPut(statementKindSudoGet, raw)
-		if err != nil {
-			return nil, fmt.Errorf(`%s: %q: %w`, logp, cmdMagicSudoGet, err)
-		}
-		return stmt, nil
-	}
-	if bytes.HasPrefix(raw, cmdMagicSudoPut) {
-		raw = raw[len(cmdMagicSudoPut):]
-		stmt, err = parseStatementGetPut(statementKindSudoPut, raw)
-		if err != nil {
-			return nil, fmt.Errorf(`%s: %q: %w`, logp, cmdMagicSudoPut, err)
-		}
-		return stmt, nil
-	}
+
+	var (
+		cmd  string
+		args []string
+	)
+
 	if bytes.HasPrefix(raw, cmdMagicRequire) {
 		raw = raw[len(cmdMagicRequire):]
 		cmd, args = libexec.ParseCommandArgs(string(raw))
@@ -97,6 +91,9 @@ func ParseStatement(raw []byte) (stmt *Statement, err error) {
 		}
 		return stmt, nil
 	}
+
+	// Comment check MUST be the last one after magic command, since
+	// both require '#' as first character.
 	if raw[0] == '#' {
 		stmt = &Statement{
 			kind: statementKindComment,
