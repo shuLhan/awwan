@@ -64,15 +64,9 @@ func ParseStatement(raw []byte) (stmt *Statement, err error) {
 	}
 	if bytes.HasPrefix(raw, cmdMagicPut) {
 		raw = raw[len(cmdMagicPut):]
-		cmd, args = libexec.ParseCommandArgs(string(raw))
-		if len(cmd) == 0 || len(args) == 0 {
-			return nil, fmt.Errorf("%s: %s missing argument", logp, cmdMagicPut)
-		}
-		stmt = &Statement{
-			kind: statementKindPut,
-			cmd:  cmd,
-			args: args,
-			raw:  raw,
+		stmt, err = parseStatementGetPut(statementKindPut, raw)
+		if err != nil {
+			return nil, fmt.Errorf(`%s: %q: %w`, logp, cmdMagicPut, err)
 		}
 		return stmt, nil
 	}
@@ -86,15 +80,9 @@ func ParseStatement(raw []byte) (stmt *Statement, err error) {
 	}
 	if bytes.HasPrefix(raw, cmdMagicSudoPut) {
 		raw = raw[len(cmdMagicSudoPut):]
-		cmd, args = libexec.ParseCommandArgs(string(raw))
-		if len(cmd) == 0 || len(args) == 0 {
-			return nil, fmt.Errorf("%s: %s missing argument", logp, cmdMagicSudoPut)
-		}
-		stmt = &Statement{
-			kind: statementKindSudoPut,
-			cmd:  cmd,
-			args: args,
-			raw:  raw,
+		stmt, err = parseStatementGetPut(statementKindSudoPut, raw)
+		if err != nil {
+			return nil, fmt.Errorf(`%s: %q: %w`, logp, cmdMagicSudoPut, err)
 		}
 		return stmt, nil
 	}

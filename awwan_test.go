@@ -389,7 +389,6 @@ func TestAwwanLocalPut(t *testing.T) {
 		fileDest:   filepath.Join(baseDir, `tmp`, `plain.txt`),
 		expContent: string(tdata.Output[`tmp/plain.txt`]),
 	}, {
-
 		desc:      `With text file, one of value is encrypted`,
 		lineRange: `3`,
 		expStderr: string(tdata.Output[`missing_val_encrypted`]),

@@ -119,19 +119,17 @@ func (ses *Session) Vals(keyPath string) (list []string) {
 
 // Copy file in local system.
 func (ses *Session) Copy(stmt *Statement) (err error) {
-	var logp = `Copy`
-
 	var (
-		src = stmt.cmd
-		dst = stmt.args[0]
+		logp = `Copy`
+		src  = stmt.args[0]
+		dst  = stmt.args[1]
 
 		isVault bool
 	)
 
 	switch stmt.kind {
 	case statementKindGet, statementKindSudoGet:
-		src = stmt.args[0]
-		dst = stmt.args[1]
+		// NO-OP.
 	case statementKindPut, statementKindSudoPut:
 		src, isVault, err = ses.generateFileInput(src)
 		if err != nil {
@@ -167,31 +165,22 @@ func (ses *Session) Get(stmt *Statement) (err error) {
 
 // Put copy file from local to remote system.
 func (ses *Session) Put(stmt *Statement) (err error) {
-	var logp = `Put`
-
-	if len(stmt.cmd) == 0 {
-		return fmt.Errorf("%s: missing source argument", logp)
-	}
-	if len(stmt.args) == 0 {
-		return fmt.Errorf("%s: missing destination argument", logp)
-	}
-	if len(stmt.args) > 1 {
-		return fmt.Errorf("%s: two or more destination arguments is given", logp)
-	}
-
 	var (
-		local   string
+		logp = `Put`
+		src  = stmt.args[0]
+		dst  = stmt.args[1]
+
 		isVault bool
 	)
 
-	local, isVault, err = ses.generateFileInput(stmt.cmd)
+	src, isVault, err = ses.generateFileInput(src)
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
 
-	err = ses.sshc.put(local, stmt.args[0])
+	err = ses.sshc.put(src, dst)
 	if isVault {
-		var errRemove = os.Remove(local)
+		var errRemove = os.Remove(src)
 		if errRemove != nil {
 			log.Printf(`%s: %s`, logp, errRemove)
 		}
@@ -205,9 +194,9 @@ func (ses *Session) Put(stmt *Statement) (err error) {
 // SudoCopy copy file in local system using sudo.
 func (ses *Session) SudoCopy(req *Request, stmt *Statement) (err error) {
 	var (
-		logp = "SudoCopy"
-		src  = stmt.cmd
-		dst  = stmt.args[0]
+		logp = `SudoCopy`
+		src  = stmt.args[0]
+		dst  = stmt.args[1]
 
 		sudoCp  *Statement
 		isVault bool
@@ -215,8 +204,7 @@ func (ses *Session) SudoCopy(req *Request, stmt *Statement) (err error) {
 
 	switch stmt.kind {
 	case statementKindGet, statementKindSudoGet:
-		src = stmt.args[0]
-		dst = stmt.args[1]
+		// NO-OP.
 	case statementKindPut, statementKindSudoPut:
 		src, isVault, err = ses.generateFileInput(src)
 		if err != nil {
@@ -249,17 +237,7 @@ func (ses *Session) SudoCopy(req *Request, stmt *Statement) (err error) {
 func (ses *Session) SudoGet(stmt *Statement) (err error) {
 	var logp = `SudoGet`
 
-	if len(stmt.cmd) == 0 {
-		return fmt.Errorf("%s: missing source argument", logp)
-	}
-	if len(stmt.args) == 0 {
-		return fmt.Errorf("%s: missing destination argument", logp)
-	}
-	if len(stmt.args) > 1 {
-		return fmt.Errorf("%s: two or more destination arguments is given", logp)
-	}
-
-	err = ses.sshc.sudoGet(stmt.cmd, stmt.args[0])
+	err = ses.sshc.sudoGet(stmt.args[0], stmt.args[1])
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
@@ -268,31 +246,22 @@ func (ses *Session) SudoGet(stmt *Statement) (err error) {
 
 // SudoPut copy file from local to remote using sudo.
 func (ses *Session) SudoPut(stmt *Statement) (err error) {
-	var logp = `SudoPut`
-
-	if len(stmt.cmd) == 0 {
-		return fmt.Errorf("%s: missing source argument", logp)
-	}
-	if len(stmt.args) == 0 {
-		return fmt.Errorf("%s: missing destination argument", logp)
-	}
-	if len(stmt.args) > 1 {
-		return fmt.Errorf("%s: two or more destination arguments is given", logp)
-	}
-
 	var (
-		local   string
+		logp = `SudoPut`
+		src  = stmt.args[0]
+		dst  = stmt.args[1]
+
 		isVault bool
 	)
 
-	local, isVault, err = ses.generateFileInput(stmt.cmd)
+	src, isVault, err = ses.generateFileInput(src)
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
 
-	err = ses.sshc.sudoPut(local, stmt.args[0])
+	err = ses.sshc.sudoPut(src, dst)
 	if isVault {
-		var errRemove = os.Remove(local)
+		var errRemove = os.Remove(src)
 		if errRemove != nil {
 			log.Printf(`%s: %s`, logp, errRemove)
 		}

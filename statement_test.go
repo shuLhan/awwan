@@ -56,19 +56,35 @@ func TestParseStatement(t *testing.T) {
 			raw:  []byte(` a\	b	c`),
 		},
 	}, {
-		raw: []byte(`#put: a b c\ `),
+		raw:      []byte(`#put: `),
+		expError: `ParseStatement: "#put:": missing arguments`,
+	}, {
+		raw:      []byte(`#put: src `),
+		expError: `ParseStatement: "#put:": missing destination file`,
+	}, {
+		raw:      []byte(`#put: src dst dst2 `),
+		expError: `ParseStatement: "#put:": too many arguments`,
+	}, {
+		raw: []byte(`#put: a bc\ `),
 		exp: &Statement{
 			kind: statementKindPut,
-			cmd:  "a",
-			args: []string{"b", `c`},
-			raw:  []byte(` a b c\`),
+			args: []string{`a`, `bc`},
+			raw:  []byte(` a bc\`),
 		},
+	}, {
+		raw:      []byte(`#put! `),
+		expError: `ParseStatement: "#put!": missing arguments`,
+	}, {
+		raw:      []byte(`#put! src `),
+		expError: `ParseStatement: "#put!": missing destination file`,
+	}, {
+		raw:      []byte(`#put! src dst dst2 `),
+		expError: `ParseStatement: "#put!": too many arguments`,
 	}, {
 		raw: []byte(`#put! a	bc `),
 		exp: &Statement{
 			kind: statementKindSudoPut,
-			cmd:  `a`,
-			args: []string{"bc"},
+			args: []string{`a`, `bc`},
 			raw:  []byte(` a	bc`),
 		},
 	}, {
