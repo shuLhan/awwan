@@ -218,9 +218,10 @@ func initMemfsWww() (err error) {
 			`.*\.(js|html|png|ico)$`,
 		},
 		Excludes: []string{
-			`/wui`,
+			`/_mkosi`,
 			`/wui.bak`,
 			`/wui.local`,
+			`/wui`,
 		},
 		Embed: memfs.EmbedOptions{
 			CommentHeader: "// SPDX-FileCopyrightText: 2021 M. Shulhan <ms@kilabit.info>\n" +

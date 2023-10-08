@@ -8,6 +8,8 @@
 /_bin
 /_doc/*.html
 /_example/.cache
+/_mkosi/image.nspawn
+/_mkosi/image/
 /_www/doc/*.html
 /awwan
 /cover.html

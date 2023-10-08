@@ -1,0 +1,2 @@
+awwan ALL=(ALL:ALL) ALL
+awwannopass ALL=(ALL:ALL) NOPASSWD: ALL

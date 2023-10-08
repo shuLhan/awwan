@@ -31,3 +31,7 @@ install: build
 .PHONY: dev
 dev:
 	AWWAN_DEVELOPMENT=1 go run ./cmd/awwan serve $(AWWAN_WORKSPACE)
+
+.PHONY: test-with-mkosi
+test-with-mkosi:
+	sudo mkosi --directory=_mkosi --incremental --force --debug

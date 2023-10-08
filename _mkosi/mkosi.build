@@ -1,0 +1,25 @@
+#!/bin/sh
+
+echo "--- mkosi.build: args=$@"
+echo "--- mkosi.build: container=$container"
+
+if [ "$container" != "mkosi" ]; then
+	exec mkosi-chroot "$CHROOT_SCRIPT" "$@"
+fi
+
+echo "--- mkosi.build: user=$USER"
+echo "--- mkosi.build: home=$HOME"
+export HOME=$BUILDDIR
+echo "--- mkosi.build: home after=$HOME"
+echo "--- mkosi.build: pwd=$PWD"
+echo "--- mkosi.build: srcdir=$SRCDIR"
+echo "--- mkosi.build: builddir=$BUILDDIR"
+
+cd $SRCDIR/awwan
+go env -w GOCACHE="$BUILDDIR/cache/go-build"
+go env -w GOMODCACHE="$BUILDDIR/go/pkg/mod"
+go env -w GOPRIVATE='git.sr.ht'
+echo "--- mkosi.build: go env"
+go env
+git config --global --add safe.directory $PWD
+make
