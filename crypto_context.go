@@ -4,6 +4,7 @@
 package awwan
 
 import (
+	"bytes"
 	"crypto"
 	"crypto/rand"
 	"crypto/rsa"
@@ -171,6 +172,8 @@ func (cryptoc *cryptoContext) loadPassphrase() (pass []byte, err error) {
 	if err != nil {
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
+
+	pass = bytes.TrimSpace(pass)
 
 	return pass, nil
 }
