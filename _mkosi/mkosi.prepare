@@ -2,20 +2,26 @@
 
 echo "--- mkosi.prepare: args=$@"
 echo "--- mkosi.prepare: container=$container"
+env
 
 if [ "$container" != "mkosi" ]; then
 	exec mkosi-chroot "$CHROOT_SCRIPT" "$@"
 fi
 
 if [ "$1" == "final" ]; then
+	set -x
 	## User testing sudo with password prompt.
-	## password: awwan
+	## The UID of user in container must equal with UID in host, for
+	## better compatibility.
+	## The password is "awwan".
 	useradd --create-home --user-group \
+		--uid $MKOSI_UID \
 		--password '$2a$10$XVhjfOB4Un5DJE4TQEBPrOHfBVGVWP4iA3ElUMzcbJ7jdc2zZPgZ2' \
 		awwan
 
 	## User testing with ssh.
 	useradd --create-home --user-group --groups wheel \
+		--uid $((MKOSI_UID+1)) \
 		--password '$2a$10$XVhjfOB4Un5DJE4TQEBPrOHfBVGVWP4iA3ElUMzcbJ7jdc2zZPgZ2' \
 		awwanssh
 

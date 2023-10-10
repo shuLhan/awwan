@@ -1,2 +1,5 @@
 awwan ALL=(ALL:ALL) ALL
 awwannopass ALL=(ALL:ALL) NOPASSWD: ALL
+
+## Always ask for password.
+Defaults:awwan timestamp_timeout=0,passwd_tries=1

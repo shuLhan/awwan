@@ -1,3 +1,4 @@
+*.lck
 /CHANGELOG.html
 /README.html
 /_AUR/*.tar.zst
@@ -8,8 +9,12 @@
 /_bin
 /_doc/*.html
 /_example/.cache
-/_mkosi/image.nspawn
-/_mkosi/image/
+/_mkosi/awwan-test
+/_mkosi/awwan-test.nspawn
+/_mkosi/image
+/_mkosi/image.raw
+/_mkosi/mkosi.builddir/
+/_mkosi/mkosi.cache/
 /_www/doc/*.html
 /awwan
 /cover.html
@@ -19,3 +24,4 @@
 /testdata/encrypt-with-passphrase/.awwan.env.vault
 /testdata/encrypt-without-passphrase/.awwan.env.vault
 /testdata/local/.cache
+awwan.test

@@ -1,2 +1,4 @@
-[Network]
-Private=yes
+[Files]
+Bind=../:/home/awwan/src
+Bind=mkosi.cache/gocache:/home/awwan/.cache/go-build
+Bind=mkosi.cache/gomodcache:/home/awwan/go/pkg/mod

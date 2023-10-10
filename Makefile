@@ -32,6 +32,16 @@ install: build
 dev:
 	AWWAN_DEVELOPMENT=1 go run ./cmd/awwan serve $(AWWAN_WORKSPACE)
 
+.PHONY: setup-mkosi
+setup-mkosi:
+	@echo ">>> Creating symlinks to simplify binding ..."
+	ln -sf $(shell go env GOCACHE) _mkosi/mkosi.cache/gocache
+	ln -sf $(shell go env GOMODCACHE) _mkosi/mkosi.cache/gomodcache
+	@echo ">>> Booting awwan-test container ..."
+	sudo mkosi --directory=_mkosi/ boot
+
 .PHONY: test-with-mkosi
 test-with-mkosi:
-	sudo mkosi --directory=_mkosi --incremental --force --debug
+	go test -tags=integration -c .
+	machinectl shell awwan@awwan-test \
+		/bin/sh -c "cd src; ./awwan.test -test.v"
