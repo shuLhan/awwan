@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: 2019 M. Shulhan <ms@kilabit.info>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+//go:build !integration
+
 package awwan
 
 import (
