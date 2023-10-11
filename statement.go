@@ -112,7 +112,7 @@ func ParseStatement(raw []byte) (stmt *Statement, err error) {
 }
 
 func (stmt *Statement) String() string {
-	return fmt.Sprintf("%s %s", stmt.cmd, strings.Join(stmt.args, " "))
+	return fmt.Sprintf("%s%s %s", magicCmdGetPut[stmt.kind], stmt.cmd, strings.Join(stmt.args, " "))
 }
 
 // parseStatementGetPut parse the raw "#get" or "#put" statement.

@@ -330,7 +330,7 @@ func (ses *Session) executeScriptOnLocal(req *Request, pos linePosition) {
 			continue
 		}
 
-		fmt.Fprintf(req.stdout, "\n--> local: %3d: %s\n", x, stmt.raw)
+		fmt.Fprintf(req.stdout, "\n--> local: %3d: %s\n", x, stmt.String())
 
 		var err error
 		switch stmt.kind {
@@ -373,8 +373,8 @@ func (ses *Session) executeScriptOnRemote(req *Request, pos linePosition) {
 			continue
 		}
 
-		fmt.Fprintf(req.stdout, "\n--> %s: %3d: %s %s\n",
-			ses.sshc.conn, x, stmt.cmd, stmt.args)
+		fmt.Fprintf(req.stdout, "\n--> %s: %3d: %s\n",
+			ses.sshc.conn, x, stmt.String())
 
 		var err error
 		switch stmt.kind {
