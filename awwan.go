@@ -207,9 +207,9 @@ func (aww *Awwan) Local(req *Request) (err error) {
 		return fmt.Errorf("%s: %s: %w", logp, ses.dirTmp, err)
 	}
 	defer func() {
-		err = os.RemoveAll(ses.dirTmp)
-		if err != nil {
-			log.Printf("%s: %s", logp, err)
+		var errRemove = os.RemoveAll(ses.dirTmp)
+		if errRemove != nil {
+			log.Printf(`%s: %s`, logp, errRemove)
 		}
 	}()
 
@@ -217,10 +217,13 @@ func (aww *Awwan) Local(req *Request) (err error) {
 	for _, pos = range req.lineRange.list {
 		err = ses.executeRequires(req, pos)
 		if err != nil {
-			return fmt.Errorf("%s:%w", logp, err)
+			return fmt.Errorf(`%s: %w`, logp, err)
 		}
 
-		ses.executeScriptOnLocal(req, pos)
+		err = ses.executeScriptOnLocal(req, pos)
+		if err != nil {
+			return fmt.Errorf(`%s: %w`, logp, err)
+		}
 	}
 
 	return nil

@@ -367,7 +367,6 @@ func TestAwwanLocalPut(t *testing.T) {
 		lineRange  string
 		fileDest   string
 		expError   string
-		expStderr  string
 		expContent string
 	}
 
@@ -393,7 +392,7 @@ func TestAwwanLocalPut(t *testing.T) {
 	}, {
 		desc:      `With text file, one of value is encrypted`,
 		lineRange: `3`,
-		expStderr: string(tdata.Output[`missing_val_encrypted`]),
+		expError:  string(tdata.Output[`missing_val_encrypted`]),
 	}, {
 		desc:       `With encrypted file`,
 		lineRange:  `5`,
@@ -403,7 +402,7 @@ func TestAwwanLocalPut(t *testing.T) {
 	}, {
 		desc:      `With encrypted file, empty passphrase`,
 		lineRange: `5`,
-		expStderr: string(tdata.Output[`encrypted_empty_passphrase.stderr`]),
+		expError:  string(tdata.Output[`encrypted_empty_passphrase.stderr`]),
 	}, {
 		desc:       `With encrypted file, invalid passphrase`,
 		passphrase: "invalid\r",
@@ -449,11 +448,6 @@ func TestAwwanLocalPut(t *testing.T) {
 			test.Assert(t, `Local error`, c.expError, err.Error())
 			continue
 		}
-
-		// The stdout cannot be asserted since its print dynamic
-		// paths.
-
-		test.Assert(t, `stderr`, c.expStderr, mockerr.String())
 
 		if len(c.fileDest) != 0 {
 			gotContent, err = os.ReadFile(c.fileDest)

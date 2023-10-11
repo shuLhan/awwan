@@ -309,7 +309,7 @@ func (ses *Session) executeRequires(req *Request, pos linePosition) (err error) 
 	return nil
 }
 
-func (ses *Session) executeScriptOnLocal(req *Request, pos linePosition) {
+func (ses *Session) executeScriptOnLocal(req *Request, pos linePosition) (err error) {
 	var max = int64(len(req.script.stmts))
 	if pos.start > max {
 		return
@@ -332,7 +332,6 @@ func (ses *Session) executeScriptOnLocal(req *Request, pos linePosition) {
 
 		fmt.Fprintf(req.stdout, "\n--> local: %3d: %s\n", x, stmt.String())
 
-		var err error
 		switch stmt.kind {
 		case statementKindDefault:
 			err = ses.ExecLocal(req, stmt)
@@ -347,9 +346,10 @@ func (ses *Session) executeScriptOnLocal(req *Request, pos linePosition) {
 		}
 		if err != nil {
 			fmt.Fprintf(req.stderr, "!!! %s\n", err)
-			break
+			return err
 		}
 	}
+	return nil
 }
 
 func (ses *Session) executeScriptOnRemote(req *Request, pos linePosition) {

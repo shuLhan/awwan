@@ -3,14 +3,14 @@ The host name is encrypt.
 
 
 <<< missing_val_encrypted
-!!! Copy: generateFileInput: template: missing_val_encrypted.txt:2:25: executing "missing_val_encrypted.txt" at <.Val>: error calling Val: "secret::pass" is empty
+Local: Copy: generateFileInput: template: missing_val_encrypted.txt:2:25: executing "missing_val_encrypted.txt" at <.Val>: error calling Val: "secret::pass" is empty
 
 <<< tmp/decrypted.txt
 The host name is encrypt.
 The secret password is this_is_a_secret.
 
 <<< encrypted_empty_passphrase.stderr
-!!! Copy: encrypted.txt.vault: private key is missing or not loaded
+Local: Copy: encrypted.txt.vault: private key is missing or not loaded
 
 <<< encrypted_invalid_passphrase
 Local: NewSession: .awwan.env.vault: LoadPrivateKeyInteractive: x509: decryption password incorrect
