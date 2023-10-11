@@ -214,9 +214,16 @@ func (ses *Session) SudoCopy(req *Request, stmt *Statement) (err error) {
 
 	sudoCp = &Statement{
 		kind: statementKindDefault,
-		cmd:  "sudo",
-		args: []string{"cp", src, dst},
-		raw:  []byte(`sudo cp "` + src + `" "` + dst + `"`),
+	}
+
+	// Detect which stdin we use.
+	// If its non-nil, use "sudo -S" to read password from stdin instead
+	// of from terminal.
+	// This will allow us to test sudo behaviour.
+	if req.stdin == nil {
+		sudoCp.raw = []byte(`sudo cp "` + src + `" "` + dst + `"`)
+	} else {
+		sudoCp.raw = []byte(`sudo -S cp "` + src + `" "` + dst + `"`)
 	}
 
 	err = ses.ExecLocal(req, sudoCp)
@@ -280,9 +287,16 @@ func (ses *Session) ExecLocal(req *Request, stmt *Statement) (err error) {
 		args = string(stmt.raw)
 		cmd  = exec.Command(`/bin/sh`, `-c`, args)
 	)
+
+	cmd.Stdin = req.stdin
 	cmd.Stdout = req.stdout
 	cmd.Stderr = req.stderr
-	return cmd.Run()
+
+	err = cmd.Run()
+	if err != nil {
+		return fmt.Errorf(`ExecLocal: %w`, err)
+	}
+	return nil
 }
 
 // executeRequires run the "#require:" statements from line 0 until

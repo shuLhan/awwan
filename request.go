@@ -12,11 +12,14 @@ import (
 // Each request define the Mode of execution, Script file to be executed,
 // and the lineRange -- list of line numbers to be executed.
 type Request struct {
-	// Each request may set the Writer where the command output and
-	// error will be written.
-	// If its nil, it will default to os.Stdout and os.Stderr.
-	stdout     io.Writer
-	stderr     io.Writer
+	// Each request may set the Writer where the command read input from
+	// or output and error will be written.
+	// If its nil, it will default to os.DevNull (default os
+	// [exec/Cmd]), os.Stdout, and os.Stderr, respectively.
+	stdin  io.Reader
+	stdout io.Writer
+	stderr io.Writer
+
 	scriptPath string // The actual or cleaned up path of the Script.
 	script     *Script
 

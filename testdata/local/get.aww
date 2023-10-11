@@ -1,1 +1,3 @@
 #get: {{.ScriptDir}}/plain.txt {{.ScriptDir}}/tmp/get_plain.txt
+
+#get! /etc/os-release {{.ScriptDir}}/tmp/os-release
