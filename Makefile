@@ -8,7 +8,7 @@ all: test lint build
 
 .PHONY: test
 test:
-	CGO_ENABLED=1 go test -race -coverprofile=cover.out ./...
+	go test -coverprofile=cover.out ./...
 	go tool cover -html=cover.out -o cover.html
 
 .PHONY: lint
