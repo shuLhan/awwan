@@ -3,3 +3,6 @@
 #put: {{.ScriptDir}}/missing_val_encrypted.txt {{.ScriptDir}}/tmp/missing_val_encrypted.txt
 
 #put: {{.ScriptDir}}/encrypted.txt {{.ScriptDir}}/tmp/decrypted.txt
+
+#put! {{.ScriptDir}}/plain.txt /etc/plain.txt
+sudo chmod 0644 /etc/plain.txt

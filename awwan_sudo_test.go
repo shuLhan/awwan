@@ -98,3 +98,85 @@ func TestAwwan_Local_SudoGet(t *testing.T) {
 		test.Assert(t, `content`, c.expContent, string(gotContent))
 	}
 }
+
+func TestAwwan_Local_SudoPut(t *testing.T) {
+	type testCase struct {
+		desc       string
+		lineRange  string
+		keyPass    string
+		sudoPass   string
+		fileDest   string
+		expError   string
+		expContent string
+	}
+
+	// Load the test data output.
+	var (
+		baseDir = filepath.Join(`testdata`, `local`)
+		script  = filepath.Join(baseDir, `put.aww`)
+
+		tdata *test.Data
+		err   error
+	)
+
+	tdata, err = test.LoadData(filepath.Join(baseDir, `put.data`))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var cases = []testCase{{
+		desc:       `WithTextFile`,
+		lineRange:  `7-8`,
+		sudoPass:   "awwan\nawwan\n",
+		fileDest:   `/etc/plain.txt`,
+		expContent: string(tdata.Output[`tmp/plain.txt`]),
+	}}
+
+	var (
+		mockin   = &mockStdin{}
+		mockout  = &bytes.Buffer{}
+		mockTerm = mock.ReadWriter{}
+
+		aww        *Awwan
+		c          testCase
+		gotContent []byte
+	)
+	for _, c = range cases {
+		t.Log(c.desc)
+
+		aww, err = New(baseDir)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		// Mock terminal to read passphrase for private key.
+		mockTerm.BufRead.Reset()
+		mockTerm.BufRead.WriteString(c.keyPass)
+		aww.cryptoc.termrw = &mockTerm
+
+		if len(c.fileDest) != 0 {
+			_ = os.Remove(c.fileDest)
+		}
+
+		var req = NewRequest(CommandModeLocal, script, c.lineRange)
+
+		mockin.buf.Reset()
+		mockin.buf.WriteString(c.sudoPass)
+		req.stdin = mockin
+
+		err = aww.Local(req)
+		if err != nil {
+			test.Assert(t, `Local error`, c.expError, err.Error())
+			continue
+		}
+
+		t.Log(mockout.String())
+
+		gotContent, err = os.ReadFile(c.fileDest)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		test.Assert(t, `content`, c.expContent, string(gotContent))
+	}
+}
