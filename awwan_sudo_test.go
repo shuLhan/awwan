@@ -40,7 +40,7 @@ func TestAwwan_Local_SudoGet(t *testing.T) {
 	}
 
 	var (
-		mockrw = mock.ReadWriter{}
+		mockTerm = mock.ReadWriter{}
 
 		aww *Awwan
 	)
@@ -51,24 +51,24 @@ func TestAwwan_Local_SudoGet(t *testing.T) {
 	}
 
 	// Mock terminal to read passphrase for private key.
-	aww.cryptoc.termrw = &mockrw
+	aww.cryptoc.termrw = &mockTerm
 
 	var cases = []testCase{{
 		desc:       `WithPlainFile`,
 		lineRange:  `3`,
-		sudoPass:   "awwan\r\n",
+		sudoPass:   "awwan\n",
 		fileDest:   filepath.Join(baseDir, `tmp`, `os-release`),
 		expContent: string(tdata.Output[`tmp/os-release`]),
 	}, {
 		desc:      `WithInvalidPassword`,
 		lineRange: `3`,
-		sudoPass:  "invalid\r\n",
+		sudoPass:  "invalid\n",
 		expError:  `Local: SudoCopy: ExecLocal: exit status 1`,
 	}}
 
 	var (
-		script    = filepath.Join(baseDir, `get.aww`)
-		mockStdin = bytes.Buffer{}
+		script = filepath.Join(baseDir, `get.aww`)
+		mockin = &mockStdin{}
 
 		c          testCase
 		gotContent []byte
@@ -80,9 +80,9 @@ func TestAwwan_Local_SudoGet(t *testing.T) {
 		var req = NewRequest(CommandModeLocal, script, c.lineRange)
 
 		// Mock the request stdin to read password from buffer.
-		mockStdin.Reset()
-		mockStdin.WriteString(c.sudoPass)
-		req.stdin = &mockStdin
+		mockin.buf.Reset()
+		mockin.buf.WriteString(c.sudoPass)
+		req.stdin = mockin
 
 		err = aww.Local(req)
 		if err != nil {
