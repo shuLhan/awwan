@@ -214,19 +214,11 @@ func (ses *Session) SudoCopy(req *Request, stmt *Statement) (err error) {
 
 	sudoCp = &Statement{
 		kind: statementKindDefault,
+		cmd:  `sudo`,
+		args: []string{"cp", src, dst},
 	}
 
-	// Detect which stdin we use.
-	// If its non-nil, use "sudo -S" to read password from stdin instead
-	// of from terminal.
-	// This will allow us to test sudo behaviour.
-	if req.stdin == nil {
-		sudoCp.raw = []byte(`sudo cp "` + src + `" "` + dst + `"`)
-	} else {
-		sudoCp.raw = []byte(`sudo -S cp "` + src + `" "` + dst + `"`)
-	}
-
-	err = ses.ExecLocal(req, sudoCp)
+	err = ExecLocal(req, sudoCp)
 	if isVault {
 		var errRemove = os.Remove(src)
 		if errRemove != nil {
@@ -280,12 +272,24 @@ func (ses *Session) SudoPut(stmt *Statement) (err error) {
 	return nil
 }
 
-// ExecLocal execute the command with its arguments in local environment where
-// the output and error send to os.Stdout and os.Stderr respectively.
-func (ses *Session) ExecLocal(req *Request, stmt *Statement) (err error) {
+// ExecLocal execute the command with its arguments in local environment
+// where the output and error send to os.Stdout and os.Stderr respectively.
+//
+// If the statement command is "sudo" and stdin is non-nil, sudo will run
+// with "-S" option to read password from stdin instead of from terminal.
+func ExecLocal(req *Request, stmt *Statement) (err error) {
+	if stmt.cmd == `sudo` {
+		if req.stdin != nil {
+			var newArgs = make([]string, len(stmt.args)+1)
+			newArgs = append(newArgs, `-S`)
+			newArgs = append(newArgs, stmt.args...)
+			stmt.args = newArgs
+		}
+	}
+
 	var (
-		args = string(stmt.raw)
-		cmd  = exec.Command(`/bin/sh`, `-c`, args)
+		rawcmd = fmt.Sprintf(`%s %s`, stmt.cmd, strings.Join(stmt.args, ` `))
+		cmd    = exec.Command(`/bin/sh`, `-c`, rawcmd)
 	)
 
 	cmd.Stdin = req.stdin
@@ -315,7 +319,7 @@ func (ses *Session) executeRequires(req *Request, pos linePosition) (err error) 
 
 		fmt.Fprintf(req.stdout, "--- require %d: %v\n", x, stmt)
 
-		err = ses.ExecLocal(req, stmt)
+		err = ExecLocal(req, stmt)
 		if err != nil {
 			return err
 		}
@@ -348,7 +352,7 @@ func (ses *Session) executeScriptOnLocal(req *Request, pos linePosition) (err er
 
 		switch stmt.kind {
 		case statementKindDefault:
-			err = ses.ExecLocal(req, stmt)
+			err = ExecLocal(req, stmt)
 		case statementKindGet:
 			err = ses.Copy(stmt)
 		case statementKindPut:
