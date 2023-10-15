@@ -45,3 +45,22 @@ test-with-mkosi:
 	go test -tags=integration -c .
 	machinectl shell awwan@awwan-test \
 		/bin/sh -c "cd src; ./awwan.test -test.v"
+
+#{{{ Tasks to test or deploy awwan.org website.
+
+.PHONY: embed-www
+embed-www:
+	go run ./internal/cmd/www-awwan/ embed
+
+.PHONY: build-www
+build-www: embed-www
+	go build ./internal/cmd/www-awwan/
+
+serve-www:
+	go run ./internal/cmd/www-awwan -dev
+
+deploy-www: GOOS=linux GOARCH=amd64 CGO_ENABLED=0
+deploy-www: build-www
+	rsync --progress ./www-awwan awwan.org:/data/app/bin/
+
+#}}}

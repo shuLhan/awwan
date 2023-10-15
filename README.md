@@ -72,7 +72,7 @@ the local or remote server using shell or SSH.
 Do you have a collection of shell scripts to manage one more similar server?
 Do you ever want to execute only part of your script?
 Are you get tired with learning others syntax and tools for provisioning
-your own server, while you need is a handful of shell script?
+your own server, while you need is a handful knowledge of shell script?
 
 If yes, awwan is the right tools for you.
 

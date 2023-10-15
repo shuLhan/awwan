@@ -1,0 +1,369 @@
+@font-face {
+  font-family: "Go";
+  src:
+    local("Go Regular"),
+    local("GoRegular"),
+    url("/assets/fonts/go/GoRegular.woff2") format("woff2"),
+    url("/assets/fonts/go/GoRegular.woff") format("woff"),
+    url("/assets/fonts/go/GoRegular.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Go";
+  src:
+    local("Go Bold"),
+    local("Go-Bold"),
+    url("/assets/fonts/go/Go-Bold.woff2") format("woff2"),
+    url("/assets/fonts/go/Go-Bold.woff") format("woff"),
+    url("/assets/fonts/go/Go-Bold.ttf") format("truetype");
+  font-weight: bold;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Go";
+  src:
+    local("Go Italic"),
+    local("Go-Italic"),
+    url("/assets/fonts/go/Go-Italic.woff2") format("woff2"),
+    url("/assets/fonts/go/Go-Italic.woff") format("woff"),
+    url("/assets/fonts/go/Go-Italic.ttf") format("truetype");
+  font-weight: normal;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: "Go";
+  src:
+    local("Go Bold Italic"),
+    local("Go-BoldItalic"),
+    url("/assets/fonts/go/Go-BoldItalic.woff2") format("woff2"),
+    url("/assets/fonts/go/Go-BoldItalic.woff") format("woff"),
+    url("/assets/fonts/go/Go-BoldItalic.ttf") format("truetype");
+  font-weight: bold;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: "Go";
+  src:
+    local("Go Medium"),
+    local("GoMedium"),
+    url("/assets/fonts/go/GoMedium.woff2") format("woff2"),
+    url("/assets/fonts/go/GoMedium.woff") format("woff"),
+    url("/assets/fonts/go/GoMedium.ttf") format("truetype");
+  font-weight: 500;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Go";
+  src:
+    local("Go Medium Italic"),
+    local("GoMedium-Italic"),
+    url("/assets/fonts/go/GoMedium-Italic.woff2") format("woff2"),
+    url("/assets/fonts/go/GoMedium-Italic.woff") format("woff"),
+    url("/assets/fonts/go/GoMedium-Italic.ttf") format("truetype");
+  font-weight: 500;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: "Go Mono";
+  src:
+    local("Go Mono"),
+    local("GoMono"),
+    url("/assets/fonts/go/GoMono.woff2") format("woff2"),
+    url("/assets/fonts/go/GoMono.woff") format("woff"),
+    url("/assets/fonts/go/GoMono.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Go Mono";
+  src:
+    local("Go Mono Bold Italic"),
+    local("GoMono-BoldItalic"),
+    url("/assets/fonts/go/GoMono-BoldItalic.woff2") format("woff2"),
+    url("/assets/fonts/go/GoMono-BoldItalic.woff") format("woff"),
+    url("/assets/fonts/go/GoMono-BoldItalic.ttf") format("truetype");
+  font-weight: bold;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: "Go Mono";
+  src:
+    local("Go Mono Italic"),
+    local("GoMono-Italic"),
+    url("/assets/fonts/go/GoMono-Italic.woff2") format("woff2"),
+    url("/assets/fonts/go/GoMono-Italic.woff") format("woff"),
+    url("/assets/fonts/go/GoMono-Italic.ttf") format("truetype");
+  font-weight: normal;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: "Go Mono";
+  src:
+    local("Go Mono Bold"),
+    local("GoMono-Bold"),
+    url("/assets/fonts/go/GoMono-Bold.woff2") format("woff2"),
+    url("/assets/fonts/go/GoMono-Bold.woff") format("woff"),
+    url("/assets/fonts/go/GoMono-Bold.ttf") format("truetype");
+  font-weight: bold;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Go Smallcaps";
+  src:
+    local("Go Smallcaps Italic"),
+    local("GoSmallcaps-Italic"),
+    url("/assets/fonts/go/GoSmallcaps-Italic.woff2") format("woff2"),
+    url("/assets/fonts/go/GoSmallcaps-Italic.woff") format("woff"),
+    url("/assets/fonts/go/GoSmallcaps-Italic.ttf") format("truetype");
+  font-weight: normal;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: "Go Smallcaps";
+  src:
+    local("Go Smallcaps"),
+    local("GoSmallcaps"),
+    url("/assets/fonts/go/GoSmallcaps.woff2") format("woff2"),
+    url("/assets/fonts/go/GoSmallcaps.woff") format("woff"),
+    url("/assets/fonts/go/GoSmallcaps.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+}
+
+body {
+  color: black;
+  font-family: Go, sans-serif;
+  margin: 0 auto;
+  width: 800px;
+  font-size: 16px;
+}
+
+code {
+  font-family: "Go Mono", monospace;
+}
+
+div {
+  margin: 0;
+  padding: 0;
+}
+
+a {
+  text-decoration: none;
+}
+
+blockquote {
+  border-left: solid 4px darkgray;
+  padding-left: 1em;
+  color: darkgreen;
+}
+
+h1 {
+  font-size: 28px;
+  border-bottom: 1px solid grey;
+  padding-bottom: 8px;
+}
+
+h2 {
+  font-size: 22px;
+}
+
+h3,
+h4 {
+  font-size: 16px;
+}
+
+h3::before {
+  content: "§ ";
+}
+
+h4::before {
+  content: "§§ ";
+}
+
+h5::before {
+  content: "§§§ ";
+}
+
+h2,
+h3,
+h4,
+h5 {
+  background-color: lightblue;
+  border-bottom: 1px solid grey;
+  padding: 6px;
+  color: black;
+}
+
+img {
+  margin: 0 10px;
+}
+
+pre {
+  background-color: #eee;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  display: block;
+  font-size: 16px;
+  font-family: "Go Mono", monospace;
+  margin: 0 0 10px 20px;
+  overflow: auto;
+  padding: 9.5px;
+  word-break: break-all;
+  word-wrap: break-word;
+}
+
+img.background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: -1;
+  opacity: 0.05;
+  width: 920px;
+  margin: 0 0;
+}
+
+.awwan-logo {
+  width: 20px;
+  margin: 0px;
+}
+
+.topbar-left,
+.topbar-right {
+  margin-top: 1rem;
+}
+
+.topbar-left {
+  font-size: 24px;
+  font-weight: bold;
+  display: inline-block;
+}
+
+.topbar-left a {
+  text-decoration: none;
+}
+
+.topbar-left a:visited {
+  color: black;
+}
+
+.topbar-info {
+  font-size: 12px;
+  font-weight: normal;
+  font-family: "Go Mono", monospace;
+}
+
+.topbar-right {
+  display: inline-block;
+  text-align: right;
+}
+
+.page {
+  margin: 24px 0px;
+}
+
+.quoteblock .attribution {
+  text-align: right;
+  margin-right: 56px;
+}
+
+.container .meta {
+  font-style: italic;
+  margin: 1.25rem;
+}
+
+.footer {
+  text-align: center;
+  color: #666;
+  font-size: 0.875rem;
+  margin: 1rem 0;
+}
+
+/** Custom classes for asciidoc */
+#toctitle {
+  display: none;
+}
+
+#toc li {
+  list-style: none;
+}
+
+#toc ul .sectlevel1 {
+  padding: 0px;
+  margin: 4px;
+}
+
+#toc ul .sectlevel2 {
+  margin: 4px;
+}
+
+#footer {
+  clear: both;
+  margin-top: 1em;
+}
+
+.admonitionblock {
+  border: 1px solid #ddd;
+}
+
+.admonitionblock .icon {
+  background-color: aliceblue;
+  border-right: 1px solid #ddd;
+  margin: 0px;
+  padding: 8px;
+}
+
+.admonitionblock .content {
+  margin: 0px;
+  padding: 8px;
+}
+
+.right {
+  float: right;
+}
+.left {
+  float: left;
+}
+.sect1,
+.sect2 {
+  clear: both;
+}
+
+@media only screen and (max-width: 960px) {
+  body {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  .topbar {
+    padding: 0 1.5em;
+  }
+
+  .topbar-left,
+  .topbar-right {
+    width: 100%;
+    display: block;
+    text-align: left;
+  }
+
+  .page {
+    padding: 0 1.5em;
+  }
+
+  .footer {
+    text-align: left;
+    padding: 0 1.5em;
+  }
+}
