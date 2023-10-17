@@ -37,6 +37,7 @@ func TestExecLocal_sudo(t *testing.T) {
 		listStmt: []Statement{{
 			cmd:  `sudo`,
 			args: []string{`echo "hello sudo"`},
+			raw:  []byte(`sudo echo "hello sudo"`),
 		}},
 		sudoPass:  "awwan\n",
 		expOutput: "[sudo] password for awwan: hello sudo\n",
@@ -45,9 +46,11 @@ func TestExecLocal_sudo(t *testing.T) {
 		listStmt: []Statement{{
 			cmd:  `sudo`,
 			args: []string{`echo "hello sudo #1"`},
+			raw:  []byte(`sudo echo "hello sudo #1"`),
 		}, {
 			cmd:  `sudo`,
 			args: []string{`echo "hello sudo #2"`},
+			raw:  []byte(`sudo echo "hello sudo #2"`),
 		}},
 		sudoPass:  "awwan\nawwan\n",
 		expOutput: "[sudo] password for awwan: hello sudo #1\n[sudo] password for awwan: hello sudo #2",
@@ -56,6 +59,7 @@ func TestExecLocal_sudo(t *testing.T) {
 		listStmt: []Statement{{
 			cmd:  `sudo`,
 			args: []string{`echo "hello sudo"`},
+			raw:  []byte(`sudo echo "hello sudo"`),
 		}},
 		sudoPass:  "invalid\n",
 		expError:  []string{`ExecLocal: exit status 1`},
@@ -65,9 +69,11 @@ func TestExecLocal_sudo(t *testing.T) {
 		listStmt: []Statement{{
 			cmd:  `sudo`,
 			args: []string{`echo "hello sudo #1"`},
+			raw:  []byte(`sudo echo "hello sudo #1"`),
 		}, {
 			cmd:  `sudo`,
 			args: []string{`echo "hello sudo #2"`},
+			raw:  []byte(`sudo echo "hello sudo #2"`),
 		}},
 		sudoPass: "awwan\ninvalid\n",
 		expError: []string{

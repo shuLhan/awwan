@@ -216,6 +216,7 @@ func (ses *Session) SudoCopy(req *Request, stmt *Statement) (err error) {
 		kind: statementKindDefault,
 		cmd:  `sudo`,
 		args: []string{"cp", src, dst},
+		raw:  []byte(fmt.Sprintf(`sudo cp %q %q`, src, dst)),
 	}
 
 	err = ExecLocal(req, sudoCp)
@@ -277,20 +278,20 @@ func (ses *Session) SudoPut(stmt *Statement) (err error) {
 //
 // If the statement command is "sudo" and stdin is non-nil, sudo will run
 // with "-S" option to read password from stdin instead of from terminal.
+//
+// The raw field must be used when generating Command to handle arguments
+// with quotes.
 func ExecLocal(req *Request, stmt *Statement) (err error) {
 	if stmt.cmd == `sudo` {
 		if req.stdin != nil {
-			var newArgs = make([]string, len(stmt.args)+1)
-			newArgs = append(newArgs, `-S`)
-			newArgs = append(newArgs, stmt.args...)
-			stmt.args = newArgs
+			var raw = make([]byte, 0, len(stmt.raw))
+			raw = append(raw, []byte(`sudo -S`)...)
+			raw = append(raw, bytes.TrimPrefix(stmt.raw, []byte(`sudo`))...)
+			stmt.raw = raw
 		}
 	}
 
-	var (
-		rawcmd = fmt.Sprintf(`%s %s`, stmt.cmd, strings.Join(stmt.args, ` `))
-		cmd    = exec.Command(`/bin/sh`, `-c`, rawcmd)
-	)
+	var cmd = exec.Command(`/bin/sh`, `-c`, string(stmt.raw))
 
 	cmd.Stdin = req.stdin
 	cmd.Stdout = req.stdout
