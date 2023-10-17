@@ -1,0 +1,41 @@
+= To-do
+:toc:
+:sectanchors:
+
+List of next features or enhancements for awwan,
+
+* [ ] `#-put:` and `#-put!`, put file as is without parsing.
+
+* [ ] Add option to set file owner and attributes in #put command,
++
+--
+Example,
+
+	#put!user:group+0600 <src> <dest>
+
+The first option is user, and then separated by ":" is group and then
+separated by "+" is attributes.
+--
+
+* [ ] replace "play" with "remote". This is breaking changes.
+
+* [ ] use "play" to run script that contains "#local:" and "#remote:".
+
+* [ ] wui: Cleanup stdout and stderr on run.
+
+* [ ] wui: Refresh the tree
+
+* [ ] Cache the script, fstat the script before reading.
++
+--
+This is quite complex because if the script contains call to `{{.Val ...}}`,
+we need also to check if the awwan.env or .awwan.env.vault also changes.
+--
+
+* [ ] Cache the environment file
+
+* [ ] Export each of variable as system environment variable with format:
+  `SECTION_SUBSECTION_KEY`
+
+// SPDX-FileCopyrightText: 2019 M. Shulhan <ms@kilabit.info>
+// SPDX-License-Identifier: GPL-3.0-or-later
