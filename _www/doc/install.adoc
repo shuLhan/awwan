@@ -1,0 +1,70 @@
+= Installation
+:toc:
+:sectanchors:
+
+Awwan can be installed by downloading the binary or by building it manually,
+either using Go tools or from source code.
+
+== Binary
+
+The binary installation can be done by downloading pre-build file based on
+your operating system (OS) and put it your system PATH.
+
+=== Download
+
+The following binary is the build based on latest tip on main branch.
+
+https://sin1.contabostorage.com/57fb451d5f5f46fa91560a02facf49f8:pub/awwan/awwan-darwin-amd64[Apple macOS (x86-64)]
+
+https://sin1.contabostorage.com/57fb451d5f5f46fa91560a02facf49f8:pub/awwan/awwan-dragonfly-amd64[DragonFly (x86-64)]
+
+https://sin1.contabostorage.com/57fb451d5f5f46fa91560a02facf49f8:pub/awwan/awwan-freebsd-amd64[FreeBSD (x86-64)]
+
+https://sin1.contabostorage.com/57fb451d5f5f46fa91560a02facf49f8:pub/awwan/awwan-linux-amd64[Linux (x86-64)]
+
+https://sin1.contabostorage.com/57fb451d5f5f46fa91560a02facf49f8:pub/awwan/awwan-netbsd-amd64[NetBSD (x86-64)]
+
+https://sin1.contabostorage.com/57fb451d5f5f46fa91560a02facf49f8:pub/awwan/awwan-openbsd-amd64[OpenBSD (x86-64)]
+
+https://sin1.contabostorage.com/57fb451d5f5f46fa91560a02facf49f8:pub/awwan/awwan-plan9-amd64[Plan9 (x86-64)]
+
+https://sin1.contabostorage.com/57fb451d5f5f46fa91560a02facf49f8:pub/awwan/awwan-solaris-amd64[Solaris (x86-64)]
+
+https://sin1.contabostorage.com/57fb451d5f5f46fa91560a02facf49f8:pub/awwan/awwan-windows-amd64[Windows (x86-64)]
+
+Once the binary filed downloaded, set the execute permission,
+
+    $ chmod +x <path/to/downloaded>/awwan
+
+===  Arch Linux
+
+Arch Linux user can install awwan from the following repository,
+
+----
+[build.kilabit.info]
+Server = https://build.kilabit.info/aur
+----
+
+== Manual
+
+The manual installation require,
+
+* https://git-scm.com/[Git SCM^] version 2.42 or greater,
+* https://go.dev/dl[Go tools^] version 1.21 or greater, and
+* https://www.gnu.org/software/make[GNU make^] version 4.4.1 or greater.
+
+One can build the binary using Go tools directly,
+
+    $ go install git.sr.ht/~shulhan/cmd/awwan
+
+or by building from source code, by cloning the awwan repository using git
+first,
+
+    $ git clone https://git.sr.ht/~shulhan/awwan
+
+And then by running "make build" in the cloned "awwan" directory,
+
+    $ cd awwan
+    $ make build
+
+The awwan binary now should be built in current directory.

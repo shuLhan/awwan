@@ -30,9 +30,13 @@ Features,
 
 ==  Documentation
 
-link:CHANGELOG.html[CHANGELOG]:: History of release.
+link:CHANGELOG.html[Changelog]:: History of each awwan release.
 
-link:README.html[README]:: Manual page for awwan.
+link:install.html[Installation]:: Link download and/or install awwan
+manually from source code.
+
+link:README.html[Manual page]:: The manual page describe how to use
+and setup awwan workspace.
 
 ==  Development
 
