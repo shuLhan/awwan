@@ -1,3 +1,7 @@
 #get: {{.ScriptDir}}/plain.txt {{.ScriptDir}}/tmp/get_plain.txt
 
 #get! /etc/os-release {{.ScriptDir}}/tmp/os-release
+
+#get:+0561 {{.ScriptDir}}/plain.txt {{.ScriptDir}}/tmp/get_with_mode.txt
+
+#get:root:root {{.ScriptDir}}/plain.txt {{.ScriptDir}}/tmp/get_with_owner.txt

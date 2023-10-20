@@ -24,4 +24,5 @@
 /testdata/encrypt-with-passphrase/.awwan.env.vault
 /testdata/encrypt-without-passphrase/.awwan.env.vault
 /testdata/local/.cache
+/testdata/local/put_with_mode.txt
 /www-awwan

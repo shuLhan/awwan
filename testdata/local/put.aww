@@ -6,3 +6,7 @@
 
 #put! {{.ScriptDir}}/plain.txt /etc/plain.txt
 sudo chmod 0644 /etc/plain.txt
+
+#put:+0611 {{.ScriptDir}}/plain.txt {{.ScriptDir}}/tmp/put_with_mode.txt
+
+#put:audio:audio {{.ScriptDir}}/plain.txt {{.ScriptDir}}/tmp/put_with_owner.txt

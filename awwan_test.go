@@ -7,6 +7,7 @@ package awwan
 
 import (
 	"bytes"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"testing"
@@ -296,6 +297,8 @@ func TestAwwanLocal_Get(t *testing.T) {
 		fileDest   string
 		expContent string
 		expError   string
+
+		expFileMode fs.FileMode
 	}
 
 	// Load the test data.
@@ -327,10 +330,21 @@ func TestAwwanLocal_Get(t *testing.T) {
 	aww.cryptoc.termrw = &mockrw
 
 	var cases = []testCase{{
-		desc:       `Get_PlainFile`,
-		lineRange:  `1`,
-		fileDest:   filepath.Join(baseDir, `tmp`, `get_plain.txt`),
-		expContent: string(tdata.Output[`tmp/get_plain.txt`]),
+		desc:        `PlainFile`,
+		lineRange:   `1`,
+		fileDest:    filepath.Join(baseDir, `tmp`, `get_plain.txt`),
+		expContent:  string(tdata.Output[`tmp/get_plain.txt`]),
+		expFileMode: fs.FileMode(384),
+	}, {
+		desc:        `WithMode`,
+		lineRange:   `5`,
+		fileDest:    filepath.Join(baseDir, `tmp`, `get_with_mode.txt`),
+		expContent:  string(tdata.Output[`tmp/get_plain.txt`]),
+		expFileMode: fs.FileMode(0561),
+	}, {
+		desc:      `WithOwner`,
+		lineRange: `7`,
+		expError:  `Local: Copy: chown root:root: exit status 1`,
 	}}
 
 	var (
@@ -342,6 +356,8 @@ func TestAwwanLocal_Get(t *testing.T) {
 
 	for _, c = range cases {
 		t.Log(c.desc)
+
+		_ = os.Remove(c.fileDest)
 
 		var req = NewRequest(CommandModeLocal, script, c.lineRange)
 
@@ -357,10 +373,19 @@ func TestAwwanLocal_Get(t *testing.T) {
 		}
 
 		test.Assert(t, `content`, c.expContent, string(gotContent))
+
+		var fi os.FileInfo
+
+		fi, err = os.Stat(c.fileDest)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		test.Assert(t, `mode`, c.expFileMode, fi.Mode())
 	}
 }
 
-func TestAwwanLocalPut(t *testing.T) {
+func TestAwwanLocal_Put(t *testing.T) {
 	type testCase struct {
 		desc       string
 		passphrase string
@@ -368,6 +393,7 @@ func TestAwwanLocalPut(t *testing.T) {
 		fileDest   string
 		expError   string
 		expContent string
+		expMode    fs.FileMode
 	}
 
 	// Load the test data output.
@@ -389,6 +415,7 @@ func TestAwwanLocalPut(t *testing.T) {
 		lineRange:  `1`,
 		fileDest:   filepath.Join(baseDir, `tmp`, `plain.txt`),
 		expContent: string(tdata.Output[`tmp/plain.txt`]),
+		expMode:    384,
 	}, {
 		desc:      `With text file, one of value is encrypted`,
 		lineRange: `3`,
@@ -399,6 +426,7 @@ func TestAwwanLocalPut(t *testing.T) {
 		passphrase: "s3cret\r",
 		fileDest:   filepath.Join(baseDir, `tmp`, `decrypted.txt`),
 		expContent: string(tdata.Output[`tmp/decrypted.txt`]),
+		expMode:    384,
 	}, {
 		desc:      `With encrypted file, empty passphrase`,
 		lineRange: `5`,
@@ -408,6 +436,17 @@ func TestAwwanLocalPut(t *testing.T) {
 		passphrase: "invalid\r",
 		lineRange:  `5`,
 		expError:   string(tdata.Output[`encrypted_invalid_passphrase`]),
+	}, {
+		desc:       `With mode`,
+		lineRange:  `10`,
+		fileDest:   filepath.Join(baseDir, `tmp`, `put_with_mode.txt`),
+		expContent: string(tdata.Output[`tmp/plain.txt`]),
+		expMode:    0611,
+	}, {
+		desc:      `With owner`,
+		lineRange: `12`,
+		fileDest:  filepath.Join(baseDir, `tmp`, `put_with_owner.txt`),
+		expError:  `Local: Copy: chown audio:audio: exit status 1`,
 	}}
 
 	var (
@@ -421,6 +460,10 @@ func TestAwwanLocalPut(t *testing.T) {
 	)
 	for _, c = range cases {
 		t.Log(c.desc)
+
+		if len(c.fileDest) != 0 {
+			_ = os.Remove(c.fileDest)
+		}
 
 		aww, err = New(baseDir)
 		if err != nil {
@@ -449,13 +492,24 @@ func TestAwwanLocalPut(t *testing.T) {
 			continue
 		}
 
-		if len(c.fileDest) != 0 {
-			gotContent, err = os.ReadFile(c.fileDest)
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			test.Assert(t, `content`, c.expContent, string(gotContent))
+		if len(c.fileDest) == 0 {
+			continue
 		}
+
+		gotContent, err = os.ReadFile(c.fileDest)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		test.Assert(t, `content`, c.expContent, string(gotContent))
+
+		var fi os.FileInfo
+
+		fi, err = os.Stat(c.fileDest)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		test.Assert(t, `error`, c.expMode, fi.Mode())
 	}
 }

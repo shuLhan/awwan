@@ -18,6 +18,7 @@ import (
 	"github.com/shuLhan/share/lib/ascii"
 	"github.com/shuLhan/share/lib/ini"
 	libos "github.com/shuLhan/share/lib/os"
+	libexec "github.com/shuLhan/share/lib/os/exec"
 	"github.com/shuLhan/share/lib/ssh/config"
 )
 
@@ -148,6 +149,21 @@ func (ses *Session) Copy(stmt *Statement) (err error) {
 	if err != nil {
 		return fmt.Errorf(`%s: %w`, logp, err)
 	}
+
+	if len(stmt.owner) != 0 {
+		var cmd = fmt.Sprintf(`chown %s %s`, stmt.owner, dst)
+		err = libexec.Run(cmd, nil, nil)
+		if err != nil {
+			return fmt.Errorf(`%s: chown %s: %w`, logp, stmt.owner, err)
+		}
+	}
+	if stmt.mode != 0 {
+		err = os.Chmod(dst, stmt.mode)
+		if err != nil {
+			return fmt.Errorf(`%s: %w`, logp, err)
+		}
+	}
+
 	return nil
 }
 
