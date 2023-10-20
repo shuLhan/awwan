@@ -42,6 +42,41 @@ func TestParseStatement(t *testing.T) {
 			raw:  []byte(` a\ b c`),
 		},
 	}, {
+		raw:      []byte(`#get:user:group `),
+		expError: `ParseStatement: "#get:": missing arguments`,
+	}, {
+		raw:      []byte(`#get:user:group src`),
+		expError: `ParseStatement: "#get:": missing destination file`,
+	}, {
+		raw: []byte(`#get:user:group src dst`),
+		exp: &Statement{
+			kind:  statementKindGet,
+			owner: `user:group`,
+			args:  []string{`src`, `dst`},
+			raw:   []byte(`src dst`),
+		},
+	}, {
+		raw:      []byte(`#get:+800 src dst`),
+		expError: `ParseStatement: "#get:": strconv.ParseUint: parsing "800": invalid syntax`,
+	}, {
+		raw: []byte(`#get:user:group+561 src dst`),
+		exp: &Statement{
+			kind:  statementKindGet,
+			owner: `user:group`,
+			mode:  369,
+			args:  []string{`src`, `dst`},
+			raw:   []byte(`src dst`),
+		},
+	}, {
+		raw: []byte(`#get:user:group+0561 src dst`),
+		exp: &Statement{
+			kind:  statementKindGet,
+			owner: `user:group`,
+			mode:  0561,
+			args:  []string{`src`, `dst`},
+			raw:   []byte(`src dst`),
+		},
+	}, {
 		raw:      []byte(`#get! `),
 		expError: `ParseStatement: "#get!": missing arguments`,
 	}, {
@@ -111,6 +146,8 @@ func TestParseStatement(t *testing.T) {
 	)
 
 	for _, c = range cases {
+		t.Logf(`ParseStatement: %s`, c.raw)
+
 		got, err = ParseStatement(c.raw)
 		if err != nil {
 			test.Assert(t, `error`, c.expError, err.Error())

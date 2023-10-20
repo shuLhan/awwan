@@ -7,6 +7,8 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"io/fs"
+	"strconv"
 	"strings"
 
 	libexec "github.com/shuLhan/share/lib/os/exec"
@@ -42,9 +44,12 @@ var magicCmdGetPut = map[int][]byte{
 
 // Statement contains parsed raw line from the script.
 type Statement struct {
+	owner string
+
 	cmd  string
 	args []string
 	raw  []byte
+	mode fs.FileMode
 	kind int
 }
 
@@ -122,6 +127,21 @@ func parseStatementGetPut(kind int, raw []byte) (stmt *Statement, err error) {
 		args []string
 	)
 
+	if len(raw) == 0 {
+		return nil, errors.New(`missing arguments`)
+	}
+
+	stmt = &Statement{
+		kind: kind,
+	}
+
+	if raw[0] != ' ' && raw[0] != '\t' {
+		raw, err = stmt.parseOwnerMode(raw)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	cmd, args = libexec.ParseCommandArgs(string(raw))
 	if len(cmd) == 0 {
 		return nil, errors.New(`missing arguments`)
@@ -132,10 +152,56 @@ func parseStatementGetPut(kind int, raw []byte) (stmt *Statement, err error) {
 	if len(args) > 1 {
 		return nil, errors.New(`too many arguments`)
 	}
-	stmt = &Statement{
-		kind: kind,
-		args: []string{cmd, args[0]},
-		raw:  raw,
-	}
+
+	stmt.args = []string{cmd, args[0]}
+	stmt.raw = raw
+
 	return stmt, nil
+}
+
+// parseOwnerMode parse the owner and optionally the file mode for
+// destination file.
+// The owner and mode has the following syntax,
+//
+//	[ USER [ ":" GROUP ]][ "+" MODE ]
+//
+// The USER and/or GROUP is optional, its accept the value as in "chown".
+// The MODE also optional, its value must be an octal.
+func (stmt *Statement) parseOwnerMode(in []byte) (out []byte, err error) {
+	var (
+		sepSpace = " \t"
+		sepMode  = "+"
+
+		tmp []byte
+		idx int
+	)
+
+	idx = bytes.IndexAny(in, sepSpace)
+	if idx < 0 {
+		return nil, nil
+	}
+
+	tmp = in[:idx]
+	out = in[idx+1:]
+
+	idx = bytes.IndexAny(tmp, sepMode)
+	if idx < 0 {
+		stmt.owner = string(tmp)
+	} else {
+		stmt.owner = string(tmp[:idx])
+
+		var (
+			modeString = string(tmp[idx+1:])
+			mode       uint64
+		)
+
+		mode, err = strconv.ParseUint(modeString, 8, 32)
+		if err != nil {
+			return nil, err
+		}
+
+		stmt.mode = fs.FileMode(mode)
+	}
+
+	return out, nil
 }
