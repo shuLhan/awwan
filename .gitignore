@@ -18,7 +18,7 @@
 /awwan
 /awwan.test
 /cover.html
-/cover.out
+/cover.txt
 /testdata/decrypt-with-passphrase/.awwan.env
 /testdata/encrypt-with-passfile/plain.txt.vault
 /testdata/encrypt-with-passphrase/.awwan.env.vault

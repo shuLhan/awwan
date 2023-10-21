@@ -10,8 +10,9 @@ all: test lint
 
 .PHONY: test
 test:
-	go test -coverprofile=cover.out ./...
-	go tool cover -html=cover.out -o cover.html
+	go test -cover ./... -test.gocoverdir=_coverage
+	go tool covdata textfmt -i=_coverage -o cover.txt
+	go tool cover -html=cover.txt -o cover.html
 
 .PHONY: lint
 lint:
@@ -53,6 +54,23 @@ test-with-mkosi:
 	go test -tags=integration -c .
 	machinectl shell awwan@awwan-test \
 		/bin/sh -c "cd src; ./awwan.test -test.v"
+
+## The following tasks must be executed inside the container.
+
+.PHONY: test-integration
+test-integration:
+	go test -cover -tags=integration ./... -test.gocoverdir=_coverage
+	go tool covdata textfmt -i=_coverage -o cover.txt
+	go tool cover -html=cover.txt -o cover.html
+
+.PHONY: test-all
+test-all:
+	rm -f _coverage/*
+	go test -cover ./... -test.gocoverdir=_coverage
+	go test -cover -tags=integration ./... -test.gocoverdir=_coverage
+	go tool covdata textfmt -i=_coverage -o cover.txt
+	go tool cover -html=cover.txt -o cover.html
+	go tool covdata percent -i=_coverage
 
 #}}}
 #{{{ Tasks to test or deploy awwan.org website.
