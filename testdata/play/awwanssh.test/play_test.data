@@ -1,0 +1,13 @@
+Test on "play" command.
+
+<<< play_with_local:stdout
+--- SSH connection: awwanssh@127.0.0.1:10022
+--- SSH identity file: [/home/awwan/.ssh/id_ed25519]
+
+--> awwanssh@127.0.0.1:10022:   2: pwd
+/home/awwanssh
+
+--> awwanssh@127.0.0.1:10022:   5: #local: pwd
+/home/awwan/src
+
+<<< play_with_local:stderr

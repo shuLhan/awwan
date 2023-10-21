@@ -17,6 +17,7 @@ import (
 const (
 	statementKindDefault int = iota
 	statementKindComment
+	statementKindLocal
 	statementKindRequire
 	statementKindGet
 	statementKindPut
@@ -27,6 +28,7 @@ const (
 // List of magic command.
 var (
 	cmdMagicGet     = []byte(`#get:`)
+	cmdMagicLocal   = []byte(`#local:`)
 	cmdMagicPut     = []byte(`#put:`)
 	cmdMagicSudoGet = []byte(`#get!`)
 	cmdMagicSudoPut = []byte(`#put!`)
@@ -84,6 +86,18 @@ func ParseStatement(raw []byte) (stmt *Statement, err error) {
 		cmd  string
 		args []string
 	)
+
+	if bytes.HasPrefix(raw, cmdMagicLocal) {
+		raw = raw[len(cmdMagicLocal):]
+		cmd, args = libexec.ParseCommandArgs(string(raw))
+		stmt = &Statement{
+			kind: statementKindLocal,
+			cmd:  cmd,
+			args: args,
+			raw:  raw,
+		}
+		return stmt, nil
+	}
 
 	if bytes.HasPrefix(raw, cmdMagicRequire) {
 		raw = raw[len(cmdMagicRequire):]

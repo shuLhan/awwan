@@ -1,0 +1,13 @@
+Test on "local" command.
+
+<<< local:stdout
+
+--> local:   1: echo "hello"
+hello
+
+--> local:   4: #local: echo "nothing"
+
+--> local:   6: echo "local"
+local
+
+<<< local:stderr

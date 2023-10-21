@@ -6,6 +6,7 @@
 package awwan
 
 import (
+	"bytes"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -25,6 +26,49 @@ type testCaseGetPut struct {
 	expError   string
 
 	expMode fs.FileMode
+}
+
+func TestAwwan_Play_withLocal(t *testing.T) {
+	var (
+		baseDir    = `testdata/play`
+		scriptDir  = filepath.Join(baseDir, `awwanssh.test`)
+		scriptFile = filepath.Join(scriptDir, `play.aww`)
+		tdataFile  = filepath.Join(scriptDir, `play_test.data`)
+
+		tdata *test.Data
+		aww   *Awwan
+		err   error
+	)
+
+	tdata, err = test.LoadData(tdataFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	aww, err = New(baseDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var (
+		req     = NewRequest(CommandModePlay, scriptFile, `1-`)
+		mockout = bytes.Buffer{}
+		mockerr = bytes.Buffer{}
+	)
+
+	req.stdout = &mockout
+	req.stderr = &mockerr
+
+	err = aww.Play(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var exp = string(tdata.Output[`play_with_local:stdout`])
+	test.Assert(t, `stdout`, exp, mockout.String())
+
+	exp = string(tdata.Output[`play_with_local:stderr`])
+	test.Assert(t, `stderr`, exp, mockerr.String())
 }
 
 func TestAwwan_Play_Get(t *testing.T) {

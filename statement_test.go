@@ -137,6 +137,14 @@ func TestParseStatement(t *testing.T) {
 			kind: statementKindComment,
 			raw:  []byte(`#requ: a`),
 		},
+	}, {
+		raw: []byte(`#local: echo "a"`),
+		exp: &Statement{
+			kind: statementKindLocal,
+			cmd:  `echo`,
+			args: []string{`a`},
+			raw:  []byte(` echo "a"`),
+		},
 	}}
 
 	var (

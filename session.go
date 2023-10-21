@@ -504,6 +504,8 @@ func (ses *Session) executeScriptOnRemote(req *Request, pos linePosition) (err e
 			err = ses.sshc.conn.Execute(string(stmt.raw))
 		case statementKindGet:
 			err = ses.Get(stmt)
+		case statementKindLocal:
+			err = ExecLocal(req, stmt)
 		case statementKindPut:
 			err = ses.Put(stmt)
 		case statementKindSudoGet:
