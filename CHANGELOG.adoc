@@ -5,6 +5,44 @@
 :sectanchors:
 :sectlinks:
 
+[#v0_9_0]
+== awwan v0.9.0 (2023-11-xx)
+
+Awwan now have a website at https://awwan.org.
+
+[#v0_9_0__new_features]
+=== New features
+
+The magic command "#get" and "#put" now have an inline options to set the
+owner and permission of copied file.
+Example of usage are,
+
+    #get:$USER:$GROUP+$PERM src dst
+    #put!$USER:$GROUP+$PERM src dst
+
+The $USER, $GROUP and $PERM are optionals.
+
+If $USER and/or $GROUP is set, a copied file will have owner set to user
+$USER and/or group to $GROUP.
+If $PERM is set, a copied file will have the mode permission set to $MODE.
+
+
+[#v0_9_0__bug_fixes]
+=== Bug fixes
+
+all: trim spaces in passphrase when its read from file::
++
+Using vim, or UNIX in general, the file always end with "\\n".
+If we read the whole file then the passphrase will end with it, this
+cause the decryption may fail (or wrong encryption passphrase used).
+
+[#v0_9_0__enhancements]
+=== Enhancements
+
+all: fix printing the statement to be executed::
++
+This fix missing magic command not printed in stdout.
+
 
 [#v0_8_0]
 ==  awwan v0.8.0 (2023-10-04)
