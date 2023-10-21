@@ -10,3 +10,7 @@ sudo chmod 0644 /etc/plain.txt
 #put:+0611 {{.ScriptDir}}/plain.txt {{.ScriptDir}}/tmp/put_with_mode.txt
 
 #put:audio:audio {{.ScriptDir}}/plain.txt {{.ScriptDir}}/tmp/put_with_owner.txt
+
+#put!+0516 {{.ScriptDir}}/plain.txt /etc/sudoput_with_mode.txt
+
+#put!awwan:bin+0644 {{.ScriptDir}}/plain.txt /etc/sudoput_with_owner.txt

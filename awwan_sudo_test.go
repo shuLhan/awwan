@@ -7,6 +7,7 @@ package awwan
 
 import (
 	"bytes"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"testing"
@@ -23,6 +24,7 @@ func TestAwwan_Local_SudoGet(t *testing.T) {
 		sudoPass   string
 		expContent string
 		expError   string
+		expMode    fs.FileMode
 	}
 
 	// Load the test data.
@@ -59,11 +61,26 @@ func TestAwwan_Local_SudoGet(t *testing.T) {
 		sudoPass:   "awwan\n",
 		fileDest:   filepath.Join(baseDir, `tmp`, `os-release`),
 		expContent: string(tdata.Output[`tmp/os-release`]),
+		expMode:    420,
 	}, {
 		desc:      `WithInvalidPassword`,
 		lineRange: `3`,
 		sudoPass:  "invalid\n",
 		expError:  `Local: SudoCopy: ExecLocal: exit status 1`,
+	}, {
+		desc:       `WithMode`,
+		lineRange:  `9`,
+		sudoPass:   "awwan\nawwan\n",
+		fileDest:   filepath.Join(baseDir, `tmp`, `sudoget_with_mode.txt`),
+		expContent: string(tdata.Output[`tmp/os-release`]),
+		expMode:    0706,
+	}, {
+		desc:       `WithOwner`,
+		lineRange:  `11`,
+		sudoPass:   "awwan\nawwan\n",
+		fileDest:   filepath.Join(baseDir, `tmp`, `sudoget_with_owner.txt`),
+		expContent: string(tdata.Output[`tmp/os-release`]),
+		expMode:    420,
 	}}
 
 	var (
@@ -96,6 +113,15 @@ func TestAwwan_Local_SudoGet(t *testing.T) {
 		}
 
 		test.Assert(t, `content`, c.expContent, string(gotContent))
+
+		var fi os.FileInfo
+
+		fi, err = os.Stat(c.fileDest)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		test.Assert(t, `mode`, c.expMode, fi.Mode().Perm())
 	}
 }
 
@@ -108,6 +134,7 @@ func TestAwwan_Local_SudoPut(t *testing.T) {
 		fileDest   string
 		expError   string
 		expContent string
+		expMode    fs.FileMode
 	}
 
 	// Load the test data output.
@@ -130,6 +157,21 @@ func TestAwwan_Local_SudoPut(t *testing.T) {
 		sudoPass:   "awwan\nawwan\n",
 		fileDest:   `/etc/plain.txt`,
 		expContent: string(tdata.Output[`tmp/plain.txt`]),
+		expMode:    420,
+	}, {
+		desc:       `WithMode`,
+		lineRange:  `14`,
+		sudoPass:   "awwan\nawwan\n",
+		fileDest:   `/etc/sudoput_with_mode.txt`,
+		expContent: string(tdata.Output[`tmp/plain.txt`]),
+		expMode:    0516,
+	}, {
+		desc:       `WithOwner`,
+		lineRange:  `16`,
+		sudoPass:   "awwan\nawwan\nawwan\n",
+		fileDest:   `/etc/sudoput_with_owner.txt`,
+		expContent: string(tdata.Output[`tmp/plain.txt`]),
+		expMode:    420,
 	}}
 
 	var (
@@ -178,5 +220,14 @@ func TestAwwan_Local_SudoPut(t *testing.T) {
 		}
 
 		test.Assert(t, `content`, c.expContent, string(gotContent))
+
+		var fi os.FileInfo
+
+		fi, err = os.Stat(c.fileDest)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		test.Assert(t, `permission`, c.expMode, fi.Mode().Perm())
 	}
 }

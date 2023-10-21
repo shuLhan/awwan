@@ -5,3 +5,7 @@
 #get:+0561 {{.ScriptDir}}/plain.txt {{.ScriptDir}}/tmp/get_with_mode.txt
 
 #get:root:root {{.ScriptDir}}/plain.txt {{.ScriptDir}}/tmp/get_with_owner.txt
+
+#get!+0706 /etc/os-release {{.ScriptDir}}/tmp/sudoget_with_mode.txt
+
+#get!awwan:bin /etc/os-release {{.ScriptDir}}/tmp/sudoget_with_owner.txt

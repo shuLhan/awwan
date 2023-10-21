@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"text/template"
 
@@ -214,7 +215,6 @@ func (ses *Session) SudoCopy(req *Request, stmt *Statement) (err error) {
 		src  = stmt.args[0]
 		dst  = stmt.args[1]
 
-		sudoCp  *Statement
 		isVault bool
 	)
 
@@ -228,7 +228,7 @@ func (ses *Session) SudoCopy(req *Request, stmt *Statement) (err error) {
 		}
 	}
 
-	sudoCp = &Statement{
+	var sudoCp = &Statement{
 		kind: statementKindDefault,
 		cmd:  `sudo`,
 		args: []string{"cp", src, dst},
@@ -245,6 +245,35 @@ func (ses *Session) SudoCopy(req *Request, stmt *Statement) (err error) {
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
+
+	if len(stmt.owner) != 0 {
+		var sudoChown = &Statement{
+			kind: statementKindDefault,
+			cmd:  `sudo`,
+			args: []string{`chown`, stmt.owner, dst},
+			raw:  []byte(fmt.Sprintf(`sudo chown %s %q`, stmt.owner, dst)),
+		}
+		err = ExecLocal(req, sudoChown)
+		if err != nil {
+			return fmt.Errorf(`%s: chown: %w`, logp, err)
+		}
+	}
+	if stmt.mode != 0 {
+		var (
+			fsmode    = strconv.FormatUint(uint64(stmt.mode), 8)
+			sudoChmod = &Statement{
+				kind: statementKindDefault,
+				cmd:  `sudo`,
+				args: []string{`chmod`, fsmode, dst},
+				raw:  []byte(fmt.Sprintf(`sudo chmod %o %q`, stmt.mode, dst)),
+			}
+		)
+		err = ExecLocal(req, sudoChmod)
+		if err != nil {
+			return fmt.Errorf(`%s: chmod: %w`, logp, err)
+		}
+	}
+
 	return nil
 }
 
