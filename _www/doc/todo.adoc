@@ -19,7 +19,7 @@ separated by "+" is attributes.
 
 * [ ] replace "play" with "remote". This is breaking changes.
 
-* [ ] use "play" to run script that contains "#local:" and "#remote:".
+* [x] use "play" to run script that contains "#local:".
 
 * [ ] wui: Cleanup stdout and stderr on run.
 

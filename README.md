@@ -183,8 +183,8 @@ The awwan script is similar to shell script.
 Each line started with '#' is a comment, except for special, magic words.
 Each statement, either in local or remote, is executed using "sh -c".
 
-There are five magic words in the script: `#require:`, `#get:`, `#get!`,
-`#put:`, and `#put!`.
+There are six magic words recognized the script: "#require:", "#get:",
+"#get!", "#put:", "#put!", and "#local:".
 
 ### Magic word "#require"
 
@@ -327,6 +327,36 @@ following shell commands,
 $ sudo cp local/src remote/dst
 $ sudo chmod 0600 remote/dst
 $ sudo chown root:bin remote/dst
+```
+
+### Magic word "#local"
+
+The magic word "#local" define the command to be executed in the local
+environment.
+This magic word only works if the script is executed using "play" command.
+If the script executed using "local" command it will do nothing.
+
+For example, given the following script,
+
+```
+pwd
+
+#local: pwd
+```
+
+If the current working directory in local is "/home/client" and the remote
+working directory is "/home/server", executing "awwan play" on the above
+script will result in,
+
+```
+/home/server
+/home/client
+```
+
+If the script executed with "local" command it will result to,
+
+```
+/home/client
 ```
 
 ### Example
