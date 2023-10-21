@@ -1,0 +1,9 @@
+= Integration test for SSH
+
+In this directory we setup awwan workspace, with one remote server called
+"awwanssh.test".
+The SSH connection to remote server "awwanssh.test" is defined in
+".ssh/config".
+
+The user "awwanssh" allow all commands to be executed with sudo without
+prompting for password.
