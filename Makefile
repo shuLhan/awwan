@@ -38,6 +38,8 @@ install: embed
 dev:
 	AWWAN_DEVELOPMENT=1 go run ./cmd/awwan serve $(AWWAN_WORKSPACE)
 
+#{{{ Testing with container using mkosi.
+
 .PHONY: setup-mkosi
 setup-mkosi:
 	@echo ">>> Creating symlinks to simplify binding ..."
@@ -52,6 +54,7 @@ test-with-mkosi:
 	machinectl shell awwan@awwan-test \
 		/bin/sh -c "cd src; ./awwan.test -test.v"
 
+#}}}
 #{{{ Tasks to test or deploy awwan.org website.
 
 .PHONY: embed-www

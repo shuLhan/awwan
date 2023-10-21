@@ -5,3 +5,6 @@ if [ "$container" != "mkosi" ]; then
 fi
 
 systemctl enable sshd.service
+
+chown -R awwan:awwan /home/awwan/.ssh/
+chown -R awwanssh:awwanssh /home/awwanssh/.ssh/

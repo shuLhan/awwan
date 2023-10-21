@@ -2,7 +2,6 @@
 
 echo "--- mkosi.prepare: args=$@"
 echo "--- mkosi.prepare: container=$container"
-env
 
 if [ "$container" != "mkosi" ]; then
 	exec mkosi-chroot "$CHROOT_SCRIPT" "$@"
@@ -24,9 +23,4 @@ if [ "$1" == "final" ]; then
 		--uid $((MKOSI_UID+1)) \
 		--password '$2a$10$XVhjfOB4Un5DJE4TQEBPrOHfBVGVWP4iA3ElUMzcbJ7jdc2zZPgZ2' \
 		awwanssh
-
-	su - awwan sh -c "mkdir -p .ssh; ssh-keygen -t ed25519 -f .ssh/id_ed25519 -N '' -C awwan@image"
-	su - awwanssh sh -c "mkdir -p .ssh"
-	cat /home/awwan/.ssh/id_ed25519.pub > /home/awwanssh/.ssh/authorized_keys
-	chown awwanssh:awwanssh /home/awwanssh/.ssh/authorized_keys
 fi
