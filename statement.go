@@ -117,7 +117,37 @@ func ParseStatement(raw []byte) (stmt *Statement, err error) {
 }
 
 func (stmt *Statement) String() string {
-	return fmt.Sprintf("%s%s %s", magicCmdGetPut[stmt.kind], stmt.cmd, strings.Join(stmt.args, " "))
+	var sb strings.Builder
+
+	switch stmt.kind {
+	case statementKindDefault:
+		sb.Write(stmt.raw)
+
+	case statementKindLocal:
+		sb.Write(cmdMagicLocal)
+		sb.Write(stmt.raw)
+
+	case statementKindGet, statementKindPut, statementKindSudoGet, statementKindSudoPut:
+		sb.Write(magicCmdGetPut[stmt.kind])
+		if len(stmt.owner) != 0 {
+			sb.WriteString(stmt.owner)
+		}
+		if stmt.mode != 0 {
+			sb.WriteByte('+')
+			sb.WriteString(strconv.FormatUint(uint64(stmt.mode), 8))
+		}
+		sb.WriteByte(' ')
+		sb.WriteString(stmt.args[0])
+		sb.WriteByte(' ')
+		sb.WriteString(stmt.args[1])
+
+	case statementKindRequire:
+		sb.Write(cmdMagicRequire)
+		sb.WriteByte(' ')
+		sb.Write(stmt.raw)
+	}
+
+	return sb.String()
 }
 
 // parseStatementGetPut parse the raw "#get" or "#put" statement.
