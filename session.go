@@ -151,6 +151,12 @@ func (ses *Session) Copy(stmt *Statement) (err error) {
 		return fmt.Errorf(`%s: %w`, logp, err)
 	}
 
+	if stmt.mode != 0 {
+		err = os.Chmod(dst, stmt.mode)
+		if err != nil {
+			return fmt.Errorf(`%s: %w`, logp, err)
+		}
+	}
 	if len(stmt.owner) != 0 {
 		var cmd = fmt.Sprintf(`chown %s %s`, stmt.owner, dst)
 		err = libexec.Run(cmd, nil, nil)
@@ -158,13 +164,6 @@ func (ses *Session) Copy(stmt *Statement) (err error) {
 			return fmt.Errorf(`%s: chown %s: %w`, logp, stmt.owner, err)
 		}
 	}
-	if stmt.mode != 0 {
-		err = os.Chmod(dst, stmt.mode)
-		if err != nil {
-			return fmt.Errorf(`%s: %w`, logp, err)
-		}
-	}
-
 	return nil
 }
 
@@ -274,18 +273,6 @@ func (ses *Session) SudoCopy(req *Request, stmt *Statement) (err error) {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
 
-	if len(stmt.owner) != 0 {
-		var sudoChown = &Statement{
-			kind: statementKindDefault,
-			cmd:  `sudo`,
-			args: []string{`chown`, stmt.owner, dst},
-			raw:  []byte(fmt.Sprintf(`sudo chown %s %q`, stmt.owner, dst)),
-		}
-		err = ExecLocal(req, sudoChown)
-		if err != nil {
-			return fmt.Errorf(`%s: chown: %w`, logp, err)
-		}
-	}
 	if stmt.mode != 0 {
 		var (
 			fsmode    = strconv.FormatUint(uint64(stmt.mode), 8)
@@ -299,6 +286,18 @@ func (ses *Session) SudoCopy(req *Request, stmt *Statement) (err error) {
 		err = ExecLocal(req, sudoChmod)
 		if err != nil {
 			return fmt.Errorf(`%s: chmod: %w`, logp, err)
+		}
+	}
+	if len(stmt.owner) != 0 {
+		var sudoChown = &Statement{
+			kind: statementKindDefault,
+			cmd:  `sudo`,
+			args: []string{`chown`, stmt.owner, dst},
+			raw:  []byte(fmt.Sprintf(`sudo chown %s %q`, stmt.owner, dst)),
+		}
+		err = ExecLocal(req, sudoChown)
+		if err != nil {
+			return fmt.Errorf(`%s: chown: %w`, logp, err)
 		}
 	}
 
