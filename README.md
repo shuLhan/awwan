@@ -218,7 +218,21 @@ d
 
 ### Magic word "#get"
 
-The magic word `#get:` copy file from remote server to your local file
+Syntax,
+
+```
+  GET = "#get" (":"/"!") [OWNER] ["+" PERM] SP REMOTE_PATH SP LOCAL_PATH
+
+OWNER = [ USER ] [ ":" GROUP ]
+
+ PERM = 4*OCTAL ; Four digits octal number.
+
+OCTAL = "0" ... "7"
+
+   SP = " " / "\t"  ; Space characters.
+```
+
+The magic word "#get:" copy file from remote server to your local file
 system.
 For example,
 
@@ -226,7 +240,7 @@ For example,
 #get: /etc/os-release os-release
 ```
 
-Magic word `#get!` copy file from remote server, that can be accessed only by
+Magic word "#get!" copy file from remote server, that can be accessed only by
 using sudo, to your local file.
 For example,
 
@@ -234,16 +248,50 @@ For example,
 #get! /etc/nginx/ssl/my.crt server.crt
 ```
 
+The owner and/or permission of destination file (in local environment) can
+be set by using inline options.
+For example,
+
+```
+#get!root:bin+0600 remote/src local/dst
+```
+
+Will copy file from "remote/src" into "local/dst" and set the "local/dst"
+owner to user "root" and group "bin" with permission "0600" or "-rw-------".
+Basically, if executed using "local" it would similar to sequence of
+following shell commands,
+
+```
+$ sudo cp remote/src local/dst
+$ sudo chmod 0600 local/dst
+$ sudo chown root:bin local/dst
+```
+
+
 ### Magic word "#put"
 
-The magic word `#put:` copy file from your local to remote server.
+Syntax,
+
+```
+  PUT = "#put" (":"/"!") [OWNER] ["+" PERM] SP LOCAL_PATH SP REMOTE_PATH
+
+OWNER = [ USER ] [ ":" GROUP ]
+
+ PERM = 4*OCTAL ; Four digits octal number.
+
+OCTAL = "0" ... "7"
+
+   SP = " " / "\t"  ; Space characters.
+```
+
+The magic word "#put:" copy file from your local to remote server.
 For example,
 
 ```
 #put: /etc/locale.conf /tmp/locale.conf
 ```
 
-Magic word `#put!` copy file from your local system to remote server using
+Magic word "#put!" copy file from your local system to remote server using
 sudo.
 For example,
 
@@ -251,19 +299,35 @@ For example,
 #put! /etc/locale.conf /etc/locale.conf
 ```
 
-The "#put" command can read encrypted file, the command argument for source
-is the same with normal "#put" command, without ".vault" extension, for
-example
+The "#put" command can read and copy encrypted file, for example
 
 ```
-#put! secret secret
+#put! local/secret remote/secret
 ```
 
-First, "#put!" will try to read file named "secret".
+First, "#put!" will try to read a file named "secret".
 If its exist, it will copy the file as is, without decrypting it.
-If not exist, it will read file named "secret.vault", if it exist it will
-decrypt it and copy it to remote server un-encrypted.
+If not exist, it will try to read a file named "secret.vault", if it exist
+it will decrypt it and copy it to remote server un-encrypted.
 
+The owner and/or permission of destination file (in remote server) can
+be set by using inline options.
+For example,
+
+```
+#put!root:bin+0600 local/src remote/dst
+```
+
+Will copy file from "local/src" into "remote/dst" and set the "dst"
+owner to user "root" and group "bin" with permission "0600" or "-rw-------".
+Basically, if executed using "local" it would similar to sequence of
+following shell commands,
+
+```
+$ sudo cp local/src remote/dst
+$ sudo chmod 0600 remote/dst
+$ sudo chown root:bin remote/dst
+```
 
 ### Example
 

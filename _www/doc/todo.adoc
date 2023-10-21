@@ -6,7 +6,7 @@ List of next features or enhancements for awwan,
 
 * [ ] `#-put:` and `#-put!`, put file as is without parsing.
 
-* [ ] Add option to set file owner and attributes in #put command,
+* [x] Add option to set file owner and attributes in #put command,
 +
 --
 Example,
