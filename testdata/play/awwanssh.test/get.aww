@@ -1,0 +1,12 @@
+## Get without read permission.
+
+#get: /etc/shadow {{.ScriptDir}}/tmp/shadow
+
+## Get and changes file permission.
+
+#get:+624 /etc/os-release {{.ScriptDir}}/tmp/get_with_mode.txt
+
+## Setting group to "bin" should be an error since current user does not have
+## privileged.
+
+#get:awwan:bin /etc/os-release {{.ScriptDir}}/tmp/get_with_owner.txt

@@ -1,0 +1,12 @@
+## Put without write permission.
+
+#put: {{.ScriptDir}}/plain.txt /etc/plain.txt
+
+## Put and changes file permission.
+
+#put:+624 {{.ScriptDir}}/plain.txt put_with_mode.txt
+
+## Setting group to "bin" should be an error since current user does not have
+## privileged.
+
+#put:awwan:bin+666 {{.ScriptDir}}/plain.txt put_with_owner.txt

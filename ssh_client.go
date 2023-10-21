@@ -6,6 +6,7 @@ package awwan
 import (
 	"fmt"
 	"io"
+	"io/fs"
 	"path/filepath"
 
 	"github.com/shuLhan/share/lib/ascii"
@@ -79,6 +80,30 @@ func newSshClient(section *config.Section, dirTmp string, stdout, stderr io.Writ
 	}
 
 	return sshc, nil
+}
+
+// chmod change the remoteFile permission.
+func (sshc *sshClient) chmod(remoteFile string, perm fs.FileMode) (err error) {
+	var chmodStmt = fmt.Sprintf(`chmod %o %q`, perm, remoteFile)
+
+	err = sshc.conn.Execute(chmodStmt)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// chown change the owner of remoteFile.
+// The owner parameter can be set to user only "user", group only
+// ":group", or user and group "user:group".
+func (sshc *sshClient) chown(remoteFile, owner string) (err error) {
+	var chownStmt = fmt.Sprintf(`chown %s %q`, owner, remoteFile)
+
+	err = sshc.conn.Execute(chownStmt)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // get the remote file and write it to local path.

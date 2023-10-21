@@ -170,13 +170,29 @@ func (ses *Session) Copy(stmt *Statement) (err error) {
 
 // Get copy file from remote to local.
 func (ses *Session) Get(stmt *Statement) (err error) {
-	var logp = "Get"
+	var (
+		logp = `Get`
+		src  = stmt.args[0]
+		dst  = stmt.args[1]
+	)
 
-	err = ses.sshc.get(stmt.args[0], stmt.args[1])
+	err = ses.sshc.get(src, dst)
 	if err != nil {
 		return fmt.Errorf(`%s: %w`, logp, err)
 	}
-
+	if stmt.mode != 0 {
+		err = os.Chmod(dst, stmt.mode)
+		if err != nil {
+			return fmt.Errorf(`%s: chmod %o %q: %w`, logp, stmt.mode, dst, err)
+		}
+	}
+	if len(stmt.owner) != 0 {
+		var chownStmt = fmt.Sprintf(`chown %s %q`, stmt.owner, dst)
+		err = libexec.Run(chownStmt, nil, nil)
+		if err != nil {
+			return fmt.Errorf(`%s: %s: %w`, logp, chownStmt, err)
+		}
+	}
 	return nil
 }
 
@@ -204,6 +220,18 @@ func (ses *Session) Put(stmt *Statement) (err error) {
 	}
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
+	}
+	if stmt.mode != 0 {
+		err = ses.sshc.chmod(dst, stmt.mode)
+		if err != nil {
+			return fmt.Errorf(`%s: %w`, logp, err)
+		}
+	}
+	if len(stmt.owner) != 0 {
+		err = ses.sshc.chown(dst, stmt.owner)
+		if err != nil {
+			return fmt.Errorf(`%s: %w`, logp, err)
+		}
 	}
 	return nil
 }
@@ -416,7 +444,7 @@ func (ses *Session) executeScriptOnLocal(req *Request, pos linePosition) (err er
 	return nil
 }
 
-func (ses *Session) executeScriptOnRemote(req *Request, pos linePosition) {
+func (ses *Session) executeScriptOnRemote(req *Request, pos linePosition) (err error) {
 	var max = int64(len(req.script.stmts))
 	if pos.start > max {
 		return
@@ -440,7 +468,6 @@ func (ses *Session) executeScriptOnRemote(req *Request, pos linePosition) {
 		fmt.Fprintf(req.stdout, "\n--> %s: %3d: %s\n",
 			ses.sshc.conn, x, stmt.String())
 
-		var err error
 		switch stmt.kind {
 		case statementKindDefault:
 			err = ses.sshc.conn.Execute(string(stmt.raw))
@@ -455,9 +482,10 @@ func (ses *Session) executeScriptOnRemote(req *Request, pos linePosition) {
 		}
 		if err != nil {
 			fmt.Fprintf(req.stderr, "!!! %s\n", err)
-			break
+			return err
 		}
 	}
+	return nil
 }
 
 // generateFileInput read the content of file input "in", apply the session

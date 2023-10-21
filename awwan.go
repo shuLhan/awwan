@@ -292,7 +292,10 @@ func (aww *Awwan) Play(req *Request) (err error) {
 			return fmt.Errorf("%s: %w", logp, err)
 		}
 
-		ses.executeScriptOnRemote(req, pos)
+		err = ses.executeScriptOnRemote(req, pos)
+		if err != nil {
+			return fmt.Errorf(`%s: %w`, logp, err)
+		}
 	}
 
 	return nil

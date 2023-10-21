@@ -1,0 +1,12 @@
+Test input and output for "#put".
+
+<<< plain.txt
+The host name is awwanssh.test.
+
+
+<<< WithoutPermission:error
+Play: Put: Put: permission denied
+
+<<< WithOwner:error
+Play: Put: ssh: Run "chown awwan:bin \"put_with_owner.txt\"": Process exited with status 1
+
