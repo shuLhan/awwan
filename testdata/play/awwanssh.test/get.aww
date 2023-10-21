@@ -10,3 +10,9 @@
 ## privileged.
 
 #get:awwan:bin /etc/os-release {{.ScriptDir}}/tmp/get_with_owner.txt
+
+#get!+0601 /etc/crypttab {{.ScriptDir}}/tmp/sudoget_with_mode.txt
+
+#get!awwan:bin /etc/crypttab {{.ScriptDir}}/tmp/sudoget_with_owner.txt
+
+#get!awwan:bin+0602 /etc/crypttab {{.ScriptDir}}/tmp/sudoget_with_owner_mode.txt

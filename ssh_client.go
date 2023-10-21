@@ -155,6 +155,29 @@ func (sshc *sshClient) rmdirAll(dir string) {
 	}
 }
 
+// sudoChmod change the permission of remoteFile using sudo.
+func (sshc *sshClient) sudoChmod(remoteFile string, mode fs.FileMode) (err error) {
+	var cmd = fmt.Sprintf(`sudo chmod %o %q`, mode, remoteFile)
+
+	err = sshc.conn.Execute(cmd)
+	if err != nil {
+		return err
+	}
+	return nil
+
+}
+
+// sudoChown change the owner of remoteFile using sudo.
+func (sshc *sshClient) sudoChown(remoteFile, owner string) (err error) {
+	var cmd = fmt.Sprintf(`sudo chown %s %q`, owner, remoteFile)
+
+	err = sshc.conn.Execute(cmd)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // sudoGet copy the remote file using sudo to local.
 // The remote file is copied to temporary directory first, chmod-ed to
 // current SSH user so it can be read.

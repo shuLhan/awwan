@@ -306,18 +306,37 @@ func (ses *Session) SudoCopy(req *Request, stmt *Statement) (err error) {
 
 // SudoGet copy file from remote that can be accessed by root on remote, to
 // local.
-func (ses *Session) SudoGet(stmt *Statement) (err error) {
-	var logp = `SudoGet`
+// If the owner and mode is set, it will also changes using sudo.
+func (ses *Session) SudoGet(req *Request, stmt *Statement) (err error) {
+	var (
+		logp = `SudoGet`
+		src  = stmt.args[0]
+		dst  = stmt.args[1]
+	)
 
-	err = ses.sshc.sudoGet(stmt.args[0], stmt.args[1])
+	err = ses.sshc.sudoGet(src, dst)
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
+
+	if stmt.mode != 0 {
+		err = ses.localSudoChmod(req, dst, stmt.mode)
+		if err != nil {
+			return fmt.Errorf(`%s: %w`, logp, err)
+		}
+	}
+	if len(stmt.owner) != 0 {
+		err = ses.localSudoChown(req, dst, stmt.owner)
+		if err != nil {
+			return fmt.Errorf(`%s: %w`, logp, err)
+		}
+	}
+
 	return nil
 }
 
 // SudoPut copy file from local to remote using sudo.
-func (ses *Session) SudoPut(stmt *Statement) (err error) {
+func (ses *Session) SudoPut(req *Request, stmt *Statement) (err error) {
 	var (
 		logp = `SudoPut`
 		src  = stmt.args[0]
@@ -340,6 +359,19 @@ func (ses *Session) SudoPut(stmt *Statement) (err error) {
 	}
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
+	}
+
+	if stmt.mode != 0 {
+		err = ses.sshc.sudoChmod(dst, stmt.mode)
+		if err != nil {
+			return fmt.Errorf(`%s: %w`, logp, err)
+		}
+	}
+	if len(stmt.owner) != 0 {
+		err = ses.sshc.sudoChown(dst, stmt.owner)
+		if err != nil {
+			return fmt.Errorf(`%s: %w`, logp, err)
+		}
 	}
 
 	return nil
@@ -475,9 +507,9 @@ func (ses *Session) executeScriptOnRemote(req *Request, pos linePosition) (err e
 		case statementKindPut:
 			err = ses.Put(stmt)
 		case statementKindSudoGet:
-			err = ses.SudoGet(stmt)
+			err = ses.SudoGet(req, stmt)
 		case statementKindSudoPut:
-			err = ses.SudoPut(stmt)
+			err = ses.SudoPut(req, stmt)
 		}
 		if err != nil {
 			fmt.Fprintf(req.stderr, "!!! %s\n", err)
@@ -702,6 +734,40 @@ func (ses *Session) loadRawEnv(content []byte) (err error) {
 	in.Prune()
 	ses.vars.Rebase(in)
 
+	return nil
+}
+
+// localSudoChmod change the file permission in local environment using
+// sudo.
+func (ses *Session) localSudoChmod(req *Request, file string, mode fs.FileMode) (err error) {
+	var (
+		fsmode    = strconv.FormatUint(uint64(mode), 8)
+		sudoChmod = &Statement{
+			kind: statementKindDefault,
+			cmd:  `sudo`,
+			args: []string{`chmod`, fsmode, file},
+			raw:  []byte(fmt.Sprintf(`sudo chmod %o %q`, mode, file)),
+		}
+	)
+	err = ExecLocal(req, sudoChmod)
+	if err != nil {
+		return fmt.Errorf(`%s: %w`, sudoChmod.raw, err)
+	}
+	return nil
+}
+
+// localSudoChown change the file owner in local environment using sudo.
+func (ses *Session) localSudoChown(req *Request, file, owner string) (err error) {
+	var sudoChown = &Statement{
+		kind: statementKindDefault,
+		cmd:  `sudo`,
+		args: []string{`chown`, owner, file},
+		raw:  []byte(fmt.Sprintf(`sudo chown %s %q`, owner, file)),
+	}
+	err = ExecLocal(req, sudoChown)
+	if err != nil {
+		return fmt.Errorf(`%s: %w`, sudoChown.raw, err)
+	}
 	return nil
 }
 

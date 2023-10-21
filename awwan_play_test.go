@@ -16,8 +16,10 @@ import (
 
 type testCaseGetPut struct {
 	desc      string
-	fileDest  string
 	lineRange string
+
+	sudoPass string
+	fileDest string
 
 	expContent string
 	expError   string
@@ -146,6 +148,184 @@ func TestAwwan_Play_Put(t *testing.T) {
 		expContent: string(tdata.Output[`plain.txt`]),
 		expMode:    0666,
 		expError:   string(tdata.Output[`WithOwner:error`]),
+	}}
+
+	var (
+		c          testCaseGetPut
+		fi         os.FileInfo
+		gotContent []byte
+	)
+
+	for _, c = range cases {
+		t.Log(c.desc)
+
+		if len(c.fileDest) != 0 {
+			_ = os.Remove(c.fileDest)
+		}
+
+		var req = NewRequest(CommandModePlay, scriptFile, c.lineRange)
+
+		err = aww.Play(req)
+		if err != nil {
+			test.Assert(t, `play error`, c.expError, err.Error())
+		}
+
+		if len(c.fileDest) == 0 {
+			continue
+		}
+
+		// File successfully copied but maybe error when setting
+		// owner or permission.
+
+		gotContent, err = os.ReadFile(c.fileDest)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		test.Assert(t, `content`, c.expContent, string(gotContent))
+
+		fi, err = os.Stat(c.fileDest)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		test.Assert(t, `mode`, c.expMode, fi.Mode().Perm())
+	}
+}
+
+func TestAwwan_Play_SudoGet(t *testing.T) {
+	var (
+		baseDir    = `testdata/play`
+		scriptDir  = filepath.Join(baseDir, `awwanssh.test`)
+		scriptFile = filepath.Join(scriptDir, `get.aww`)
+
+		tdata *test.Data
+		aww   *Awwan
+		err   error
+	)
+
+	tdata, err = test.LoadData(filepath.Join(scriptDir, `get_test.data`))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	aww, err = New(baseDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var cases = []testCaseGetPut{{
+		desc:       `WithMode`,
+		lineRange:  `14`,
+		sudoPass:   "awwan\n",
+		fileDest:   filepath.Join(scriptDir, `tmp`, `sudoget_with_mode.txt`),
+		expContent: string(tdata.Output[`/etc/crypttab`]),
+		expMode:    0601,
+	}, {
+		desc:       `WithOwner`,
+		lineRange:  `16`,
+		sudoPass:   "awwan\n",
+		fileDest:   filepath.Join(scriptDir, `tmp`, `sudoget_with_owner.txt`),
+		expContent: string(tdata.Output[`/etc/crypttab`]),
+		expMode:    420,
+	}, {
+		desc:       `WithOwnerAndMode`,
+		lineRange:  `18`,
+		sudoPass:   "awwan\nawwan\n",
+		fileDest:   filepath.Join(scriptDir, `tmp`, `sudoget_with_owner_mode.txt`),
+		expContent: string(tdata.Output[`/etc/crypttab`]),
+		expMode:    0602,
+	}}
+
+	var (
+		mockin = &mockStdin{}
+
+		c          testCaseGetPut
+		fi         os.FileInfo
+		gotContent []byte
+	)
+
+	for _, c = range cases {
+		t.Log(c.desc)
+
+		if len(c.fileDest) != 0 {
+			_ = os.Remove(c.fileDest)
+		}
+
+		var req = NewRequest(CommandModePlay, scriptFile, c.lineRange)
+
+		// Mock the request stdin to read password from buffer.
+		mockin.buf.Reset()
+		mockin.buf.WriteString(c.sudoPass)
+		req.stdin = mockin
+
+		err = aww.Play(req)
+		if err != nil {
+			test.Assert(t, `play error`, c.expError, err.Error())
+		}
+
+		if len(c.fileDest) == 0 {
+			continue
+		}
+
+		// File successfully copied but maybe error when setting
+		// owner or permission.
+
+		gotContent, err = os.ReadFile(c.fileDest)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		test.Assert(t, `content`, c.expContent, string(gotContent))
+
+		fi, err = os.Stat(c.fileDest)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		test.Assert(t, `mode`, c.expMode, fi.Mode().Perm())
+	}
+}
+
+func TestAwwan_Play_SudoPut(t *testing.T) {
+	var (
+		baseDir    = `testdata/play`
+		scriptDir  = filepath.Join(baseDir, `awwanssh.test`)
+		scriptFile = filepath.Join(scriptDir, `put.aww`)
+
+		tdata *test.Data
+		aww   *Awwan
+		err   error
+	)
+
+	tdata, err = test.LoadData(filepath.Join(scriptDir, `put_test.data`))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	aww, err = New(baseDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var cases = []testCaseGetPut{{
+		desc:       `WithMode`,
+		lineRange:  `14`,
+		fileDest:   `/home/awwanssh/sudoput_with_mode.txt`,
+		expContent: string(tdata.Output[`plain.txt`]),
+		expMode:    0604,
+	}, {
+		desc:       `WithOwner`,
+		lineRange:  `16`,
+		fileDest:   `/home/awwanssh/sudoput_with_owner.txt`,
+		expContent: string(tdata.Output[`plain.txt`]),
+		expMode:    0600,
+	}, {
+		desc:       `WithOwnerAndMode`,
+		lineRange:  `18`,
+		fileDest:   `/home/awwanssh/sudoput_with_owner_mode.txt`,
+		expContent: string(tdata.Output[`plain.txt`]),
+		expMode:    0602,
 	}}
 
 	var (

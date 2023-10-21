@@ -10,3 +10,9 @@
 ## privileged.
 
 #put:awwan:bin+666 {{.ScriptDir}}/plain.txt put_with_owner.txt
+
+#put!+604 {{.ScriptDir}}/plain.txt sudoput_with_mode.txt
+
+#put!awwan:bin {{.ScriptDir}}/plain.txt sudoput_with_owner.txt
+
+#put!awwan:bin+602 {{.ScriptDir}}/plain.txt sudoput_with_owner_mode.txt
