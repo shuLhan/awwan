@@ -1,0 +1,760 @@
+= awwan
+:toc:
+:sectlinks:
+
+==  NAME
+
+awwan - Configuration management software, infrastructure as file and
+directory layout.
+
+
+==  SYNOPSIS
+
+----
+awwan <command> <arguments>
+
+command = "decrypt" / "encrypt" / "help" / "local" / "play" / "serve"
+        / "version"
+
+    decrypt <file.vault>
+        Decrypt the file using RSA private key at
+        "<workspace>/.ssh/awwan.key".
+
+    encrypt <file>
+        Encrypt the file using RSA private key at
+        "<workspace>/.ssh/awwan.key".
+
+    help
+        Display the command usage and its description.
+
+    local <script> <line-range>
+        Execute the script in current system from line <start> until line
+        <end>.
+
+    play <script> <line-range>
+        Execute the script in the remote server from line <start> until line
+        <end>.
+
+    serve <workspace>
+        Run the web-user interface using <workspace> directory as base
+        directory.
+
+    version
+        Print the application version to standard output.
+
+
+script = STRING
+    A path to script to be executed.
+
+workspace = STRING
+    The root directory of awwan workspace, the one that contains
+    the ".ssh" directory.
+
+line-range = start [ "-" [end] ] *("," line-range)
+
+    start = 1*DIGITS
+        The starting line number in the script.
+
+    end = 1*DIGITS
+        The end of line number.
+        Its value either empty, equal, or greater than start.
+----
+
+
+==  DESCRIPTION
+
+`awwan` is command-line interface to execute multiple lines of command in
+the local or remote server using shell or SSH.
+
+
+==  BACKGROUND
+
+Do you have a collection of shell scripts to manage one more similar server?
+Do you ever want to execute only part of your script?
+Are you get tired with learning others syntax and tools for provisioning
+your own server, while you need is a handful knowledge of shell script?
+
+If yes, awwan is the right tools for you.
+
+
+==  THE COMMAND
+
+The awwan tool have five commands: "decrypt", "encrypt", "local", "play",
+and "serve".
+
+=== Command "decrypt"
+
+The "decrypt" command decrypt the file using RSA private key at
+"<workspace>/.awwan.key".
+The encrypted file must have extension ".vault", otherwise it will return an
+error.
+The decrypted file output will be written in the current directory without
+the ".vault" extension.
+
+Example of decrypting file,
+
+----
+$ awwan decrypt secret.txt.vault
+--- BaseDir: /home/ms/go/src/git.sr.ht/~shulhan/awwan/testdata/manual
+--- Loading private key file ".ssh/.awwan.key" (enter to skip passphrase) ...
+Decrypted file output: secret.txt
+$ cat secret.txt
+secret file
+$
+----
+
+=== Command "encrypt"
+
+The "encrypt" command encrypt the file using RSA private key at
+"<workspace>/.awwan.key".
+The encrypted file will have ".vault" extension.
+
+Note that the private key should not be committed into version control
+system if its not protected with passphrase.
+
+Example of encrypting file,
+
+----
+$ echo "secret file" > secret.txt
+$ awwan encrypt secret.txt
+--- BaseDir: /home/ms/go/src/git.sr.ht/~shulhan/awwan/testdata/manual
+--- Loading private key file ".ssh/.awwan.key" (enter to skip passphrase) ...
+Encrypted file output: secret.txt.vault
+$
+----
+
+=== Command "local" and "play"
+
+The "local" command execute the script in local environment, your host
+machine, using shell.
+The "play" command execute the script in remote environment using SSH.
+
+The "local" and "play" command has the same arguments,
+
+----
+<script> <start> ["-" <end>] *(start ["-" <end>])
+----
+
+The "<script>" argument is the path to the awwan script file.
+
+The "<start>" argument is line start number.
+Its define the line number in the script where awwan start execution.
+
+The "<end>" argument define the line number in the script where awwan
+stop executing the script, or "-" empty to set to the last line.
+If not defined then its equal to the line start, which means awwan execute
+only single line.
+
+Here is some examples of how to execute script,
+
+Execute line 5, 7, and 10 until 15 of "script.aww" in local system,
+
+----
+$ awwan local myserver/script.aww 5,7,10-15
+----
+
+Execute line 6 and line 12 until the end of line of "script.aww" in remote
+server known as "myserver",
+
+----
+$ awwan play myserver/script.aww 6,12-
+----
+
+=== Command "serve"
+
+The "serve" command run the web-user interface using "<workspace>" directory
+as base directory.
+
+The "serve" command have only single argument: a "workspace".
+A "workspace" is the awwan root directory, the one that contains the
+".ssh" directory.
+
+Example of running the web-user interface using the "_example" directory in
+this repository as workspace,
+
+----
+$ awwan serve _example
+--- BaseDir: /home/ms/go/src/git.sr.ht/~shulhan/awwan/_example
+--- Starting HTTP server at http://127.0.0.1:17600
+----
+
+
+==  THE SCRIPT
+
+The awwan script is similar to shell script.
+Each line started with '#' is a comment, except for special, magic words.
+Each statement, either in local or remote, is executed using "sh -c".
+
+There are six magic words recognized the script: "#require:", "#get:",
+"#get!", "#put:", "#put!", and "#local:".
+
+=== Magic word "#require"
+
+Magic word "#require:" ensure that the statement after it always executed
+even if its skipped by line-start number argument.
+For example, given following script (with line number),
+
+----
+1: #require: echo a
+2: echo b
+3: #require: echo c
+4: echo d
+----
+
+Executing "awwan local script.aww 2", always execute "#require:" at line
+number 1 "echo a", so the output would be
+
+----
+a
+b
+----
+
+Executing "awwan local script.aww 4", always execute "#require:" line number
+1 and 3, so the output would be
+
+----
+a
+c
+d
+----
+
+=== Magic word "#get"
+
+The magic word "#get" copy file from remote server to your local file
+system.
+
+Syntax,
+
+----
+  GET = "#get" (":"/"!") [OWNER] ["+" PERM] SP REMOTE_PATH SP LOCAL_PATH
+
+OWNER = [ USER ] [ ":" GROUP ]
+
+ PERM = 4*OCTAL ; Four digits octal number.
+
+OCTAL = "0" ... "7"
+
+   SP = " " / "\t"  ; Space characters.
+----
+
+For example,
+
+----
+#get: /etc/os-release os-release
+----
+
+Magic word "#get!" copy file from remote server, that can be accessed only
+by using sudo, to your local file.
+For example,
+
+----
+#get! /etc/nginx/ssl/my.crt server.crt
+----
+
+The owner and/or permission of destination file (in local environment) can
+be set by using inline options.
+For example,
+
+----
+#get!root:bin+0600 remote/src local/dst
+----
+
+Will copy file from "remote/src" into "local/dst" and set the "local/dst"
+owner to user "root" and group "bin" with permission "0600" or "-rw-------".
+Basically, if executed using "local" it would similar to sequence of
+following shell commands,
+
+----
+$ sudo cp remote/src local/dst
+$ sudo chmod 0600 local/dst
+$ sudo chown root:bin local/dst
+----
+
+
+=== Magic word "#put"
+
+The magic word "#put" copy file from your local to remote server.
+
+Syntax,
+
+----
+  PUT = "#put" (":"/"!") [OWNER] ["+" PERM] SP LOCAL_PATH SP REMOTE_PATH
+
+OWNER = [ USER ] [ ":" GROUP ]
+
+ PERM = 4*OCTAL ; Four digits octal number.
+
+OCTAL = "0" ... "7"
+
+   SP = " " / "\t"  ; Space characters.
+----
+
+For example,
+
+----
+#put: /etc/locale.conf /tmp/locale.conf
+----
+
+Magic word "#put!" copy file from your local system to remote server using
+sudo.
+For example,
+
+----
+#put! /etc/locale.conf /etc/locale.conf
+----
+
+The "#put" command can read and copy encrypted file, for example
+
+----
+#put: local/secret remote/secret ## or ...
+#put! local/secret remote/secret
+----
+
+First, "#put!" will try to read a file named "secret".
+If its exist, it will copy the file as is, without decrypting it.
+If not exist, it will try to read a file named "secret.vault", if it exist
+it will decrypt it and copy it to remote server un-encrypted.
+
+The owner and/or permission of destination file (in remote server) can
+be set by using inline options.
+For example,
+
+----
+#put!root:bin+0600 local/src remote/dst
+----
+
+Will copy file from "local/src" into "remote/dst" and set the "dst"
+owner to user "root" and group "bin" with permission "0600" or "-rw-------".
+Basically, if executed using "local" it would similar to sequence of
+following shell commands,
+
+----
+$ sudo cp local/src remote/dst
+$ sudo chmod 0600 remote/dst
+$ sudo chown root:bin remote/dst
+----
+
+=== Magic word "#local"
+
+The magic word "#local" define the command to be executed in the local
+environment.
+This magic word only works if the script is executed using "play" command.
+If the script executed using "local" command it will do nothing.
+
+For example, given the following script,
+
+----
+pwd
+
+#local: pwd
+----
+
+If the current working directory in local is "/home/client" and the remote
+working directory is "/home/server", executing "awwan play" on the above
+script will result in,
+
+----
+/home/server
+/home/client
+----
+
+If the script executed with "local" command it will result to,
+
+----
+/home/client
+----
+
+=== Example
+
+Here is an example of script that install Nginx on remote Arch Linux server
+using configuration from your local computer,
+
+----
+sudo pacman -Sy --noconfirm nginx
+sudo systemctl enable nginx
+
+#put! {{.ScriptDir}}/etc/nginx/nginx.conf /etc/nginx/
+
+sudo systemctl restart nginx
+sudo systemctl status nginx
+----
+
+
+==  ENVIRONMENT FILE
+
+The environment file is a file named "awwan.env", or ".awwan.env.vault" for
+encrypted one.
+It contains variable and value using the form "key=value" that can be used
+in the script.
+
+When executing the script, `awwan` read environment files on each directory
+from base directory until the script directory.
+
+The environment file use the ini file format,
+
+----
+[section "subsection"]
+key = value
+----
+
+We will explain how to use and get the environment variables below.
+
+
+==  COMBINING SCRIPT AND ENVIRONMENT
+
+Script, or any files, can contains values from variables defined in
+environment files.
+
+There are six global variables that shared to all script files,
+
+* `.BaseDir` contains the absolute path to workspace directory
+* `.ScriptDir` contains the relative path to script directory
+* `.SSHKey` contains the value of "IdentityFile" in SSH configuration
+* `.SSHUser` contains the value of "User" in SSH configuration
+* `.SSHHost` contains the value of "Host" in SSH configuration
+* `.SSHPort` contains the value of "Port" in SSH configuration
+
+To get the value wrap the variable using '{{}}' for example,
+
+----
+#put! {{.BaseDir}}/templates/etc/hosts /etc/
+#put! {{.ScriptDir}}/etc/hosts /etc/
+
+scp -i {{.SSHKey}} src {{.SSHUser}}@{{.SSHHost}}:{{.SSHPort}}/dst
+----
+
+To get the value of variable in environment file, put the string ".Val"
+followed by section, subsection and key names, each separated by colon ":".
+If no subsection exists, we can leave it empty.
+
+We can put the variable inside the script or in the file that we want to
+copy.
+
+For example, given the following environment file,
+
+----
+[all]
+user = arch
+
+[whitelist "ip"]
+alpha = 1.2.3.4/32
+beta  = 2.3.4.5/32
+----
+
+The `{{.Val "all\::user"}}` result to "arch" (without double quote), and
+`{{.Val "whitelist:ip:alpha"}}` result to "1.2.3.4/32" (without double
+quote)
+
+
+==  THE SSH CONFIGURATION
+
+After we learn about the command, script, variables, and templating; we need
+to explain some file and directory structure that required by `awwan` so it
+can connect to the SSH server.
+
+To be able to connect to the remote SSH server, `awwan` need to know the
+remote host name, remote user, and location of private key file.
+All of this are derived from
+https://man.archlinux.org/man/ssh_config.5[ssh_config(5)^]
+file in the workspace ".ssh/config" directory and in the user's home
+directory.
+
+The remote host name is derived from directory name of the script file.
+It is matched with "`Host`" or "`Match`" section in the ssh_config(5) file.
+
+For example, given the following directory structure,
+
+----
+<workspace>
+|
++-- .ssh/
+|   |
+|   --- config
++-- development
+    |
+    --- script.aww
+----
+
+If we execute the "development/script.aww", awwan search for the Host that
+match with "development" in workspace ".ssh/config" or in "~/.ssh/config".
+
+
+==  SUPPORT FOR ENCRYPTION
+
+The command "encrypt" support encrypting file using RSA private key with or
+without passphrase by putting the file under ".ssh/awwan.key".
+The command "decrypt" un-encrypt the file produce by "encrypt" command.
+
+The awwan command also can read encrypted environment file with the name
+".awwan.env.vault", so any secret variables can stored there and the script
+that contains '{{.Val "..."}}' works as usual.
+
+Any magic put "#put" also can copy encrypted file without any changes, as
+long as the source file with ".vault" extension exist.
+
+For environment where awwan need to be operated automatically, for example
+in build system, awwan can read the private key's passphrase automatically
+from the file ".ssh/awwan.pass".
+
+
+==  EXAMPLE
+
+To give the idea of how `awwan` works, we will show an example using the
+working directory `$WORKDIR` as our workspace directory.
+
+Let say that we have the working remote SSH server named "myserver" at IP
+address "1.2.3.4" using username "arch" on port "2222".
+
+In the $WORKDIR, create directory ".ssh" and "config" file,
+
+----
+$ mkdir -p .ssh
+$ cat > .ssh/config <<EOF
+Host myserver
+    Hostname 1.2.3.4
+    Port 2222
+    User arch
+    IdentityFile .ssh/id_ed25519
+EOF
+----
+
+Still in the $WORKDIR, create  the environment file "awwan.env"
+
+----
+$ cat > awwan.env <<EOF
+[all]
+user = arch
+host = myserver
+
+[whitelist "ip"]
+alpha = 1.2.3.4/32
+beta  = 2.3.4.5/32
+EOF
+----
+
+Inside the $WORKDIR we create the directory that match "Host" value
+in ".ssh/config" and a script file "test.aww",
+
+----
+$ mkdir -p myserver
+$ cat > myserver/test.aww <<EOF
+echo {{.Val "all::host"}}`
+#put: {{.ScriptDir}}/test /tmp/
+cat /tmp/test
+EOF
+----
+
+and a plain text file "test" that read variable from environment file,
+
+----
+$ cat > myserver/test <<EOF
+Hi {{.Val "all::user"}}!
+EOF
+----
+
+When executed from start to end like these,
+
+----
+$ awwan play myserver/test.aww 1-
+----
+
+it will prints the following output to terminal,
+
+----
+>>> arch@1.2.3.4:2222: 1: echo myserver
+
+myserver
+test       100%    9     0.4KB/s   00:00
+>>> arch@1.2.3.4:2222: 3: cat /tmp/test
+
+Hi arch!
+----
+
+That's it.
+
+
+==  FAQ
+
+===  What is the recommended workspace structure?
+
+Beside ".ssh" directory and directory as host name, `awwan` did not require
+any other special directory but we really recommend that you use sub
+directory to group several nodes on several cloud services.
+For example, if you use cloud services with several nodes inside it, we
+recommend the following directory structures,
+
+----
+<cloud-service>/<project-name>/<service-name>/<node-name>
+----
+
+The "<cloud-service>" is the name of your remote server, it could be "AWS",
+"GCP", "DO", and others.
+The "<project-name>" is your account ID in your cloud service or your
+project name.
+The "<service-name>" is a group of several nodes, for example "development",
+"staging", "production".
+The "<node-name>" is name of your node, each node should have one single
+directory.
+
+
+Here is an example of directory structures,
+
+----
+.
+├── commons
+│   │
+│   ├── etc
+│   │   ├── pacman.d
+│   │   └── ssh
+│   └── home
+│
+├── gcp
+│   ├── development
+│   │   └── vm
+│   │       ├── www
+│   │       │   └── etc
+│   │       │       ├── my.cnf.d
+│   │       │       ├── nginx
+│   │       │       ├── php
+│   │       │       │   └── php-fpm.d
+│   │       │       └── systemd
+│   │       │           └── system
+│   │       │               └── mariadb.service.d
+│   │       └── ci
+│   └── production
+│       └── vm
+│           └── www
+│               └── etc -> ../../../development/vm/www//etc
+----
+
+The "commons" directory contains common scripts and or templates that can be
+executed in any server.
+
+The "gcp" directory is cloud service with two projects or accounts
+"development" and "production", and the rest are node names and templates
+used in that node.
+
+
+=== What happened if two variables declared inside two environment files?
+
+When executing the script `awwan` merge the variables from parent directory
+with variables from script directory.
+Any keys that are duplicate will be merged and the last one overwrite the
+previous one.
+
+Let say we execute the following script,
+
+----
+$ awwan play aaa/bbb/script.aww
+----
+
+The "aaa/awwan.env" contains
+
+----
+[my]
+name = aaa
+----
+
+and the "bbb/awwan.env" contains
+
+----
+[my]
+name = bbb
+----
+
+Then the value of '{{.Val "my\::name"}}' in "script.aww" will return "bbb".
+
+
+=== When to use magic command "#require:" ?
+
+The magic command "#require:" is added to prevent running local command
+using different project or configuration.
+
+The use case was derived from experience with "gcloud" (Google Cloud CLI)
+and "kubectl" (Kubernetes CLI) commands.
+When you have more than one projects in GCP, you need to make sure that the
+command that you run is using correct configuration.
+
+Here is the example of deploying Cloud Functions using local awwan script,
+
+----
+1: #require: gcloud config configurations activate {{.Val "gcloud::config"}}
+3:
+4: ## Create PubSub topic.
+5:
+6: gcloud pubsub topics create {{.Val "CloudFunctions:log2slack:pubsub_topic"}}
+7:
+8: ## Create Logger Sink to Route the log to PubSub topic.
+9:
+10: gcloud logging sinks create {{.Val "CloudFunctions:log2slack:pubsub_topic"}} \
+11:    pubsub.googleapis.com/projects/{{.Val "gcloud::project"}}/topics/{{.Val "CloudFunctions:log2slack:pubsub_topic"}} \
+12:    --log-filter=severity>=WARNING
+13:
+14: ## Create Cloud Functions to forward log to Slack.
+15:
+16: gcloud functions deploy Log2Slack \
+17:    --source {{.ScriptDir}} \
+18:    --entry-point Log2Slack \
+19:    --runtime go113 \
+20:    --trigger-topic {{.Val "CloudFunctions:log2slack:pubsub_topic"}} \
+21:    --set-env-vars SLACK_WEBHOOK_URL={{.Val "slack::slack_webhook_url"}} \
+22:    --ingress-settings internal-only \
+23:    --max-instances=5
+24:
+25: ## Test the chains by publishing a message to Topic...
+26:
+27: gcloud pubsub topics \
+28:    publish {{.Val "CloudFunctions:log2slack:pubsub_topic"}} \
+29:    --message='Hello World!'
+----
+
+When executing statement at line number 6, 10, 16 or 27 we need to make sure
+that it always using the correct environment "gcloud\::config",
+
+
+----
+$ awwan local awwan/playground/CloudFunctions/log2slack/local.deploy.aww 27
+2020/06/04 01:48:38 >>> loading "<REDACTED>/awwan.env" ...
+2020/06/04 01:48:38 >>> loading "<REDACTED>/awwan/dev/awwan.env" ...
+2020/06/04 01:48:38 --- require 2: gcloud config configurations activate dev
+
+Activated [dev].
+2020/06/04 01:48:38 >>> local 29: gcloud pubsub topics publish logs
+--message='Hello World!'
+----
+
+
+==  LINKS
+
+https://awwan.org:: Project website.
+
+https://sr.ht/~shulhan/awwan/::
+The repository of this software project.
+
+https://lists.sr.ht/~shulhan/awwan::
+Place for discussion and sending patches.
+
+https://todo.sr.ht/~shulhan/awwan::
+Place to open an issue or request for new feature.
+
+
+==  LICENSE
+
+Copyright (C) 2019-2023 M. Shulhan <ms@kilabit.info>
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the Free
+Software Foundation, either version 3 of the License, or any later version.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+or FITNESS FOR A PARTICULAR PURPOSE.
+See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with
+this program.
+If not, see <https://www.gnu.org/licenses/>.
+
+// SPDX-FileCopyrightText: 2019 M. Shulhan <ms@kilabit.info>
+// SPDX-License-Identifier: GPL-3.0-or-later
+// vim: expandtab:tabstop=8:shiftwidth=8:textwidth=76:
