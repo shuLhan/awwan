@@ -161,16 +161,14 @@ func main() {
 		err = fmt.Errorf("missing or invalid command %s", cmdMode)
 	}
 	if err != nil {
-		log.Printf("%s: %s", logp, err)
-		os.Exit(1)
+		log.Fatalf(`%s: %s`, logp, err)
 	}
 
 	var aww *awwan.Awwan
 
 	aww, err = awwan.New(baseDir)
 	if err != nil {
-		log.Printf("%s: %s", logp, err)
-		os.Exit(1)
+		log.Fatalf(`%s: %s`, logp, err)
 	}
 
 	switch cmdMode {
@@ -202,7 +200,6 @@ func main() {
 		err = aww.Serve()
 	}
 	if err != nil {
-		log.Printf("%s: %s", logp, err)
-		os.Exit(1)
+		log.Fatalf(`%s: %s`, logp, err)
 	}
 }
