@@ -514,7 +514,6 @@ func (ses *Session) executeScriptOnRemote(req *Request, pos linePosition) (err e
 			err = ses.SudoPut(req, stmt)
 		}
 		if err != nil {
-			fmt.Fprintf(req.stderr, "!!! %s\n", err)
 			return err
 		}
 	}
@@ -699,27 +698,34 @@ func (ses *Session) loadFileEnv(awwanEnv string, isVault bool) (err error) {
 // On success, it will return the content of file and true if the file is
 // from encrypted file .vault.
 func (ses *Session) loadFileInput(path string) (content []byte, isVault bool, err error) {
-	var relPath = relativePath(ses.BaseDir, path)
+	var (
+		logp    = `loadFileInput`
+		relPath = relativePath(ses.BaseDir, path)
+	)
 
 	content, err = os.ReadFile(path)
 	if err == nil {
 		return content, false, nil
 	}
 	if !errors.Is(err, fs.ErrNotExist) {
-		return nil, false, fmt.Errorf(`%s: %s`, relPath, err)
+		return nil, false, err
 	}
+	log.Printf(`??? %s %q: not exist`, logp, relPath)
 
 	path = path + defEncryptExt
 	relPath += defEncryptExt
 
 	content, err = os.ReadFile(path)
 	if err != nil {
-		return nil, false, fmt.Errorf(`%s: %s`, relPath, err)
+		if errors.Is(err, fs.ErrNotExist) {
+			return nil, false, fmt.Errorf(`%s %q: %w`, logp, relPath, fs.ErrNotExist)
+		}
+		return nil, false, err
 	}
 
 	content, err = ses.cryptoc.decrypt(content)
 	if err != nil {
-		return nil, false, fmt.Errorf(`%s: %s`, relPath, err)
+		return nil, false, fmt.Errorf(`%s %q: %s`, logp, relPath, err)
 	}
 
 	return content, true, nil
