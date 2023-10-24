@@ -218,9 +218,10 @@ func initMemfsWww() (err error) {
 			`.*\.(js|html|jpg|png|ico)$`,
 		},
 		Excludes: []string{
-			`/_mkosi`,
-			`/wui.bak`,
-			`/wui.local`,
+			`/.eslintrc.yaml$`,
+			`/.gitignore$`,
+			`/node_modules`,
+			`/tsconfig.json$`,
 			`/wui`,
 		},
 		Embed: memfs.EmbedOptions{

@@ -39,6 +39,13 @@ install: embed
 dev:
 	AWWAN_DEVELOPMENT=1 go run ./cmd/awwan serve $(AWWAN_WORKSPACE)
 
+#{{{ Task to lint the TypeScript files.
+
+.PHONY: _www-lint
+_www-lint:
+	cd _www && eslint --fix .
+
+#}}}
 #{{{ Testing with container using mkosi.
 
 .PHONY: setup-mkosi

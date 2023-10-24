@@ -85,132 +85,129 @@ export function renderHtml() {
 }
 
 export class Awwan {
-  private com_btn_clear!: HTMLButtonElement;
-  private com_btn_local!: HTMLButtonElement;
-  private com_btn_new_dir!: HTMLButtonElement;
-  private com_btn_new_file!: HTMLButtonElement;
-  private com_btn_remote!: HTMLButtonElement;
-  private com_btn_remove!: HTMLButtonElement;
-  private com_btn_save!: HTMLButtonElement;
-  private com_file_path!: HTMLElement;
-  private com_inp_vfs_new!: HTMLInputElement;
-  private com_stdout!: HTMLElement;
-  private com_stderr!: HTMLElement;
-  private current_node: WuiVfsNodeInterface | null = null;
+  private comBtnClear!: HTMLButtonElement;
+  private comBtnLocal!: HTMLButtonElement;
+  private comBtnNewDir!: HTMLButtonElement;
+  private comBtnNewFile!: HTMLButtonElement;
+  private comBtnRemote!: HTMLButtonElement;
+  private comBtnRemove!: HTMLButtonElement;
+  private comBtnSave!: HTMLButtonElement;
+  private comFilePath!: HTMLElement;
+  private comInputVfsNew!: HTMLInputElement;
+  private comStdout!: HTMLElement;
+  private comStderr!: HTMLElement;
+  private currentNode: WuiVfsNodeInterface | null = null;
   private request: RequestInterface = {
     mode: "local",
     script: "",
     content: "",
     line_range: "",
   };
-  private wui_editor: WuiEditor;
-  private wui_notif: WuiNotif;
-  private wui_vfs: WuiVfs;
+  private editor: WuiEditor;
+  private notif: WuiNotif;
+  private vfs: WuiVfs;
 
   constructor() {
     let el = document.getElementById(ID_BTN_CLEAR_SELECTION);
     if (el) {
-      this.com_btn_clear = el as HTMLButtonElement;
-      this.com_btn_clear.onclick = () => {
-        this.wui_editor.clearSelection();
+      this.comBtnClear = el as HTMLButtonElement;
+      this.comBtnClear.onclick = () => {
+        this.editor.clearSelection();
       };
     }
 
     el = document.getElementById(ID_BTN_EXEC_LOCAL);
     if (el) {
-      this.com_btn_local = el as HTMLButtonElement;
-      this.com_btn_local.onclick = () => {
+      this.comBtnLocal = el as HTMLButtonElement;
+      this.comBtnLocal.onclick = () => {
         this.execLocal();
       };
     }
     el = document.getElementById(ID_BTN_EXEC_REMOTE);
     if (el) {
-      this.com_btn_remote = el as HTMLButtonElement;
-      this.com_btn_remote.onclick = () => {
+      this.comBtnRemote = el as HTMLButtonElement;
+      this.comBtnRemote.onclick = () => {
         this.execRemote();
       };
     }
 
     el = document.getElementById(ID_BTN_NEW_DIR);
     if (el) {
-      this.com_btn_new_dir = el as HTMLButtonElement;
-      this.com_btn_new_dir.onclick = () => {
+      this.comBtnNewDir = el as HTMLButtonElement;
+      this.comBtnNewDir.onclick = () => {
         this.newNode(true);
       };
     }
     el = document.getElementById(ID_BTN_NEW_FILE);
     if (el) {
-      this.com_btn_new_file = el as HTMLButtonElement;
-      this.com_btn_new_file.onclick = () => {
+      this.comBtnNewFile = el as HTMLButtonElement;
+      this.comBtnNewFile.onclick = () => {
         this.newNode(false);
       };
     }
     el = document.getElementById(ID_BTN_REMOVE);
     if (el) {
-      this.com_btn_remove = el as HTMLButtonElement;
-      this.com_btn_remove.onclick = () => {
+      this.comBtnRemove = el as HTMLButtonElement;
+      this.comBtnRemove.onclick = () => {
         this.onClickRemove();
       };
     }
 
     el = document.getElementById(ID_BTN_SAVE);
     if (el) {
-      this.com_btn_save = el as HTMLButtonElement;
-      this.com_btn_save.onclick = () => {
+      this.comBtnSave = el as HTMLButtonElement;
+      this.comBtnSave.onclick = () => {
         this.onClickSave();
       };
     }
 
     el = document.getElementById(ID_INP_VFS_NEW);
     if (el) {
-      this.com_inp_vfs_new = el as HTMLInputElement;
+      this.comInputVfsNew = el as HTMLInputElement;
     }
 
     el = document.getElementById(ID_VFS_PATH);
     if (el) {
-      this.com_file_path = el;
+      this.comFilePath = el;
     }
     el = document.getElementById(ID_STDOUT);
     if (el) {
-      this.com_stdout = el;
+      this.comStdout = el;
     }
     el = document.getElementById(ID_STDERR);
     if (el) {
-      this.com_stderr = el;
+      this.comStderr = el;
     }
 
-    const editor_opts: WuiEditorOptions = {
+    const editorOpts: WuiEditorOptions = {
       id: ID_EDITOR,
       is_editable: true,
-      onSelection: (begin_at: number, end_at: number) => {
-        this.editorOnSelection(begin_at, end_at);
+      onSelection: (beginAt: number, endAt: number) => {
+        this.editorOnSelection(beginAt, endAt);
       },
       onSave: this.editorOnSave,
     };
-    this.wui_editor = new WuiEditor(editor_opts);
+    this.editor = new WuiEditor(editorOpts);
 
-    this.wui_notif = new WuiNotif();
+    this.notif = new WuiNotif();
 
-    const wui_vfs_opts: WuiVfsOptions = {
+    const vfsOpts: WuiVfsOptions = {
       id: ID_VFS,
-      open: (path: string, is_dir: boolean): Promise<WuiResponseInterface> => {
-        return this.open(path, is_dir);
+      open: (path: string, isDir: boolean): Promise<WuiResponseInterface> => {
+        return this.open(path, isDir);
       },
       openNode: (node: WuiVfsNodeInterface): Promise<WuiResponseInterface> => {
         return this.openNode(node);
       },
     };
-    this.wui_vfs = new WuiVfs(wui_vfs_opts);
+    this.vfs = new WuiVfs(vfsOpts);
 
-    window.onhashchange = (ev: Event): any => {
+    window.onhashchange = (ev: Event) => {
       ev.preventDefault();
       const hashchange = ev as HashChangeEvent;
       const url = new URL(hashchange.newURL);
       this.onHashChange(url.hash);
     };
-
-    // Open path based on hash.
-    this.onHashChange(window.location.hash);
   }
 
   onHashChange(hash: string) {
@@ -219,40 +216,40 @@ export class Awwan {
     }
 
     hash = hash.substring(1);
-    this.wui_vfs.openDir(hash);
+    this.vfs.openDir(hash);
   }
 
   // open fetch the node content from remote server.
-  async open(path: string, is_dir: boolean): Promise<WuiResponseInterface> {
-    const http_res = await fetch("/awwan/api/fs?path=" + path);
-    const res = await http_res.json();
+  async open(path: string, isDir: boolean): Promise<WuiResponseInterface> {
+    const httpRes = await fetch("/awwan/api/fs?path=" + path);
+    const res = await httpRes.json();
     if (res.code != 200) {
-      this.wui_notif.error(`Failed to open ${path}: ${res.message}`);
+      this.notif.error(`Failed to open ${path}: ${res.message}`);
       return res;
     }
 
     const node = res.data as WuiVfsNodeInterface;
-    this.com_inp_vfs_new.value = node.name;
+    this.comInputVfsNew.value = node.name;
 
-    if (is_dir) {
-      this.current_node = node;
+    if (isDir) {
+      this.currentNode = node;
       window.location.hash = "#" + path;
       return res;
     }
 
     const resAllow = this.isEditAllowed(node);
     if (resAllow.code != 200) {
-      this.wui_notif.error(resAllow.message);
+      this.notif.error(resAllow.message);
       return resAllow;
     }
 
-    this.com_file_path.innerText = path;
+    this.comFilePath.innerText = path;
     this.request.script = path;
 
-    this.wui_editor.open(node);
-    this.com_btn_local.disabled = false;
-    this.com_btn_remote.disabled = false;
-    this.com_btn_save.disabled = false;
+    this.editor.open(node);
+    this.comBtnLocal.disabled = false;
+    this.comBtnRemote.disabled = false;
+    this.comBtnSave.disabled = false;
 
     return res;
   }
@@ -262,7 +259,7 @@ export class Awwan {
   async openNode(node: WuiVfsNodeInterface): Promise<WuiResponseInterface> {
     const resAllow = this.isEditAllowed(node);
     if (resAllow.code != 200) {
-      this.wui_notif.error(resAllow.message);
+      this.notif.error(resAllow.message);
       return resAllow;
     }
 
@@ -276,7 +273,7 @@ export class Awwan {
       message: "",
     };
 
-    let is_type_allowed = false;
+    let isTypeAllowed = false;
     if (
       node.content_type &&
       (node.content_type.indexOf("json") >= 0 ||
@@ -285,9 +282,9 @@ export class Awwan {
         node.content_type.indexOf("text") >= 0 ||
         node.content_type.indexOf("xml") >= 0)
     ) {
-      is_type_allowed = true;
+      isTypeAllowed = true;
     }
-    if (!is_type_allowed) {
+    if (!isTypeAllowed) {
       res.message = `The file "${node.name}" with content type "${node.content_type}" is not allowed to be opened`;
       return res;
     }
@@ -305,7 +302,7 @@ export class Awwan {
     if (this.request.script == "") {
       return;
     }
-    let content = this.wui_editor.getContent();
+    let content = this.editor.getContent();
     const l = content.length;
     if (l > 0 && content[l - 1] != "\n") {
       content += "\n";
@@ -323,7 +320,7 @@ export class Awwan {
       path: path,
       content: btoa(content),
     };
-    const http_res = await fetch("/awwan/api/fs", {
+    const httpRes = await fetch("/awwan/api/fs", {
       method: "PUT",
       headers: {
         Accept: "application/json",
@@ -331,18 +328,18 @@ export class Awwan {
       },
       body: JSON.stringify(req),
     });
-    const res = await http_res.json();
+    const res = await httpRes.json();
     if (res.code != 200) {
-      this.wui_notif.error(`Failed to save file ${path}: ${res.message}`);
+      this.notif.error(`Failed to save file ${path}: ${res.message}`);
       return null;
     }
 
-    this.wui_notif.info(`File ${path} has been saved.`);
+    this.notif.info(`File ${path} has been saved.`);
     return res;
   }
 
   editorOnSelection(begin: number, end: number) {
-    const stmts = this.wui_editor.lines.slice(begin, end + 1);
+    const stmts = this.editor.lines.slice(begin, end + 1);
     for (const stmt of stmts) {
       console.log("stmt:", stmt.x, stmt.text);
     }
@@ -351,7 +348,7 @@ export class Awwan {
   // execLocal request to execute the selected script on local system.
   execLocal() {
     if (this.request.script == "") {
-      this.wui_notif.error(`Execute on local: no file selected`);
+      this.notif.error(`Execute on local: no file selected`);
       return;
     }
     this.httpApiExecute("local");
@@ -360,7 +357,7 @@ export class Awwan {
   // execRemote request to execute the selected script on remote system.
   execRemote() {
     if (this.request.script == "") {
-      this.wui_notif.error(`Execute on remote: no file selected`);
+      this.notif.error(`Execute on remote: no file selected`);
       return;
     }
     this.httpApiExecute("remote");
@@ -369,26 +366,26 @@ export class Awwan {
   async httpApiExecute(mode: string) {
     let beginAt = 0;
     let endAt = 0;
-    const selection_range = this.wui_editor.getSelectionRange();
-    if (selection_range.begin_at > 0) {
-      beginAt = selection_range.begin_at + 1;
+    const selectionRange = this.editor.getSelectionRange();
+    if (selectionRange.begin_at > 0) {
+      beginAt = selectionRange.begin_at + 1;
     }
-    if (selection_range.end_at > 0) {
-      endAt = selection_range.end_at + 1;
+    if (selectionRange.end_at > 0) {
+      endAt = selectionRange.end_at + 1;
     }
 
-    this.com_stdout.innerText = "";
-    this.com_stderr.innerText = "";
+    this.comStdout.innerText = "";
+    this.comStderr.innerText = "";
 
     this.request.mode = mode;
-    this.request.content = btoa(this.wui_editor.getContent());
+    this.request.content = btoa(this.editor.getContent());
     if (beginAt === endAt) {
       this.request.line_range = `${beginAt}`;
     } else {
       this.request.line_range = `${beginAt}-${endAt}`;
     }
 
-    const http_res = await fetch("/awwan/api/execute", {
+    const httpRes = await fetch("/awwan/api/execute", {
       method: "POST",
       headers: {
         Accept: "application/json",
@@ -397,39 +394,37 @@ export class Awwan {
       body: JSON.stringify(this.request),
     });
 
-    const res = await http_res.json();
+    const res = await httpRes.json();
     if (res.code != 200) {
-      this.wui_notif.error(`Execute failed: ${res.message}`);
+      this.notif.error(`Execute failed: ${res.message}`);
       return;
     }
 
     if (res.data.stdout) {
-      this.com_stdout.innerText = atob(res.data.stdout);
+      this.comStdout.innerText = atob(res.data.stdout);
     }
     if (res.data.stderr) {
-      this.com_stderr.innerText = atob(res.data.stderr);
+      this.comStderr.innerText = atob(res.data.stderr);
     }
 
-    this.wui_notif.info(
-      `Successfully execute ${this.request.script} on ${mode}.`,
-    );
+    this.notif.info(`Successfully execute ${this.request.script} on ${mode}.`);
   }
 
-  private async newNode(is_dir: boolean) {
-    if (!this.current_node) {
-      this.wui_notif.error("No active directory loaded or selected.");
+  private async newNode(isDir: boolean) {
+    if (!this.currentNode) {
+      this.notif.error("No active directory loaded or selected.");
       return;
     }
 
-    const name = this.com_inp_vfs_new.value;
+    const name = this.comInputVfsNew.value;
     if (name === "") {
-      this.wui_notif.error("Empty file name");
+      this.notif.error("Empty file name");
       return;
     }
     const req: WuiVfsNodeInterface = {
-      path: this.current_node.path + "/" + name,
+      path: this.currentNode.path + "/" + name,
       name: name,
-      is_dir: is_dir,
+      is_dir: isDir,
       content_type: "",
       mod_time: 0,
       size: 0,
@@ -438,7 +433,7 @@ export class Awwan {
       content: "",
     };
 
-    const http_res = await fetch("/awwan/api/fs", {
+    const httpRes = await fetch("/awwan/api/fs", {
       method: "POST",
       headers: {
         Accept: "application/json",
@@ -447,39 +442,39 @@ export class Awwan {
       body: JSON.stringify(req),
     });
 
-    const res = await http_res.json();
+    const res = await httpRes.json();
     if (res.code != 200) {
-      this.wui_notif.error(`newNode: ${res.message}`);
+      this.notif.error(`newNode: ${res.message}`);
       return;
     }
 
     const node = res.data as WuiVfsNodeInterface;
-    if (!this.current_node.childs) {
-      this.current_node.childs = [];
+    if (!this.currentNode.childs) {
+      this.currentNode.childs = [];
     }
-    this.current_node.childs.push(node);
-    this.wui_vfs.set(this.current_node);
+    this.currentNode.childs.push(node);
+    this.vfs.set(this.currentNode);
   }
 
   private async onClickRemove() {
-    console.log("onClickRemove: ", this.current_node);
-    if (!this.current_node) {
-      this.wui_notif.error("No file selected.");
+    console.log("onClickRemove: ", this.currentNode);
+    if (!this.currentNode) {
+      this.notif.error("No file selected.");
       return;
     }
 
-    const name = this.com_inp_vfs_new.value;
+    const name = this.comInputVfsNew.value;
     if (name === "") {
-      this.wui_notif.error("Empty file name");
+      this.notif.error("Empty file name");
       return;
     }
     const req: fsRequest = {
-      path: this.current_node.path + "/" + name,
+      path: this.currentNode.path + "/" + name,
       is_dir: false,
       content: "",
     };
 
-    const http_res = await fetch("/awwan/api/fs", {
+    const httpRes = await fetch("/awwan/api/fs", {
       method: "DELETE",
       headers: {
         Accept: "application/json",
@@ -488,9 +483,9 @@ export class Awwan {
       body: JSON.stringify(req),
     });
 
-    const res = await http_res.json();
+    const res = await httpRes.json();
     if (res.code != 200) {
-      this.wui_notif.error(`remove: ${res.message}`);
+      this.notif.error(`remove: ${res.message}`);
       return;
     }
   }

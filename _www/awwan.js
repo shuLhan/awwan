@@ -19,7 +19,7 @@ const ID_STDOUT = "stdout";
 const ID_STDERR = "stderr";
 const MAX_FILE_SIZE = 3000000;
 export function renderHtml() {
-    let el = document.createElement("div");
+    const el = document.createElement("div");
     el.classList.add("awwan");
     el.innerHTML = `
 			<div class="awwan_nav_left">
@@ -68,7 +68,7 @@ export function renderHtml() {
 }
 export class Awwan {
     constructor() {
-        this.current_node = null;
+        this.currentNode = null;
         this.request = {
             mode: "local",
             script: "",
@@ -77,159 +77,157 @@ export class Awwan {
         };
         let el = document.getElementById(ID_BTN_CLEAR_SELECTION);
         if (el) {
-            this.com_btn_clear = el;
-            this.com_btn_clear.onclick = () => {
-                this.wui_editor.clearSelection();
+            this.comBtnClear = el;
+            this.comBtnClear.onclick = () => {
+                this.editor.clearSelection();
             };
         }
         el = document.getElementById(ID_BTN_EXEC_LOCAL);
         if (el) {
-            this.com_btn_local = el;
-            this.com_btn_local.onclick = () => {
+            this.comBtnLocal = el;
+            this.comBtnLocal.onclick = () => {
                 this.execLocal();
             };
         }
         el = document.getElementById(ID_BTN_EXEC_REMOTE);
         if (el) {
-            this.com_btn_remote = el;
-            this.com_btn_remote.onclick = () => {
+            this.comBtnRemote = el;
+            this.comBtnRemote.onclick = () => {
                 this.execRemote();
             };
         }
         el = document.getElementById(ID_BTN_NEW_DIR);
         if (el) {
-            this.com_btn_new_dir = el;
-            this.com_btn_new_dir.onclick = () => {
+            this.comBtnNewDir = el;
+            this.comBtnNewDir.onclick = () => {
                 this.newNode(true);
             };
         }
         el = document.getElementById(ID_BTN_NEW_FILE);
         if (el) {
-            this.com_btn_new_file = el;
-            this.com_btn_new_file.onclick = () => {
+            this.comBtnNewFile = el;
+            this.comBtnNewFile.onclick = () => {
                 this.newNode(false);
             };
         }
         el = document.getElementById(ID_BTN_REMOVE);
         if (el) {
-            this.com_btn_remove = el;
-            this.com_btn_remove.onclick = () => {
+            this.comBtnRemove = el;
+            this.comBtnRemove.onclick = () => {
                 this.onClickRemove();
             };
         }
         el = document.getElementById(ID_BTN_SAVE);
         if (el) {
-            this.com_btn_save = el;
-            this.com_btn_save.onclick = () => {
+            this.comBtnSave = el;
+            this.comBtnSave.onclick = () => {
                 this.onClickSave();
             };
         }
         el = document.getElementById(ID_INP_VFS_NEW);
         if (el) {
-            this.com_inp_vfs_new = el;
+            this.comInputVfsNew = el;
         }
         el = document.getElementById(ID_VFS_PATH);
         if (el) {
-            this.com_file_path = el;
+            this.comFilePath = el;
         }
         el = document.getElementById(ID_STDOUT);
         if (el) {
-            this.com_stdout = el;
+            this.comStdout = el;
         }
         el = document.getElementById(ID_STDERR);
         if (el) {
-            this.com_stderr = el;
+            this.comStderr = el;
         }
-        let editor_opts = {
+        const editorOpts = {
             id: ID_EDITOR,
             is_editable: true,
-            onSelection: (begin_at, end_at) => {
-                this.editorOnSelection(begin_at, end_at);
+            onSelection: (beginAt, endAt) => {
+                this.editorOnSelection(beginAt, endAt);
             },
             onSave: this.editorOnSave,
         };
-        this.wui_editor = new WuiEditor(editor_opts);
-        this.wui_notif = new WuiNotif();
-        let wui_vfs_opts = {
+        this.editor = new WuiEditor(editorOpts);
+        this.notif = new WuiNotif();
+        const vfsOpts = {
             id: ID_VFS,
-            open: (path, is_dir) => {
-                return this.open(path, is_dir);
+            open: (path, isDir) => {
+                return this.open(path, isDir);
             },
             openNode: (node) => {
                 return this.openNode(node);
             },
         };
-        this.wui_vfs = new WuiVfs(wui_vfs_opts);
+        this.vfs = new WuiVfs(vfsOpts);
         window.onhashchange = (ev) => {
             ev.preventDefault();
-            let hashchange = ev;
-            let url = new URL(hashchange.newURL);
+            const hashchange = ev;
+            const url = new URL(hashchange.newURL);
             this.onHashChange(url.hash);
         };
-        // Open path based on hash.
-        this.onHashChange(window.location.hash);
     }
     onHashChange(hash) {
         if (hash === "") {
             hash = "#/";
         }
         hash = hash.substring(1);
-        this.wui_vfs.openDir(hash);
+        this.vfs.openDir(hash);
     }
     // open fetch the node content from remote server.
-    async open(path, is_dir) {
-        let http_res = await fetch("/awwan/api/fs?path=" + path);
-        let res = await http_res.json();
+    async open(path, isDir) {
+        const httpRes = await fetch("/awwan/api/fs?path=" + path);
+        const res = await httpRes.json();
         if (res.code != 200) {
-            this.wui_notif.error(`Failed to open ${path}: ${res.message}`);
+            this.notif.error(`Failed to open ${path}: ${res.message}`);
             return res;
         }
-        let node = res.data;
-        this.com_inp_vfs_new.value = node.name;
-        if (is_dir) {
-            this.current_node = node;
+        const node = res.data;
+        this.comInputVfsNew.value = node.name;
+        if (isDir) {
+            this.currentNode = node;
             window.location.hash = "#" + path;
             return res;
         }
-        let resAllow = this.isEditAllowed(node);
+        const resAllow = this.isEditAllowed(node);
         if (resAllow.code != 200) {
-            this.wui_notif.error(resAllow.message);
+            this.notif.error(resAllow.message);
             return resAllow;
         }
-        this.com_file_path.innerText = path;
+        this.comFilePath.innerText = path;
         this.request.script = path;
-        this.wui_editor.open(node);
-        this.com_btn_local.disabled = false;
-        this.com_btn_remote.disabled = false;
-        this.com_btn_save.disabled = false;
+        this.editor.open(node);
+        this.comBtnLocal.disabled = false;
+        this.comBtnRemote.disabled = false;
+        this.comBtnSave.disabled = false;
         return res;
     }
     // openNode is an handler that will called when user click on of the
     // item in the list.
     async openNode(node) {
-        let resAllow = this.isEditAllowed(node);
+        const resAllow = this.isEditAllowed(node);
         if (resAllow.code != 200) {
-            this.wui_notif.error(resAllow.message);
+            this.notif.error(resAllow.message);
             return resAllow;
         }
-        let res = await this.open(node.path, node.is_dir);
+        const res = await this.open(node.path, node.is_dir);
         return res;
     }
     isEditAllowed(node) {
-        let res = {
+        const res = {
             code: 412,
             message: "",
         };
-        let is_type_allowed = false;
+        let isTypeAllowed = false;
         if (node.content_type &&
             (node.content_type.indexOf("json") >= 0 ||
                 node.content_type.indexOf("message") >= 0 ||
                 node.content_type.indexOf("script") >= 0 ||
                 node.content_type.indexOf("text") >= 0 ||
                 node.content_type.indexOf("xml") >= 0)) {
-            is_type_allowed = true;
+            isTypeAllowed = true;
         }
-        if (!is_type_allowed) {
+        if (!isTypeAllowed) {
             res.message = `The file "${node.name}" with content type "${node.content_type}" is not allowed to be opened`;
             return res;
         }
@@ -244,8 +242,8 @@ export class Awwan {
         if (this.request.script == "") {
             return;
         }
-        let content = this.wui_editor.getContent();
-        let l = content.length;
+        let content = this.editor.getContent();
+        const l = content.length;
         if (l > 0 && content[l - 1] != "\n") {
             content += "\n";
         }
@@ -256,11 +254,11 @@ export class Awwan {
         this.doSaveFile(this.request.script, content);
     }
     async doSaveFile(path, content) {
-        let req = {
+        const req = {
             path: path,
             content: btoa(content),
         };
-        let http_res = await fetch("/awwan/api/fs", {
+        const httpRes = await fetch("/awwan/api/fs", {
             method: "PUT",
             headers: {
                 Accept: "application/json",
@@ -268,16 +266,16 @@ export class Awwan {
             },
             body: JSON.stringify(req),
         });
-        let res = await http_res.json();
+        const res = await httpRes.json();
         if (res.code != 200) {
-            this.wui_notif.error(`Failed to save file ${path}: ${res.message}`);
+            this.notif.error(`Failed to save file ${path}: ${res.message}`);
             return null;
         }
-        this.wui_notif.info(`File ${path} has been saved.`);
+        this.notif.info(`File ${path} has been saved.`);
         return res;
     }
     editorOnSelection(begin, end) {
-        let stmts = this.wui_editor.lines.slice(begin, end + 1);
+        const stmts = this.editor.lines.slice(begin, end + 1);
         for (const stmt of stmts) {
             console.log("stmt:", stmt.x, stmt.text);
         }
@@ -285,7 +283,7 @@ export class Awwan {
     // execLocal request to execute the selected script on local system.
     execLocal() {
         if (this.request.script == "") {
-            this.wui_notif.error(`Execute on local: no file selected`);
+            this.notif.error(`Execute on local: no file selected`);
             return;
         }
         this.httpApiExecute("local");
@@ -293,7 +291,7 @@ export class Awwan {
     // execRemote request to execute the selected script on remote system.
     execRemote() {
         if (this.request.script == "") {
-            this.wui_notif.error(`Execute on remote: no file selected`);
+            this.notif.error(`Execute on remote: no file selected`);
             return;
         }
         this.httpApiExecute("remote");
@@ -301,24 +299,24 @@ export class Awwan {
     async httpApiExecute(mode) {
         let beginAt = 0;
         let endAt = 0;
-        let selection_range = this.wui_editor.getSelectionRange();
-        if (selection_range.begin_at > 0) {
-            beginAt = selection_range.begin_at + 1;
+        const selectionRange = this.editor.getSelectionRange();
+        if (selectionRange.begin_at > 0) {
+            beginAt = selectionRange.begin_at + 1;
         }
-        if (selection_range.end_at > 0) {
-            endAt = selection_range.end_at + 1;
+        if (selectionRange.end_at > 0) {
+            endAt = selectionRange.end_at + 1;
         }
-        this.com_stdout.innerText = "";
-        this.com_stderr.innerText = "";
+        this.comStdout.innerText = "";
+        this.comStderr.innerText = "";
         this.request.mode = mode;
-        this.request.content = btoa(this.wui_editor.getContent());
+        this.request.content = btoa(this.editor.getContent());
         if (beginAt === endAt) {
             this.request.line_range = `${beginAt}`;
         }
         else {
             this.request.line_range = `${beginAt}-${endAt}`;
         }
-        let http_res = await fetch("/awwan/api/execute", {
+        const httpRes = await fetch("/awwan/api/execute", {
             method: "POST",
             headers: {
                 Accept: "application/json",
@@ -326,33 +324,33 @@ export class Awwan {
             },
             body: JSON.stringify(this.request),
         });
-        let res = await http_res.json();
+        const res = await httpRes.json();
         if (res.code != 200) {
-            this.wui_notif.error(`Execute failed: ${res.message}`);
+            this.notif.error(`Execute failed: ${res.message}`);
             return;
         }
         if (res.data.stdout) {
-            this.com_stdout.innerText = atob(res.data.stdout);
+            this.comStdout.innerText = atob(res.data.stdout);
         }
         if (res.data.stderr) {
-            this.com_stderr.innerText = atob(res.data.stderr);
+            this.comStderr.innerText = atob(res.data.stderr);
         }
-        this.wui_notif.info(`Successfully execute ${this.request.script} on ${mode}.`);
+        this.notif.info(`Successfully execute ${this.request.script} on ${mode}.`);
     }
-    async newNode(is_dir) {
-        if (!this.current_node) {
-            this.wui_notif.error("No active directory loaded or selected.");
+    async newNode(isDir) {
+        if (!this.currentNode) {
+            this.notif.error("No active directory loaded or selected.");
             return;
         }
-        let name = this.com_inp_vfs_new.value;
+        const name = this.comInputVfsNew.value;
         if (name === "") {
-            this.wui_notif.error("Empty file name");
+            this.notif.error("Empty file name");
             return;
         }
-        let req = {
-            path: this.current_node.path + "/" + name,
+        const req = {
+            path: this.currentNode.path + "/" + name,
             name: name,
-            is_dir: is_dir,
+            is_dir: isDir,
             content_type: "",
             mod_time: 0,
             size: 0,
@@ -360,7 +358,7 @@ export class Awwan {
             childs: [],
             content: "",
         };
-        let http_res = await fetch("/awwan/api/fs", {
+        const httpRes = await fetch("/awwan/api/fs", {
             method: "POST",
             headers: {
                 Accept: "application/json",
@@ -368,35 +366,35 @@ export class Awwan {
             },
             body: JSON.stringify(req),
         });
-        let res = await http_res.json();
+        const res = await httpRes.json();
         if (res.code != 200) {
-            this.wui_notif.error(`newNode: ${res.message}`);
+            this.notif.error(`newNode: ${res.message}`);
             return;
         }
-        let node = res.data;
-        if (!this.current_node.childs) {
-            this.current_node.childs = [];
+        const node = res.data;
+        if (!this.currentNode.childs) {
+            this.currentNode.childs = [];
         }
-        this.current_node.childs.push(node);
-        this.wui_vfs.set(this.current_node);
+        this.currentNode.childs.push(node);
+        this.vfs.set(this.currentNode);
     }
     async onClickRemove() {
-        console.log("onClickRemove: ", this.current_node);
-        if (!this.current_node) {
-            this.wui_notif.error("No file selected.");
+        console.log("onClickRemove: ", this.currentNode);
+        if (!this.currentNode) {
+            this.notif.error("No file selected.");
             return;
         }
-        let name = this.com_inp_vfs_new.value;
+        const name = this.comInputVfsNew.value;
         if (name === "") {
-            this.wui_notif.error("Empty file name");
+            this.notif.error("Empty file name");
             return;
         }
-        let req = {
-            path: this.current_node.path + "/" + name,
+        const req = {
+            path: this.currentNode.path + "/" + name,
             is_dir: false,
             content: "",
         };
-        let http_res = await fetch("/awwan/api/fs", {
+        const httpRes = await fetch("/awwan/api/fs", {
             method: "DELETE",
             headers: {
                 Accept: "application/json",
@@ -404,9 +402,9 @@ export class Awwan {
             },
             body: JSON.stringify(req),
         });
-        let res = await http_res.json();
+        const res = await httpRes.json();
         if (res.code != 200) {
-            this.wui_notif.error(`remove: ${res.message}`);
+            this.notif.error(`remove: ${res.message}`);
             return;
         }
     }
