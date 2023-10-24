@@ -1,878 +1,811 @@
+"use strict";
 var awwan = (() => {
   // _www/wui/editor/editor.js
   var WUI_EDITOR_CLASS = "wui_editor";
   var WUI_EDITOR_CLASS_LINE = "wui_editor_line";
   var WUI_EDITOR_CLASS_LINE_NUMBER = "wui_editor_line_number";
   var WUI_EDITOR_CLASS_LINE_TEXT = "wui_editor_line_text";
-  var WuiEditor = (
-    /** @class */
-    function() {
-      function WuiEditor2(opts) {
-        var _this = this;
-        this.opts = opts;
-        this.lines = [];
-        this.active_file = null;
-        this.active_text = null;
-        this.range_begin = -1;
-        this.range_end = -1;
-        this.raw_lines = [];
-        this.is_key_control = false;
-        this.unre = new WuiEditorUndoRedo();
-        this.id = opts.id;
-        this.is_editable = opts.is_editable;
-        var el = document.getElementById(opts.id);
-        if (!el) {
-          console.error("WuiEditor: element ID not found:", opts.id);
-          return;
-        }
-        this.el = el;
-        this.initStyle();
-        this.el.classList.add(WUI_EDITOR_CLASS);
-        var sel = window.getSelection();
-        if (!sel) {
-          console.error("WuiEditor: cannot get window selection", opts.id);
-          return;
-        }
-        this.sel = sel;
-        this.range = document.createRange();
-        document.onkeyup = function(ev) {
-          _this.onKeyupDocument(_this, ev);
-        };
+  var WuiEditor = class {
+    constructor(opts) {
+      this.opts = opts;
+      this.lines = [];
+      this.range_begin = -1;
+      this.range_end = -1;
+      this.raw_lines = [];
+      this.is_key_control = false;
+      this.unre = new WuiEditorUndoRedo();
+      this.id = opts.id;
+      this.is_editable = opts.is_editable;
+      const el = document.getElementById(opts.id);
+      if (!el) {
+        console.error("WuiEditor: element ID not found:", opts.id);
+        return;
       }
-      WuiEditor2.prototype.GetContent = function() {
-        var content = "";
-        for (var x = 0; x < this.lines.length; x++) {
-          if (x > 0) {
-            content += "\n";
+      this.el = el;
+      this.initStyle();
+      this.el.classList.add(WUI_EDITOR_CLASS);
+      const sel = window.getSelection();
+      if (!sel) {
+        console.error("WuiEditor: cannot get window selection", opts.id);
+        return;
+      }
+      this.sel = sel;
+      this.range = document.createRange();
+      document.onkeyup = (ev) => {
+        this.onKeyupDocument(this, ev);
+      };
+    }
+    // getContent return content of file.
+    getContent() {
+      let content = "";
+      for (let x = 0; x < this.lines.length; x++) {
+        if (x > 0) {
+          content += "\n";
+        }
+        content += this.lines[x].elText.innerText;
+      }
+      return content;
+    }
+    getSelectionRange() {
+      return {
+        begin_at: this.range_begin,
+        end_at: this.range_end
+      };
+    }
+    onClickText() {
+      const sel = window.getSelection();
+      if (sel) {
+        this.sel = sel;
+      }
+    }
+    onKeyup(x, ev) {
+      let elTextCurr;
+      let elTextPrev;
+      let textBefore;
+      let textAfter;
+      let off;
+      switch (ev.key) {
+        case "Alt":
+        case "ArrowDown":
+        case "ArrowLeft":
+        case "ArrowRight":
+        case "ArrowUp":
+        case "CapsLock":
+        case "ContextMenu":
+        case "End":
+        case "Home":
+        case "Insert":
+        case "OS":
+        case "PageDown":
+        case "PageUp":
+        case "Pause":
+        case "PrintScreen":
+        case "ScrollLock":
+        case "Shift":
+          break;
+        case "Backspace":
+          ev.preventDefault();
+          textBefore = this.raw_lines[x];
+          elTextCurr = this.lines[x].elText;
+          textAfter = elTextCurr.innerText;
+          off = this.sel.focusOffset;
+          if (off > 0) {
+            this.unre.doUpdate(x, textBefore, textAfter);
+            this.raw_lines[x] = textAfter;
+            this.setCaret(elTextCurr, off);
+            return false;
           }
-          content += this.lines[x].el_text.innerText;
-        }
-        return content;
-      };
-      WuiEditor2.prototype.GetSelectionRange = function() {
-        return {
-          begin_at: this.range_begin,
-          end_at: this.range_end
-        };
-      };
-      WuiEditor2.prototype.OnClickText = function(text) {
-        var sel = window.getSelection();
-        if (sel) {
-          this.sel = sel;
-        }
-      };
-      WuiEditor2.prototype.OnKeyup = function(x, text, ev) {
-        var text_before;
-        var text_after;
-        var off;
-        switch (ev.key) {
-          case "Alt":
-          case "ArrowDown":
-          case "ArrowLeft":
-          case "ArrowRight":
-          case "ArrowUp":
-          case "CapsLock":
-          case "ContextMenu":
-          case "End":
-          case "Home":
-          case "Insert":
-          case "OS":
-          case "PageDown":
-          case "PageUp":
-          case "Pause":
-          case "PrintScreen":
-          case "ScrollLock":
-          case "Shift":
-            break;
-          case "Backspace":
+          elTextPrev = this.lines[x - 1].elText;
+          this.unre.doJoin(x - 1, elTextPrev.innerText, elTextCurr.innerText);
+          off = elTextPrev.innerText.length;
+          elTextPrev.innerText = elTextPrev.innerText + elTextCurr.innerText;
+          this.raw_lines[x - 1] = elTextPrev.innerText;
+          this.deleteLine(x);
+          this.setCaret(elTextPrev, off);
+          return false;
+        case "Control":
+          this.is_key_control = false;
+          break;
+        case "Enter":
+          ev.preventDefault();
+          break;
+        case "r":
+          if (this.is_key_control) {
             ev.preventDefault();
-            text_before = this.raw_lines[x];
-            var el_text_curr = this.lines[x].el_text;
-            text_after = el_text_curr.innerText;
-            off = this.sel.focusOffset;
-            if (off > 0) {
-              this.unre.DoUpdate(x, text_before, text_after);
-              this.raw_lines[x] = text_after;
-              this.setCaret(el_text_curr, off);
-              return false;
-            }
-            var el_text_prev = this.lines[x - 1].el_text;
-            this.unre.DoJoin(x - 1, el_text_prev.innerText, el_text_curr.innerText);
-            off = el_text_prev.innerText.length;
-            el_text_prev.innerText = el_text_prev.innerText + el_text_curr.innerText;
-            this.raw_lines[x - 1] = el_text_prev.innerText;
-            this.deleteLine(x);
-            this.setCaret(el_text_prev, off);
-            return false;
-          case "Control":
-            this.is_key_control = false;
-            break;
-          case "Enter":
-            ev.preventDefault();
-            break;
-          case "r":
-            if (this.is_key_control) {
-              ev.preventDefault();
-              return;
-            }
-            break;
-          case "z":
-            if (this.is_key_control) {
-              ev.preventDefault();
-              return;
-            }
-            break;
-          default:
-            if (this.is_key_control) {
-              break;
-            }
-            this.unre.DoUpdate(x, this.raw_lines[x], this.lines[x].el_text.innerText);
-            this.raw_lines[x] = this.lines[x].el_text.innerText;
-        }
-        return true;
-      };
-      WuiEditor2.prototype.OnKeydownOnLine = function(x, el_text, ev) {
-        var text_before;
-        var text_after;
-        var off;
-        switch (ev.key) {
-          case "ArrowUp":
-            if (x == 0) {
-              return false;
-            }
-            ev.preventDefault();
-            var el_text_1 = this.lines[x - 1].el_text;
-            var off_1 = this.sel.focusOffset;
-            if (off_1 > el_text_1.innerText.length) {
-              off_1 = el_text_1.innerText.length;
-            }
-            this.setCaret(el_text_1, off_1);
-            if (x == 1) {
-              this.el.scrollTop = 0;
-            } else if (x * 23 < this.el.scrollTop) {
-              this.el.scrollTop -= 25;
-            }
-            return false;
-          case "ArrowDown":
-            if (x == this.lines.length - 1) {
-              return false;
-            }
-            ev.preventDefault();
-            el_text_1 = this.lines[x + 1].el_text;
-            off_1 = this.sel.focusOffset;
-            if (off_1 > el_text_1.innerText.length) {
-              off_1 = el_text_1.innerText.length;
-            }
-            this.setCaret(el_text_1, off_1);
-            x += 2;
-            if (x * 25 >= this.el.clientHeight + this.el.scrollTop) {
-              this.el.scrollTop += 25;
-            }
-            return false;
-          case "Control":
-            this.is_key_control = true;
-            break;
-          case "Delete":
-            ev.preventDefault();
-            var is_join_line_after = false;
-            var el_text_current = this.lines[x].el_text;
-            off_1 = this.sel.focusOffset;
-            text_before = el_text_current.innerText;
-            text_after = "";
-            if (text_before.length === 0 || off_1 === text_before.length) {
-              is_join_line_after = true;
-            }
-            if (is_join_line_after) {
-              if (x + 1 < this.lines.length) {
-                var el_text_after = this.lines[x + 1].el_text;
-                text_after = el_text_after.innerText;
-                el_text_after.innerText = "";
-                this.unre.DoJoin(x, text_before, text_after);
-                this.deleteLine(x + 1);
-                text_after = text_before + text_after;
-              }
-            } else {
-              text_after = text_before.slice(0, off_1) + text_before.slice(off_1 + 1, text_before.length);
-              this.unre.DoUpdate(x, text_before, text_after);
-            }
-            this.lines[x].el_text.innerText = text_after;
-            this.raw_lines[x] = text_after;
-            this.setCaret(el_text_current, off_1);
-            break;
-          case "Enter":
-            ev.preventDefault();
-            off_1 = this.sel.focusOffset;
-            var text = this.lines[x].el_text.innerText;
-            text_before = text.slice(0, off_1);
-            text_after = text.slice(off_1, text.length);
-            this.unre.DoSplit(x, text_before, text_after);
-            this.lines[x].el_text.innerText = text_before;
-            this.raw_lines[x] = text_before;
-            this.insertNewline(x + 1, text_after);
-            if (x + 3 >= this.raw_lines.length) {
-              this.el.scrollTop = this.el.scrollHeight;
-            }
-            break;
-          case "Tab":
-            ev.preventDefault();
-            el_text_1 = this.lines[x].el_text;
-            off_1 = this.sel.focusOffset;
-            text_before = el_text_1.innerText;
-            text_after = text_before.slice(0, off_1) + "	" + text_before.slice(off_1, text_before.length);
-            this.unre.DoUpdate(x, text_before, text_after);
-            el_text_1.innerText = text_after;
-            this.raw_lines[x] = text_after;
-            this.setCaret(el_text_1, off_1 + 1);
-            break;
-          case "r":
-            if (this.is_key_control) {
-              ev.preventDefault();
-              this.doRedo();
-              return;
-            }
-            break;
-          case "s":
-            if (this.is_key_control) {
-              ev.preventDefault();
-              ev.stopPropagation();
-              if (this.opts.OnSave) {
-                this.opts.OnSave(this.GetContent());
-              }
-              return false;
-            }
-            break;
-          case "z":
-            if (this.is_key_control) {
-              ev.preventDefault();
-              this.doUndo();
-              return;
-            }
-            break;
-        }
-      };
-      WuiEditor2.prototype.OnMouseDownAtLine = function(x) {
-        this.range_begin = x;
-      };
-      WuiEditor2.prototype.OnMouseUpAtLine = function(x) {
-        this.range_end = x;
-        if (this.range_end < this.range_begin) {
-          return;
-        }
-        var y = 0;
-        for (; y < this.range_begin; y++) {
-          this.el.children[y].setAttribute("style", "");
-        }
-        for (; y <= this.range_end; y++) {
-          this.el.children[y].setAttribute("style", "background-color:lightsalmon");
-        }
-        for (; y < this.el.children.length; y++) {
-          this.el.children[y].setAttribute("style", "");
-        }
-        if (this.opts.OnSelection) {
-          this.opts.OnSelection(this.range_begin, this.range_end);
-        }
-      };
-      WuiEditor2.prototype.SetEditOff = function() {
-        for (var x = 0; x < this.lines.length; x++) {
-          this.lines[x].SetEditOff();
-        }
-      };
-      WuiEditor2.prototype.SetEditOn = function() {
-        for (var x = 0; x < this.lines.length; x++) {
-          this.lines[x].SetEditOn();
-        }
-      };
-      WuiEditor2.prototype.Open = function(node) {
-        this.active_file = node;
-        var content = atob(node.content);
-        content = content.replace("\r\n", "\n");
-        this.raw_lines = content.split("\n");
-        this.lines = [];
-        for (var x = 0; x < this.raw_lines.length; x++) {
-          var line = new WuiEditorLine(x, this.raw_lines[x], this);
-          this.lines.push(line);
-        }
-        this.render();
-      };
-      WuiEditor2.prototype.ClearSelection = function() {
-        if (this.range_begin < 0 || this.range_end == 0) {
-          return;
-        }
-        for (var x = this.range_begin; x <= this.range_end; x++) {
-          this.el.children[x].setAttribute("style", "");
-        }
-        this.range_begin = -1;
-        this.range_end = -1;
-      };
-      WuiEditor2.prototype.initStyle = function() {
-        var style = document.createElement("style");
-        style.type = "text/css";
-        style.innerText = "\n			[contenteditable] {\n				outline: 0px solid transparent;\n			}\n			." + WUI_EDITOR_CLASS + " {\n				background-color: cornsilk;\n				font-family: monospace;\n				overflow-y: auto;\n				width: 100%;\n			}\n			." + WUI_EDITOR_CLASS_LINE + " {\n				display: block;\n				width: 100%;\n			}\n			." + WUI_EDITOR_CLASS_LINE_NUMBER + " {\n				color: dimgrey;\n				cursor: pointer;\n				display: inline-block;\n				padding: 4px 10px 4px 4px;\n				text-align: right;\n				user-select: none;\n				vertical-align: top;\n				width: 30px;\n			}\n			." + WUI_EDITOR_CLASS_LINE_NUMBER + ":hover {\n				background-color: lightsalmon;\n			}\n			." + WUI_EDITOR_CLASS_LINE_TEXT + " {\n				display: inline-block;\n				padding: 4px;\n				border-color: lightblue;\n				border-width: 0px;\n				border-style: solid;\n				white-space: pre-wrap;\n				width: calc(100% - 60px);\n			}\n		";
-        document.head.appendChild(style);
-      };
-      WuiEditor2.prototype.doJoin = function(changes) {
-        this.lines[changes.curr_line].el_text.innerText = changes.curr_text;
-        this.deleteLine(changes.next_line);
-        this.setCaret(this.lines[changes.curr_line].el_text, 0);
-      };
-      WuiEditor2.prototype.doSplit = function(changes) {
-        this.lines[changes.curr_line].el_text.innerText = changes.curr_text;
-        this.insertNewline(changes.next_line, changes.next_text);
-      };
-      WuiEditor2.prototype.doUpdate = function(changes) {
-        this.lines[changes.curr_line].el_text.innerText = changes.curr_text;
-        this.setCaret(this.lines[changes.curr_line].el_text, 0);
-      };
-      WuiEditor2.prototype.doRedo = function() {
-        var act = this.unre.Redo();
-        if (!act) {
-          return;
-        }
-        switch (act.kind) {
-          case "join":
-            this.doJoin(act.after);
-            break;
-          case "split":
-            this.doSplit(act.after);
-            break;
-          case "update":
-            this.doUpdate(act.after);
-            break;
-        }
-      };
-      WuiEditor2.prototype.doUndo = function() {
-        var act = this.unre.Undo();
-        if (!act) {
-          return;
-        }
-        switch (act.kind) {
-          case "join":
-            this.doSplit(act.before);
-            break;
-          case "split":
-            this.doJoin(act.before);
-            break;
-          case "update":
-            this.doUpdate(act.before);
-            break;
-        }
-      };
-      WuiEditor2.prototype.deleteLine = function(x) {
-        this.lines.splice(x, 1);
-        this.raw_lines.splice(x, 1);
-        for (; x < this.lines.length; x++) {
-          this.lines[x].SetNumber(x);
-        }
-        this.render();
-      };
-      WuiEditor2.prototype.insertNewline = function(x, text) {
-        var newline = new WuiEditorLine(x, text, this);
-        for (var y = x; y < this.lines.length; y++) {
-          this.lines[y].SetNumber(y + 1);
-        }
-        this.lines.splice(x, 0, newline);
-        this.raw_lines.splice(x, 0, text);
-        this.render();
-        this.setCaret(newline.el_text, 0);
-      };
-      WuiEditor2.prototype.onKeyupDocument = function(ed, ev) {
-        switch (ev.key) {
-          case "Escape":
-            ev.preventDefault();
-            ed.ClearSelection();
-            break;
-        }
-        return true;
-      };
-      WuiEditor2.prototype.render = function() {
-        this.el.innerHTML = "";
-        for (var _i = 0, _a = this.lines; _i < _a.length; _i++) {
-          var line = _a[_i];
-          this.el.appendChild(line.el);
-        }
-      };
-      WuiEditor2.prototype.setCaret = function(el_text, off) {
-        if (el_text.firstChild) {
-          this.range.setStart(el_text.firstChild, off);
-        } else {
-          this.range.setStart(el_text, off);
-        }
-        this.range.collapse(true);
-        this.sel.removeAllRanges();
-        this.sel.addRange(this.range);
-      };
-      return WuiEditor2;
-    }()
-  );
-  var WuiEditorLine = (
-    /** @class */
-    function() {
-      function WuiEditorLine2(x, text, ed) {
-        var _this = this;
-        this.x = x;
-        this.text = text;
-        this.line_num = 0;
-        this.line_num = x;
-        this.el = document.createElement("div");
-        this.el.classList.add(WUI_EDITOR_CLASS_LINE);
-        this.el_number = document.createElement("span");
-        this.el_number.classList.add(WUI_EDITOR_CLASS_LINE_NUMBER);
-        this.el_number.innerText = this.line_num + 1 + "";
-        this.el_number.onmousedown = function(ev) {
-          ed.OnMouseDownAtLine(_this.line_num);
-        };
-        this.el_number.onmouseup = function(ev) {
-          ed.OnMouseUpAtLine(_this.line_num);
-        };
-        this.el_text = document.createElement("span");
-        this.el_text.classList.add(WUI_EDITOR_CLASS_LINE_TEXT);
-        this.el_text.innerText = text;
-        this.el_text.contentEditable = "true";
-        this.el_text.onclick = function(ev) {
-          ed.OnClickText(_this.el_text);
-        };
-        this.el_text.onkeydown = function(ev) {
-          return ed.OnKeydownOnLine(_this.line_num, _this.el_text, ev);
-        };
-        this.el_text.onkeyup = function(ev) {
-          return ed.OnKeyup(_this.line_num, _this.el_text, ev);
-        };
-        this.el_text.addEventListener("paste", function(ev) {
-          if (!ev.clipboardData) {
             return;
           }
+          break;
+        case "z":
+          if (this.is_key_control) {
+            ev.preventDefault();
+            return;
+          }
+          break;
+        default:
+          if (this.is_key_control) {
+            break;
+          }
+          this.unre.doUpdate(x, this.raw_lines[x], this.lines[x].elText.innerText);
+          this.raw_lines[x] = this.lines[x].elText.innerText;
+      }
+      return true;
+    }
+    onKeydownOnLine(x, ev) {
+      var _a;
+      let textBefore;
+      let textAfter;
+      let off;
+      let elText;
+      let elTextCurrent;
+      let text;
+      let isJoinLineAfter;
+      switch (ev.key) {
+        case "ArrowUp":
+          if (x == 0) {
+            return false;
+          }
           ev.preventDefault();
-          var text2 = ev.clipboardData.getData("text/plain");
-          document.execCommand("insertHTML", false, text2);
-        });
-        this.el.appendChild(this.el_number);
-        this.el.appendChild(this.el_text);
+          elText = this.lines[x - 1].elText;
+          off = this.sel.focusOffset;
+          if (off > elText.innerText.length) {
+            off = elText.innerText.length;
+          }
+          this.setCaret(elText, off);
+          if (x == 1) {
+            this.el.scrollTop = 0;
+          } else if (x * 23 < this.el.scrollTop) {
+            this.el.scrollTop -= 25;
+          }
+          return false;
+        case "ArrowDown":
+          if (x == this.lines.length - 1) {
+            return false;
+          }
+          ev.preventDefault();
+          elText = this.lines[x + 1].elText;
+          off = this.sel.focusOffset;
+          if (off > elText.innerText.length) {
+            off = elText.innerText.length;
+          }
+          this.setCaret(elText, off);
+          x += 2;
+          if (x * 25 >= this.el.clientHeight + this.el.scrollTop) {
+            this.el.scrollTop += 25;
+          }
+          return false;
+        case "Control":
+          this.is_key_control = true;
+          break;
+        case "Delete":
+          ev.preventDefault();
+          isJoinLineAfter = false;
+          elTextCurrent = this.lines[x].elText;
+          off = this.sel.focusOffset;
+          textBefore = elTextCurrent.innerText;
+          textAfter = "";
+          if (textBefore.length === 0 || off === textBefore.length) {
+            isJoinLineAfter = true;
+          }
+          if (isJoinLineAfter) {
+            if (x + 1 < this.lines.length) {
+              const elTextAfter = this.lines[x + 1].elText;
+              textAfter = elTextAfter.innerText;
+              elTextAfter.innerText = "";
+              this.unre.doJoin(x, textBefore, textAfter);
+              this.deleteLine(x + 1);
+              textAfter = textBefore + textAfter;
+            }
+          } else {
+            textAfter = textBefore.slice(0, off) + textBefore.slice(off + 1, textBefore.length);
+            this.unre.doUpdate(x, textBefore, textAfter);
+          }
+          this.lines[x].elText.innerText = textAfter;
+          this.raw_lines[x] = textAfter;
+          this.setCaret(elTextCurrent, off);
+          break;
+        case "Enter":
+          ev.preventDefault();
+          elText = this.lines[x].elText;
+          off = this.sel.focusOffset;
+          text = elText.innerText;
+          textBefore = text.slice(0, off);
+          textAfter = text.slice(off, text.length);
+          this.unre.doSplit(x, textBefore, textAfter);
+          elText.innerText = textBefore;
+          this.raw_lines[x] = textBefore;
+          this.insertNewline(x + 1, textAfter);
+          if (x + 3 >= this.raw_lines.length) {
+            this.el.scrollTop = this.el.scrollHeight;
+          }
+          break;
+        case "Tab":
+          ev.preventDefault();
+          elText = (_a = this.lines[x]) === null || _a === void 0 ? void 0 : _a.elText;
+          if (!elText) {
+            break;
+          }
+          off = this.sel.focusOffset;
+          textBefore = elText.innerText;
+          textAfter = textBefore.slice(0, off) + "	" + textBefore.slice(off, textBefore.length);
+          this.unre.doUpdate(x, textBefore, textAfter);
+          elText.innerText = textAfter;
+          this.raw_lines[x] = textAfter;
+          this.setCaret(elText, off + 1);
+          break;
+        case "r":
+          if (this.is_key_control) {
+            ev.preventDefault();
+            this.doRedo();
+            return;
+          }
+          break;
+        case "s":
+          if (this.is_key_control) {
+            ev.preventDefault();
+            ev.stopPropagation();
+            if (this.opts.onSave) {
+              this.opts.onSave(this.getContent());
+            }
+            return false;
+          }
+          break;
+        case "z":
+          if (this.is_key_control) {
+            ev.preventDefault();
+            this.doUndo();
+            return;
+          }
+          break;
       }
-      WuiEditorLine2.prototype.SetNumber = function(x) {
-        this.line_num = x;
-        this.el_number.innerText = x + 1 + "";
-      };
-      WuiEditorLine2.prototype.SetEditOn = function() {
-        this.el_text.contentEditable = "true";
-      };
-      WuiEditorLine2.prototype.SetEditOff = function() {
-        this.el_text.contentEditable = "false";
-      };
-      return WuiEditorLine2;
-    }()
-  );
-  var WuiEditorUndoRedo = (
-    /** @class */
-    function() {
-      function WuiEditorUndoRedo2() {
-        this.idx = 0;
-        this.actions = [];
+      return true;
+    }
+    onMouseDownAtLine(x) {
+      this.range_begin = x;
+    }
+    onMouseUpAtLine(x) {
+      var _a, _b, _c;
+      this.range_end = x;
+      if (this.range_end < this.range_begin) {
+        return;
       }
-      WuiEditorUndoRedo2.prototype.DoJoin = function(prevLine, prevText, curr_text) {
-        var curr_line = prevLine + 1;
-        var action = {
-          kind: "join",
-          before: {
-            curr_line: prevLine,
-            curr_text: prevText,
-            next_line: prevLine + 1,
-            next_text: curr_text
-          },
-          after: {
-            curr_line: prevLine,
-            curr_text: prevText + curr_text,
-            next_line: prevLine + 1,
-            next_text: ""
-          }
-        };
-        if (this.actions.length > 0) {
-          this.actions = this.actions.slice(0, this.idx);
-        }
-        this.actions.push(action);
-        this.idx++;
+      let y = 0;
+      for (; y < this.range_begin; y++) {
+        (_a = this.el.children[y]) === null || _a === void 0 ? void 0 : _a.setAttribute("style", "");
+      }
+      for (; y <= this.range_end; y++) {
+        (_b = this.el.children[y]) === null || _b === void 0 ? void 0 : _b.setAttribute("style", "background-color:lightsalmon");
+      }
+      for (; y < this.el.children.length; y++) {
+        (_c = this.el.children[y]) === null || _c === void 0 ? void 0 : _c.setAttribute("style", "");
+      }
+      if (this.opts.onSelection) {
+        this.opts.onSelection(this.range_begin, this.range_end);
+      }
+    }
+    // setEditOff make the content not editable.
+    setEditOff() {
+      this.lines.forEach((line) => {
+        line.setEditOff();
+      });
+    }
+    // setEditOn make the content to be editable.
+    setEditOn() {
+      this.lines.forEach((line) => {
+        line.setEditOn();
+      });
+    }
+    // open the node for editing.
+    // The content MUST be encoded in base64.
+    open(node) {
+      let content = atob(node.content);
+      content = content.replace("\r\n", "\n");
+      this.raw_lines = content.split("\n");
+      this.lines = [];
+      this.raw_lines.forEach((rawLine, x) => {
+        const line = new WuiEditorLine(x, rawLine, this);
+        this.lines.push(line);
+      });
+      this.render();
+    }
+    // clearSelection clear selection range indicator.
+    clearSelection() {
+      var _a;
+      if (this.range_begin < 0 || this.range_end == 0) {
+        return;
+      }
+      for (let x = this.range_begin; x <= this.range_end; x++) {
+        (_a = this.el.children[x]) === null || _a === void 0 ? void 0 : _a.setAttribute("style", "");
+      }
+      this.range_begin = -1;
+      this.range_end = -1;
+    }
+    initStyle() {
+      const style = document.createElement("style");
+      style.type = "text/css";
+      style.innerText = `
+			[contenteditable] {
+				outline: 0px solid transparent;
+			}
+			.${WUI_EDITOR_CLASS} {
+				background-color: cornsilk;
+				font-family: monospace;
+				overflow-y: auto;
+				width: 100%;
+			}
+			.${WUI_EDITOR_CLASS_LINE} {
+				display: block;
+				width: 100%;
+			}
+			.${WUI_EDITOR_CLASS_LINE_NUMBER} {
+				color: dimgrey;
+				cursor: pointer;
+				display: inline-block;
+				padding: 4px 10px 4px 4px;
+				text-align: right;
+				user-select: none;
+				vertical-align: top;
+				width: 30px;
+			}
+			.${WUI_EDITOR_CLASS_LINE_NUMBER}:hover {
+				background-color: lightsalmon;
+			}
+			.${WUI_EDITOR_CLASS_LINE_TEXT} {
+				display: inline-block;
+				padding: 4px;
+				border-color: lightblue;
+				border-width: 0px;
+				border-style: solid;
+				white-space: pre-wrap;
+				width: calc(100% - 60px);
+			}
+		`;
+      document.head.appendChild(style);
+    }
+    doJoin(changes) {
+      const line = this.lines[changes.currLine];
+      if (!line) {
+        return;
+      }
+      line.elText.innerText = changes.currText;
+      this.deleteLine(changes.nextLine);
+      this.setCaret(line.elText, 0);
+    }
+    doSplit(changes) {
+      const line = this.lines[changes.currLine];
+      if (!line) {
+        return;
+      }
+      line.elText.innerText = changes.currText;
+      this.insertNewline(changes.nextLine, changes.nextText);
+    }
+    doUpdate(changes) {
+      const line = this.lines[changes.currLine];
+      if (!line) {
+        return;
+      }
+      line.elText.innerText = changes.currText;
+      this.setCaret(line.elText, 0);
+    }
+    doRedo() {
+      const act = this.unre.redo();
+      if (!act) {
+        return;
+      }
+      switch (act.kind) {
+        case "join":
+          this.doJoin(act.after);
+          break;
+        case "split":
+          this.doSplit(act.after);
+          break;
+        case "update":
+          this.doUpdate(act.after);
+          break;
+      }
+    }
+    doUndo() {
+      const act = this.unre.undo();
+      if (!act) {
+        return;
+      }
+      switch (act.kind) {
+        case "join":
+          this.doSplit(act.before);
+          break;
+        case "split":
+          this.doJoin(act.before);
+          break;
+        case "update":
+          this.doUpdate(act.before);
+          break;
+      }
+    }
+    deleteLine(x) {
+      var _a;
+      this.lines.splice(x, 1);
+      this.raw_lines.splice(x, 1);
+      for (; x < this.lines.length; x++) {
+        (_a = this.lines[x]) === null || _a === void 0 ? void 0 : _a.setNumber(x);
+      }
+      this.render();
+    }
+    insertNewline(x, text) {
+      var _a;
+      const newline = new WuiEditorLine(x, text, this);
+      for (let y = x; y < this.lines.length; y++) {
+        (_a = this.lines[y]) === null || _a === void 0 ? void 0 : _a.setNumber(y + 1);
+      }
+      this.lines.splice(x, 0, newline);
+      this.raw_lines.splice(x, 0, text);
+      this.render();
+      this.setCaret(newline.elText, 0);
+    }
+    onKeyupDocument(ed, ev) {
+      switch (ev.key) {
+        case "Escape":
+          ev.preventDefault();
+          ed.clearSelection();
+          break;
+      }
+      return true;
+    }
+    render() {
+      this.el.innerHTML = "";
+      for (const line of this.lines) {
+        this.el.appendChild(line.el);
+      }
+    }
+    setCaret(elText, off) {
+      if (elText.firstChild) {
+        this.range.setStart(elText.firstChild, off);
+      } else {
+        this.range.setStart(elText, off);
+      }
+      this.range.collapse(true);
+      this.sel.removeAllRanges();
+      this.sel.addRange(this.range);
+    }
+  };
+  var WuiEditorLine = class {
+    constructor(x, text, ed) {
+      this.x = x;
+      this.text = text;
+      this.lineNum = 0;
+      this.lineNum = x;
+      this.el = document.createElement("div");
+      this.el.classList.add(WUI_EDITOR_CLASS_LINE);
+      this.el_number = document.createElement("span");
+      this.el_number.classList.add(WUI_EDITOR_CLASS_LINE_NUMBER);
+      this.el_number.innerText = this.lineNum + 1 + "";
+      this.el_number.onmousedown = () => {
+        ed.onMouseDownAtLine(this.lineNum);
       };
-      WuiEditorUndoRedo2.prototype.DoSplit = function(curr_line, curr_text, next_text) {
-        var action = {
-          kind: "split",
-          before: {
-            curr_line,
-            curr_text: curr_text + next_text,
-            next_line: curr_line + 1,
-            next_text: ""
-          },
-          after: {
-            curr_line,
-            curr_text,
-            next_line: curr_line + 1,
-            next_text
-          }
-        };
-        if (this.actions.length > 0) {
-          this.actions = this.actions.slice(0, this.idx);
-        }
-        this.actions.push(action);
-        this.idx++;
+      this.el_number.onmouseup = () => {
+        ed.onMouseUpAtLine(this.lineNum);
       };
-      WuiEditorUndoRedo2.prototype.DoUpdate = function(line_num, text_before, text_after) {
-        var action = {
-          kind: "update",
-          before: {
-            curr_line: line_num,
-            curr_text: text_before,
-            next_line: 0,
-            next_text: ""
-          },
-          after: {
-            curr_line: line_num,
-            curr_text: text_after,
-            next_line: 0,
-            next_text: ""
-          }
-        };
-        if (this.actions.length > 0) {
-          this.actions = this.actions.slice(0, this.idx);
-        }
-        this.actions.push(action);
-        this.idx++;
+      this.elText = document.createElement("span");
+      this.elText.classList.add(WUI_EDITOR_CLASS_LINE_TEXT);
+      this.elText.innerText = text;
+      this.elText.contentEditable = "true";
+      this.elText.onclick = () => {
+        ed.onClickText();
       };
-      WuiEditorUndoRedo2.prototype.Undo = function() {
-        if (this.idx == 0) {
-          return null;
-        }
-        this.idx--;
-        return this.actions[this.idx];
+      this.elText.onkeydown = (ev) => {
+        return ed.onKeydownOnLine(this.lineNum, ev);
       };
-      WuiEditorUndoRedo2.prototype.Redo = function() {
-        if (this.idx == this.actions.length) {
-          return null;
-        }
-        var action = this.actions[this.idx];
-        this.idx++;
-        return action;
+      this.elText.onkeyup = (ev) => {
+        return ed.onKeyup(this.lineNum, ev);
       };
-      return WuiEditorUndoRedo2;
-    }()
-  );
+      this.elText.addEventListener("paste", (ev) => {
+        if (!ev.clipboardData) {
+          return;
+        }
+        ev.preventDefault();
+        const text2 = ev.clipboardData.getData("text/plain");
+        document.execCommand("insertHTML", false, text2);
+      });
+      this.el.appendChild(this.el_number);
+      this.el.appendChild(this.elText);
+    }
+    setNumber(x) {
+      this.lineNum = x;
+      this.el_number.innerText = x + 1 + "";
+    }
+    setEditOn() {
+      this.elText.contentEditable = "true";
+    }
+    setEditOff() {
+      this.elText.contentEditable = "false";
+    }
+  };
+  var WuiEditorUndoRedo = class {
+    constructor() {
+      this.idx = 0;
+      this.actions = [];
+    }
+    doJoin(prevLine, prevText, currText) {
+      const action = {
+        kind: "join",
+        before: {
+          currLine: prevLine,
+          currText: prevText,
+          nextLine: prevLine + 1,
+          nextText: currText
+        },
+        after: {
+          currLine: prevLine,
+          currText: prevText + currText,
+          nextLine: prevLine + 1,
+          nextText: ""
+        }
+      };
+      if (this.actions.length > 0) {
+        this.actions = this.actions.slice(0, this.idx);
+      }
+      this.actions.push(action);
+      this.idx++;
+    }
+    doSplit(currLine, currText, nextText) {
+      const action = {
+        kind: "split",
+        before: {
+          currLine,
+          currText: currText + nextText,
+          nextLine: currLine + 1,
+          nextText: ""
+        },
+        after: {
+          currLine,
+          currText,
+          nextLine: currLine + 1,
+          nextText
+        }
+      };
+      if (this.actions.length > 0) {
+        this.actions = this.actions.slice(0, this.idx);
+      }
+      this.actions.push(action);
+      this.idx++;
+    }
+    doUpdate(lineNum, textBefore, textAfter) {
+      const action = {
+        kind: "update",
+        before: {
+          currLine: lineNum,
+          currText: textBefore,
+          nextLine: 0,
+          nextText: ""
+        },
+        after: {
+          currLine: lineNum,
+          currText: textAfter,
+          nextLine: 0,
+          nextText: ""
+        }
+      };
+      if (this.actions.length > 0) {
+        this.actions = this.actions.slice(0, this.idx);
+      }
+      this.actions.push(action);
+      this.idx++;
+    }
+    undo() {
+      if (this.idx == 0) {
+        return null;
+      }
+      this.idx--;
+      const action = this.actions[this.idx];
+      if (!action) {
+        return null;
+      }
+      return action;
+    }
+    redo() {
+      if (this.idx == this.actions.length) {
+        return null;
+      }
+      const action = this.actions[this.idx];
+      if (!action) {
+        return null;
+      }
+      this.idx++;
+      return action;
+    }
+  };
 
   // _www/wui/notif/notif.js
   var WUI_NOTIF_ID = "wui_notif";
   var WUI_NOTIF_CLASS_INFO = "wui_notif_info";
   var WUI_NOTIF_CLASS_ERROR = "wui_notif_error";
-  var WuiNotif = (
-    /** @class */
-    function() {
-      function WuiNotif2() {
-        this.timeout = 5e3;
-        this.el = document.createElement("div");
-        this.el.id = WUI_NOTIF_ID;
-        document.body.appendChild(this.el);
-        this.initStyle();
-      }
-      WuiNotif2.prototype.Info = function(msg) {
-        var _this = this;
-        var item = document.createElement("div");
-        item.innerHTML = msg;
-        item.classList.add(WUI_NOTIF_CLASS_INFO);
-        this.el.appendChild(item);
-        setTimeout(function() {
-          _this.el.removeChild(item);
-        }, this.timeout);
-      };
-      WuiNotif2.prototype.Error = function(msg) {
-        var _this = this;
-        var item = document.createElement("div");
-        item.innerHTML = msg;
-        item.classList.add(WUI_NOTIF_CLASS_ERROR);
-        this.el.appendChild(item);
-        setTimeout(function() {
-          _this.el.removeChild(item);
-        }, this.timeout);
-      };
-      WuiNotif2.prototype.initStyle = function() {
-        var style = document.createElement("style");
-        style.type = "text/css";
-        style.innerText = "\n			#" + WUI_NOTIF_ID + " {\n				left: 10%;\n				position: fixed;\n				top: 1em;\n				width: 80%;\n				z-index: 10000;\n			}\n			." + WUI_NOTIF_CLASS_INFO + " {\n				border: 1px solid silver;\n				background-color: honeydew;\n				margin-bottom: 1em;\n				padding: 1em;\n			}\n			." + WUI_NOTIF_CLASS_ERROR + " {\n				border: 1px solid salmon;\n				background-color: lightsalmon;\n				margin-bottom: 1em;\n				padding: 1em;\n			}\n		";
-        document.head.appendChild(style);
-      };
-      return WuiNotif2;
-    }()
-  );
+  var WuiNotif = class {
+    constructor() {
+      this.timeout = 5e3;
+      this.el = document.createElement("div");
+      this.el.id = WUI_NOTIF_ID;
+      document.body.appendChild(this.el);
+      this.initStyle();
+    }
+    // info show the msg as information.
+    info(msg) {
+      const item = document.createElement("div");
+      item.innerHTML = msg;
+      item.classList.add(WUI_NOTIF_CLASS_INFO);
+      this.el.appendChild(item);
+      setTimeout(() => {
+        this.el.removeChild(item);
+      }, this.timeout);
+    }
+    // error show the msg as an error.
+    error(msg) {
+      const item = document.createElement("div");
+      item.innerHTML = msg;
+      item.classList.add(WUI_NOTIF_CLASS_ERROR);
+      this.el.appendChild(item);
+      setTimeout(() => {
+        this.el.removeChild(item);
+      }, this.timeout);
+    }
+    initStyle() {
+      const style = document.createElement("style");
+      style.type = "text/css";
+      style.innerText = `
+			#${WUI_NOTIF_ID} {
+				left: 10%;
+				position: fixed;
+				top: 1em;
+				width: 80%;
+				z-index: 10000;
+			}
+			.${WUI_NOTIF_CLASS_INFO} {
+				border: 1px solid silver;
+				background-color: honeydew;
+				margin-bottom: 1em;
+				padding: 1em;
+			}
+			.${WUI_NOTIF_CLASS_ERROR} {
+				border: 1px solid salmon;
+				background-color: lightsalmon;
+				margin-bottom: 1em;
+				padding: 1em;
+			}
+		`;
+      document.head.appendChild(style);
+    }
+  };
 
   // _www/wui/vfs/vfs.js
-  var __awaiter = function(thisArg, _arguments, P, generator) {
-    function adopt(value) {
-      return value instanceof P ? value : new P(function(resolve) {
-        resolve(value);
-      });
-    }
-    return new (P || (P = Promise))(function(resolve, reject) {
-      function fulfilled(value) {
-        try {
-          step(generator.next(value));
-        } catch (e) {
-          reject(e);
-        }
-      }
-      function rejected(value) {
-        try {
-          step(generator["throw"](value));
-        } catch (e) {
-          reject(e);
-        }
-      }
-      function step(result) {
-        result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected);
-      }
-      step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-  };
-  var __generator = function(thisArg, body) {
-    var _ = { label: 0, sent: function() {
-      if (t[0] & 1)
-        throw t[1];
-      return t[1];
-    }, trys: [], ops: [] }, f, y, t, g;
-    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() {
-      return this;
-    }), g;
-    function verb(n) {
-      return function(v) {
-        return step([n, v]);
-      };
-    }
-    function step(op) {
-      if (f)
-        throw new TypeError("Generator is already executing.");
-      while (_)
-        try {
-          if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done)
-            return t;
-          if (y = 0, t)
-            op = [op[0] & 2, t.value];
-          switch (op[0]) {
-            case 0:
-            case 1:
-              t = op;
-              break;
-            case 4:
-              _.label++;
-              return { value: op[1], done: false };
-            case 5:
-              _.label++;
-              y = op[1];
-              op = [0];
-              continue;
-            case 7:
-              op = _.ops.pop();
-              _.trys.pop();
-              continue;
-            default:
-              if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) {
-                _ = 0;
-                continue;
-              }
-              if (op[0] === 3 && (!t || op[1] > t[0] && op[1] < t[3])) {
-                _.label = op[1];
-                break;
-              }
-              if (op[0] === 6 && _.label < t[1]) {
-                _.label = t[1];
-                t = op;
-                break;
-              }
-              if (t && _.label < t[2]) {
-                _.label = t[2];
-                _.ops.push(op);
-                break;
-              }
-              if (t[2])
-                _.ops.pop();
-              _.trys.pop();
-              continue;
-          }
-          op = body.call(thisArg, _);
-        } catch (e) {
-          op = [6, e];
-          y = 0;
-        } finally {
-          f = t = 0;
-        }
-      if (op[0] & 5)
-        throw op[1];
-      return { value: op[0] ? op[1] : void 0, done: true };
-    }
-  };
   var CLASS_VFS_PATH = "wui_vfs_path";
   var CLASS_VFS_LIST = "wui_vfs_list";
-  var WuiVfs = (
-    /** @class */
-    function() {
-      function WuiVfs2(opts) {
-        var _this = this;
-        this.opts = opts;
-        this.opts = opts;
-        var el = document.getElementById(opts.id);
-        if (!el) {
-          console.error("WuiVfs: element id", opts.id, "not found");
-          return;
-        }
-        this.el = el;
-        this.com_path = new WuiVfsPath(function(path) {
-          _this.OpenDir(path);
-        });
-        this.el.appendChild(this.com_path.el);
-        this.com_list = new WuiVfsList(function(node) {
-          _this.OpenNode(node);
-        });
-        this.el.appendChild(this.com_list.el);
+  var WuiVfs = class {
+    constructor(opts) {
+      this.opts = opts;
+      this.opts = opts;
+      const el = document.getElementById(opts.id);
+      if (!el) {
+        console.error("WuiVfs: element id", opts.id, "not found");
+        return;
       }
-      WuiVfs2.prototype.OpenNode = function(node) {
-        if (node.is_dir) {
-          this.OpenDir(node.path);
-        } else {
-          this.opts.OpenNode(node);
-        }
-      };
-      WuiVfs2.prototype.OpenDir = function(path) {
-        return __awaiter(this, void 0, void 0, function() {
-          var res;
-          return __generator(this, function(_a) {
-            switch (_a.label) {
-              case 0:
-                return [4, this.opts.Open(path, true)];
-              case 1:
-                res = _a.sent();
-                if (res.code != 200) {
-                  return [
-                    2
-                    /*return*/
-                  ];
-                }
-                this.Set(res.data);
-                return [
-                  2
-                  /*return*/
-                ];
-            }
-          });
-        });
-      };
-      WuiVfs2.prototype.Set = function(node) {
-        if (node.is_dir) {
-          this.com_path.Open(node);
-          this.com_list.Open(node);
-        }
-      };
-      return WuiVfs2;
-    }()
-  );
-  var WuiVfsList = (
-    /** @class */
-    function() {
-      function WuiVfsList2(onClick) {
-        this.onClick = onClick;
-        this.node = null;
-        this.el = document.createElement("div");
-        this.el.classList.add(CLASS_VFS_LIST);
-        this.el.style.borderWidth = "1px";
-        this.el.style.borderStyle = "solid";
-        this.el.style.borderColor = "silver";
+      this.el = el;
+      this.com_path = new WuiVfsPath((path) => {
+        this.openDir(path);
+      });
+      this.el.appendChild(this.com_path.el);
+      this.com_list = new WuiVfsList((node) => {
+        this.openNode(node);
+      });
+      this.el.appendChild(this.com_list.el);
+    }
+    // openNode is a handler that will be called when a node is clicked
+    // inside the WuiVfsList.
+    openNode(node) {
+      if (node.is_dir) {
+        this.openDir(node.path);
+      } else {
+        this.opts.openNode(node);
       }
-      WuiVfsList2.prototype.Open = function(node) {
-        var _this = this;
-        this.node = node;
-        this.el.innerHTML = "";
-        if (!this.node.childs) {
-          return;
+    }
+    // openDir is a handler that will be called when a path is clicked
+    // inside the WuiVfsPath.
+    async openDir(path) {
+      const res = await this.opts.open(path, true);
+      if (res.code != 200) {
+        return;
+      }
+      this.set(res.data);
+    }
+    set(node) {
+      if (node.is_dir) {
+        this.com_path.open(node);
+        this.com_list.open(node);
+      }
+    }
+  };
+  var WuiVfsList = class {
+    constructor(onClick) {
+      this.onClick = onClick;
+      this.node = null;
+      this.el = document.createElement("div");
+      this.el.classList.add(CLASS_VFS_LIST);
+      this.el.style.borderWidth = "1px";
+      this.el.style.borderStyle = "solid";
+      this.el.style.borderColor = "silver";
+    }
+    open(node) {
+      this.node = node;
+      this.el.innerHTML = "";
+      if (!this.node.childs) {
+        return;
+      }
+      for (const c of this.node.childs) {
+        const el = document.createElement("div");
+        el.style.padding = "1em";
+        el.style.cursor = "pointer";
+        el.innerHTML = c.name;
+        if (c.is_dir) {
+          el.style.backgroundColor = "cornsilk";
         }
-        var _loop_1 = function(c2) {
-          var el = document.createElement("div");
-          el.style.padding = "1em";
-          el.style.cursor = "pointer";
-          el.innerHTML = c2.name;
-          if (c2.is_dir) {
+        el.onclick = () => {
+          this.onClick(c);
+        };
+        el.onmouseout = () => {
+          if (c.is_dir) {
             el.style.backgroundColor = "cornsilk";
-          }
-          el.onclick = function(ev) {
-            _this.onClick(c2);
-          };
-          el.onmouseout = function(event) {
-            if (c2.is_dir) {
-              el.style.backgroundColor = "cornsilk";
-            } else {
-              el.style.backgroundColor = "white";
-            }
-          };
-          el.onmouseover = function(event) {
-            el.style.backgroundColor = "aliceblue";
-          };
-          this_1.el.appendChild(el);
-        };
-        var this_1 = this;
-        for (var _i = 0, _a = this.node.childs; _i < _a.length; _i++) {
-          var c = _a[_i];
-          _loop_1(c);
-        }
-      };
-      return WuiVfsList2;
-    }()
-  );
-  var WuiVfsPath = (
-    /** @class */
-    function() {
-      function WuiVfsPath2(onClick) {
-        this.el = document.createElement("div");
-        this.el.classList.add(CLASS_VFS_PATH);
-        this.el.style.borderWidth = "1px";
-        this.el.style.borderStyle = "solid";
-        this.el.style.borderColor = "silver";
-        this.crumbs = [];
-        this.onClick = onClick;
-      }
-      WuiVfsPath2.prototype.Open = function(node) {
-        var _this = this;
-        this.el.innerHTML = "";
-        this.crumbs = [];
-        var paths = [];
-        if (node.path == "/") {
-          paths.push(node.path);
-        } else {
-          paths = node.path.split("/");
-        }
-        var _loop_2 = function(x2) {
-          var full_path = "";
-          var p = "";
-          if (x2 == 0) {
-            p = "/";
-            full_path = "/";
           } else {
-            p = paths[x2];
-            full_path = paths.slice(0, x2 + 1).join("/");
+            el.style.backgroundColor = "white";
           }
-          var crumb = document.createElement("span");
-          crumb.style.display = "inline-block";
-          crumb.style.padding = "1em";
-          crumb.style.cursor = "pointer";
-          crumb.innerHTML = p;
-          crumb.onclick = function(event) {
-            _this.onClick(full_path);
-          };
-          crumb.onmouseout = function(event) {
-            crumb.style.backgroundColor = "white";
-          };
-          crumb.onmouseover = function(event) {
-            crumb.style.backgroundColor = "aliceblue";
-          };
-          this_2.el.appendChild(crumb);
         };
-        var this_2 = this;
-        for (var x = 0; x < paths.length; x++) {
-          _loop_2(x);
+        el.onmouseover = () => {
+          el.style.backgroundColor = "aliceblue";
+        };
+        this.el.appendChild(el);
+      }
+    }
+  };
+  var WuiVfsPath = class {
+    constructor(onClick) {
+      this.el = document.createElement("div");
+      this.el.classList.add(CLASS_VFS_PATH);
+      this.el.style.borderWidth = "1px";
+      this.el.style.borderStyle = "solid";
+      this.el.style.borderColor = "silver";
+      this.onClick = onClick;
+    }
+    open(node) {
+      this.el.innerHTML = "";
+      let paths = [];
+      if (node.path == "/") {
+        paths.push(node.path);
+      } else {
+        paths = node.path.split("/");
+      }
+      paths.forEach((path, x) => {
+        let fullPath = "";
+        let p = "";
+        if (x == 0) {
+          p = "/";
+          fullPath = "/";
+        } else {
+          p = path;
+          fullPath = paths.slice(0, x + 1).join("/");
         }
-      };
-      return WuiVfsPath2;
-    }()
-  );
+        const crumb = document.createElement("span");
+        crumb.style.display = "inline-block";
+        crumb.style.padding = "1em";
+        crumb.style.cursor = "pointer";
+        crumb.innerHTML = p;
+        crumb.onclick = () => {
+          this.onClick(fullPath);
+        };
+        crumb.onmouseout = () => {
+          crumb.style.backgroundColor = "white";
+        };
+        crumb.onmouseover = () => {
+          crumb.style.backgroundColor = "aliceblue";
+        };
+        this.el.appendChild(crumb);
+      });
+    }
+  };
 
   // _www/awwan.ts
   var CLASS_EDITOR_ACTION = "editor_action";
@@ -891,7 +824,7 @@ var awwan = (() => {
   var ID_STDERR = "stderr";
   var MAX_FILE_SIZE = 3e6;
   function renderHtml() {
-    let el = document.createElement("div");
+    const el = document.createElement("div");
     el.classList.add("awwan");
     el.innerHTML = `
 			<div class="awwan_nav_left">
@@ -939,33 +872,19 @@ var awwan = (() => {
     document.body.appendChild(el);
   }
   var Awwan = class {
-    com_btn_clear;
-    com_btn_local;
-    com_btn_new_dir;
-    com_btn_new_file;
-    com_btn_remote;
-    com_btn_remove;
-    com_btn_save;
-    com_file_path;
-    com_inp_vfs_new;
-    com_stdout;
-    com_stderr;
-    current_node = null;
-    request = {
-      mode: "local",
-      script: "",
-      content: "",
-      line_range: 0
-    };
-    wui_editor;
-    wui_notif;
-    wui_vfs;
     constructor() {
+      this.current_node = null;
+      this.request = {
+        mode: "local",
+        script: "",
+        content: "",
+        line_range: ""
+      };
       let el = document.getElementById(ID_BTN_CLEAR_SELECTION);
       if (el) {
         this.com_btn_clear = el;
         this.com_btn_clear.onclick = () => {
-          this.wui_editor.ClearSelection();
+          this.wui_editor.clearSelection();
         };
       }
       el = document.getElementById(ID_BTN_EXEC_LOCAL);
@@ -1026,30 +945,30 @@ var awwan = (() => {
       if (el) {
         this.com_stderr = el;
       }
-      let editor_opts = {
+      const editor_opts = {
         id: ID_EDITOR,
         is_editable: true,
-        OnSelection: (begin_at, end_at) => {
+        onSelection: (begin_at, end_at) => {
           this.editorOnSelection(begin_at, end_at);
         },
-        OnSave: this.editorOnSave
+        onSave: this.editorOnSave
       };
       this.wui_editor = new WuiEditor(editor_opts);
       this.wui_notif = new WuiNotif();
-      let wui_vfs_opts = {
+      const wui_vfs_opts = {
         id: ID_VFS,
-        Open: (path, is_dir) => {
-          return this.Open(path, is_dir);
+        open: (path, is_dir) => {
+          return this.open(path, is_dir);
         },
-        OpenNode: (node) => {
-          return this.OpenNode(node);
+        openNode: (node) => {
+          return this.openNode(node);
         }
       };
       this.wui_vfs = new WuiVfs(wui_vfs_opts);
       window.onhashchange = (ev) => {
         ev.preventDefault();
-        let hashchange = ev;
-        let url = new URL(hashchange.newURL);
+        const hashchange = ev;
+        const url = new URL(hashchange.newURL);
         this.onHashChange(url.hash);
       };
       this.onHashChange(window.location.hash);
@@ -1059,49 +978,49 @@ var awwan = (() => {
         hash = "#/";
       }
       hash = hash.substring(1);
-      this.wui_vfs.OpenDir(hash);
+      this.wui_vfs.openDir(hash);
     }
-    // Open fetch the node content from remote server.
-    async Open(path, is_dir) {
-      let http_res = await fetch("/awwan/api/fs?path=" + path);
-      let res = await http_res.json();
+    // open fetch the node content from remote server.
+    async open(path, is_dir) {
+      const http_res = await fetch("/awwan/api/fs?path=" + path);
+      const res = await http_res.json();
       if (res.code != 200) {
-        this.wui_notif.Error(`Failed to open ${path}: ${res.message}`);
+        this.wui_notif.error(`Failed to open ${path}: ${res.message}`);
         return res;
       }
-      let node = res.data;
+      const node = res.data;
       this.com_inp_vfs_new.value = node.name;
       if (is_dir) {
         this.current_node = node;
         window.location.hash = "#" + path;
         return res;
       }
-      let resAllow = this.isEditAllowed(node);
+      const resAllow = this.isEditAllowed(node);
       if (resAllow.code != 200) {
-        this.wui_notif.Error(resAllow.message);
+        this.wui_notif.error(resAllow.message);
         return resAllow;
       }
       this.com_file_path.innerText = path;
       this.request.script = path;
-      this.wui_editor.Open(node);
+      this.wui_editor.open(node);
       this.com_btn_local.disabled = false;
       this.com_btn_remote.disabled = false;
       this.com_btn_save.disabled = false;
       return res;
     }
-    // OpenNode is an handler that will called when user click on of the
+    // openNode is an handler that will called when user click on of the
     // item in the list.
-    async OpenNode(node) {
-      let resAllow = this.isEditAllowed(node);
+    async openNode(node) {
+      const resAllow = this.isEditAllowed(node);
       if (resAllow.code != 200) {
-        this.wui_notif.Error(resAllow.message);
+        this.wui_notif.error(resAllow.message);
         return resAllow;
       }
-      let res = await this.Open(node.path, node.is_dir);
+      const res = await this.open(node.path, node.is_dir);
       return res;
     }
     isEditAllowed(node) {
-      let res = {
+      const res = {
         code: 412,
         message: ""
       };
@@ -1124,8 +1043,8 @@ var awwan = (() => {
       if (this.request.script == "") {
         return;
       }
-      let content = this.wui_editor.GetContent();
-      let l = content.length;
+      let content = this.wui_editor.getContent();
+      const l = content.length;
       if (l > 0 && content[l - 1] != "\n") {
         content += "\n";
       }
@@ -1136,11 +1055,11 @@ var awwan = (() => {
       this.doSaveFile(this.request.script, content);
     }
     async doSaveFile(path, content) {
-      let req = {
+      const req = {
         path,
         content: btoa(content)
       };
-      let http_res = await fetch("/awwan/api/fs", {
+      const http_res = await fetch("/awwan/api/fs", {
         method: "PUT",
         headers: {
           Accept: "application/json",
@@ -1148,16 +1067,16 @@ var awwan = (() => {
         },
         body: JSON.stringify(req)
       });
-      let res = await http_res.json();
+      const res = await http_res.json();
       if (res.code != 200) {
-        this.wui_notif.Error(`Failed to save file ${path}: ${res.message}`);
+        this.wui_notif.error(`Failed to save file ${path}: ${res.message}`);
         return null;
       }
-      this.wui_notif.Info(`File ${path} has been saved.`);
+      this.wui_notif.info(`File ${path} has been saved.`);
       return res;
     }
     editorOnSelection(begin, end) {
-      let stmts = this.wui_editor.lines.slice(begin, end + 1);
+      const stmts = this.wui_editor.lines.slice(begin, end + 1);
       for (const stmt of stmts) {
         console.log("stmt:", stmt.x, stmt.text);
       }
@@ -1165,7 +1084,7 @@ var awwan = (() => {
     // execLocal request to execute the selected script on local system.
     execLocal() {
       if (this.request.script == "") {
-        this.wui_notif.Error(`Execute on local: no file selected`);
+        this.wui_notif.error(`Execute on local: no file selected`);
         return;
       }
       this.httpApiExecute("local");
@@ -1173,7 +1092,7 @@ var awwan = (() => {
     // execRemote request to execute the selected script on remote system.
     execRemote() {
       if (this.request.script == "") {
-        this.wui_notif.Error(`Execute on remote: no file selected`);
+        this.wui_notif.error(`Execute on remote: no file selected`);
         return;
       }
       this.httpApiExecute("remote");
@@ -1181,7 +1100,7 @@ var awwan = (() => {
     async httpApiExecute(mode) {
       let beginAt = 0;
       let endAt = 0;
-      let selection_range = this.wui_editor.GetSelectionRange();
+      const selection_range = this.wui_editor.getSelectionRange();
       if (selection_range.begin_at > 0) {
         beginAt = selection_range.begin_at + 1;
       }
@@ -1191,13 +1110,13 @@ var awwan = (() => {
       this.com_stdout.innerText = "";
       this.com_stderr.innerText = "";
       this.request.mode = mode;
-      this.request.content = btoa(this.wui_editor.GetContent());
+      this.request.content = btoa(this.wui_editor.getContent());
       if (beginAt === endAt) {
         this.request.line_range = `${beginAt}`;
       } else {
         this.request.line_range = `${beginAt}-${endAt}`;
       }
-      let http_res = await fetch("/awwan/api/execute", {
+      const http_res = await fetch("/awwan/api/execute", {
         method: "POST",
         headers: {
           Accept: "application/json",
@@ -1205,9 +1124,9 @@ var awwan = (() => {
         },
         body: JSON.stringify(this.request)
       });
-      let res = await http_res.json();
+      const res = await http_res.json();
       if (res.code != 200) {
-        this.wui_notif.Error(`Execute failed: ${res.message}`);
+        this.wui_notif.error(`Execute failed: ${res.message}`);
         return;
       }
       if (res.data.stdout) {
@@ -1216,21 +1135,21 @@ var awwan = (() => {
       if (res.data.stderr) {
         this.com_stderr.innerText = atob(res.data.stderr);
       }
-      this.wui_notif.Info(
+      this.wui_notif.info(
         `Successfully execute ${this.request.script} on ${mode}.`
       );
     }
     async newNode(is_dir) {
       if (!this.current_node) {
-        this.wui_notif.Error("No active directory loaded or selected.");
+        this.wui_notif.error("No active directory loaded or selected.");
         return;
       }
-      let name = this.com_inp_vfs_new.value;
+      const name = this.com_inp_vfs_new.value;
       if (name === "") {
-        this.wui_notif.Error("Empty file name");
+        this.wui_notif.error("Empty file name");
         return;
       }
-      let req = {
+      const req = {
         path: this.current_node.path + "/" + name,
         name,
         is_dir,
@@ -1241,7 +1160,7 @@ var awwan = (() => {
         childs: [],
         content: ""
       };
-      let http_res = await fetch("/awwan/api/fs", {
+      const http_res = await fetch("/awwan/api/fs", {
         method: "POST",
         headers: {
           Accept: "application/json",
@@ -1249,35 +1168,35 @@ var awwan = (() => {
         },
         body: JSON.stringify(req)
       });
-      let res = await http_res.json();
+      const res = await http_res.json();
       if (res.code != 200) {
-        this.wui_notif.Error(`newNode: ${res.message}`);
+        this.wui_notif.error(`newNode: ${res.message}`);
         return;
       }
-      let node = res.data;
+      const node = res.data;
       if (!this.current_node.childs) {
         this.current_node.childs = [];
       }
       this.current_node.childs.push(node);
-      this.wui_vfs.Set(this.current_node);
+      this.wui_vfs.set(this.current_node);
     }
     async onClickRemove() {
       console.log("onClickRemove: ", this.current_node);
       if (!this.current_node) {
-        this.wui_notif.Error("No file selected.");
+        this.wui_notif.error("No file selected.");
         return;
       }
-      let name = this.com_inp_vfs_new.value;
+      const name = this.com_inp_vfs_new.value;
       if (name === "") {
-        this.wui_notif.Error("Empty file name");
+        this.wui_notif.error("Empty file name");
         return;
       }
-      let req = {
+      const req = {
         path: this.current_node.path + "/" + name,
         is_dir: false,
         content: ""
       };
-      let http_res = await fetch("/awwan/api/fs", {
+      const http_res = await fetch("/awwan/api/fs", {
         method: "DELETE",
         headers: {
           Accept: "application/json",
@@ -1285,9 +1204,9 @@ var awwan = (() => {
         },
         body: JSON.stringify(req)
       });
-      let res = await http_res.json();
+      const res = await http_res.json();
       if (res.code != 200) {
-        this.wui_notif.Error(`remove: ${res.message}`);
+        this.wui_notif.error(`remove: ${res.message}`);
         return;
       }
     }
@@ -1295,5 +1214,5 @@ var awwan = (() => {
 
   // _www/main.ts
   renderHtml();
-  var awwan = new Awwan();
+  new Awwan();
 })();
