@@ -820,8 +820,7 @@ var awwan = (() => {
   var ID_INP_VFS_NEW = "com_inp_vfs_new";
   var ID_VFS = "com_vfs";
   var ID_VFS_PATH = "vfs_path";
-  var ID_STDOUT = "stdout";
-  var ID_STDERR = "stderr";
+  var ID_OUTPUT = "output";
   var MAX_FILE_SIZE = 3e6;
   function renderHtml() {
     const el = document.createElement("div");
@@ -854,10 +853,8 @@ var awwan = (() => {
             <button id="${ID_BTN_EXEC_REMOTE}" disabled="true">Remote</button>
           </div>
         </div>
-        <div class="boxheader">Standard output:</div>
-        <div id="${ID_STDOUT}"></div>
-        <div class="boxheader">Standard error:</div>
-        <div id="${ID_STDERR}"></div>
+        <div class="boxheader">Output:</div>
+        <div id="${ID_OUTPUT}"></div>
       </div>
     `;
     document.body.appendChild(el);
@@ -927,13 +924,9 @@ var awwan = (() => {
       if (el) {
         this.comFilePath = el;
       }
-      el = document.getElementById(ID_STDOUT);
+      el = document.getElementById(ID_OUTPUT);
       if (el) {
-        this.comStdout = el;
-      }
-      el = document.getElementById(ID_STDERR);
-      if (el) {
-        this.comStderr = el;
+        this.comOutput = el;
       }
       const editorOpts = {
         id: ID_EDITOR,
@@ -1088,8 +1081,7 @@ var awwan = (() => {
       this.httpApiExecute("remote", lineRange);
     }
     async httpApiExecute(mode, lineRange) {
-      this.comStdout.innerText = "";
-      this.comStderr.innerText = "";
+      this.comOutput.innerText = "";
       this.request.mode = mode;
       this.request.content = btoa(this.editor.getContent());
       this.request.line_range = lineRange;
@@ -1106,11 +1098,8 @@ var awwan = (() => {
         this.notif.error(`Execute failed: ${res.message}`);
         return;
       }
-      if (res.data.stdout) {
-        this.comStdout.innerText = atob(res.data.stdout);
-      }
-      if (res.data.stderr) {
-        this.comStderr.innerText = atob(res.data.stderr);
+      if (res.data.output) {
+        this.comOutput.innerText = atob(res.data.output);
       }
       this.notif.info(`Successfully execute ${this.request.script} on ${mode}.`);
     }

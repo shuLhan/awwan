@@ -18,8 +18,7 @@ const ID_INP_LINE_RANGE = "com_inp_line_range";
 const ID_INP_VFS_NEW = "com_inp_vfs_new";
 const ID_VFS = "com_vfs";
 const ID_VFS_PATH = "vfs_path";
-const ID_STDOUT = "stdout";
-const ID_STDERR = "stderr";
+const ID_OUTPUT = "output";
 const MAX_FILE_SIZE = 3000000;
 
 interface RequestInterface {
@@ -66,10 +65,8 @@ export function renderHtml() {
             <button id="${ID_BTN_EXEC_REMOTE}" disabled="true">Remote</button>
           </div>
         </div>
-        <div class="boxheader">Standard output:</div>
-        <div id="${ID_STDOUT}"></div>
-        <div class="boxheader">Standard error:</div>
-        <div id="${ID_STDERR}"></div>
+        <div class="boxheader">Output:</div>
+        <div id="${ID_OUTPUT}"></div>
       </div>
     `;
   document.body.appendChild(el);
@@ -85,8 +82,7 @@ export class Awwan {
   private comFilePath!: HTMLElement;
   private comInputLineRange!: HTMLInputElement;
   private comInputVfsNew!: HTMLInputElement;
-  private comStdout!: HTMLElement;
-  private comStderr!: HTMLElement;
+  private comOutput!: HTMLElement;
   private currentNode: WuiVfsNodeInterface | null = null;
   private request: RequestInterface = {
     mode: "local",
@@ -161,13 +157,9 @@ export class Awwan {
     if (el) {
       this.comFilePath = el;
     }
-    el = document.getElementById(ID_STDOUT);
+    el = document.getElementById(ID_OUTPUT);
     if (el) {
-      this.comStdout = el;
-    }
-    el = document.getElementById(ID_STDERR);
-    if (el) {
-      this.comStderr = el;
+      this.comOutput = el;
     }
 
     const editorOpts: WuiEditorOptions = {
@@ -355,8 +347,7 @@ export class Awwan {
   }
 
   async httpApiExecute(mode: string, lineRange: string) {
-    this.comStdout.innerText = "";
-    this.comStderr.innerText = "";
+    this.comOutput.innerText = "";
 
     this.request.mode = mode;
     this.request.content = btoa(this.editor.getContent());
@@ -377,11 +368,8 @@ export class Awwan {
       return;
     }
 
-    if (res.data.stdout) {
-      this.comStdout.innerText = atob(res.data.stdout);
-    }
-    if (res.data.stderr) {
-      this.comStderr.innerText = atob(res.data.stderr);
+    if (res.data.output) {
+      this.comOutput.innerText = atob(res.data.output);
     }
 
     this.notif.info(`Successfully execute ${this.request.script} on ${mode}.`);

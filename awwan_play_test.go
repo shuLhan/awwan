@@ -51,24 +51,20 @@ func TestAwwan_Play_withLocal(t *testing.T) {
 	}
 
 	var (
-		req     = NewRequest(CommandModePlay, scriptFile, `1-`)
-		mockout = bytes.Buffer{}
-		mockerr = bytes.Buffer{}
+		req = NewRequest(CommandModePlay, scriptFile, `1-`)
+
+		logw bytes.Buffer
 	)
 
-	req.stdout = &mockout
-	req.stderr = &mockerr
+	req.registerLogWriter(`output`, &logw)
 
 	err = aww.Play(req)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	var exp = string(tdata.Output[`play_with_local:stdout`])
-	test.Assert(t, `stdout`, exp, mockout.String())
-
-	exp = string(tdata.Output[`play_with_local:stderr`])
-	test.Assert(t, `stderr`, exp, mockerr.String())
+	var exp = string(tdata.Output[`play_with_local:output`])
+	test.Assert(t, `output`, exp, logw.String())
 }
 
 func TestAwwan_Play_Get(t *testing.T) {

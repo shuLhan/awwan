@@ -402,14 +402,11 @@ func (httpd *httpServer) awwanApiExecute(epr *libhttp.EndpointRequest) (resb []b
 
 	req.Script = filepath.Join(httpd.memfsBase.Opts.Root, req.Script)
 	req.lineRange = parseLineRange(req.LineRange)
+	req.init()
 
-	var (
-		bufout bytes.Buffer
-		buferr bytes.Buffer
-	)
+	var logw bytes.Buffer
 
-	req.stdout = &bufout
-	req.stderr = &buferr
+	req.registerLogWriter(`output`, &logw)
 
 	if req.Mode == CommandModeLocal {
 		err = httpd.aww.Local(req)
@@ -423,8 +420,7 @@ func (httpd *httpServer) awwanApiExecute(epr *libhttp.EndpointRequest) (resb []b
 
 	data = &HttpResponse{
 		Request: req,
-		Stdout:  bufout.Bytes(),
-		Stderr:  buferr.Bytes(),
+		Output:  logw.Bytes(),
 	}
 
 	res.Code = http.StatusOK

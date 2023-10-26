@@ -1,6 +1,6 @@
 Test on "local" command.
 
-<<< local:stdout
+<<< local:output
 
 --> local:   1: echo "hello"
 hello
@@ -9,5 +9,3 @@ hello
 
 --> local:   6: echo "local"
 local
-
-<<< local:stderr

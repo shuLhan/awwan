@@ -211,6 +211,8 @@ func (aww *Awwan) Local(req *Request) (err error) {
 		if errRemove != nil {
 			log.Printf(`%s: %s`, logp, errRemove)
 		}
+
+		req.mlog.Flush()
 	}()
 
 	var pos linePosition
@@ -283,7 +285,10 @@ func (aww *Awwan) Play(req *Request) (err error) {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
 
-	defer ses.sshc.rmdirAll(ses.sshc.dirTmp)
+	defer func() {
+		ses.sshc.rmdirAll(ses.sshc.dirTmp)
+		req.mlog.Flush()
+	}()
 
 	var pos linePosition
 	for _, pos = range req.lineRange.list {

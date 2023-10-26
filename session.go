@@ -354,7 +354,7 @@ func (ses *Session) SudoPut(req *Request, stmt *Statement) (err error) {
 	if isVault {
 		var errRemove = os.Remove(src)
 		if errRemove != nil {
-			log.Printf(`%s: %s`, logp, errRemove)
+			req.mlog.Errf(`%s: %s`, logp, errRemove)
 		}
 	}
 	if err != nil {
@@ -398,8 +398,8 @@ func ExecLocal(req *Request, stmt *Statement) (err error) {
 	var cmd = exec.Command(`/bin/sh`, `-c`, string(stmt.raw))
 
 	cmd.Stdin = req.stdin
-	cmd.Stdout = req.stdout
-	cmd.Stderr = req.stderr
+	cmd.Stdout = req.mlog
+	cmd.Stderr = req.mlog
 
 	err = cmd.Run()
 	if err != nil {
@@ -422,7 +422,7 @@ func (ses *Session) executeRequires(req *Request, pos linePosition) (err error) 
 			continue
 		}
 
-		fmt.Fprintf(req.stdout, "--- require %d: %v\n", x, stmt)
+		req.mlog.Outf(`--- require %d: %v`, x, stmt)
 
 		err = ExecLocal(req, stmt)
 		if err != nil {
@@ -453,7 +453,7 @@ func (ses *Session) executeScriptOnLocal(req *Request, pos linePosition) (err er
 			continue
 		}
 
-		fmt.Fprintf(req.stdout, "\n--> local: %3d: %s\n", x, stmt.String())
+		req.mlog.Outf("\n--> local: %3d: %s", x, stmt.String())
 
 		switch stmt.kind {
 		case statementKindDefault:
@@ -468,7 +468,7 @@ func (ses *Session) executeScriptOnLocal(req *Request, pos linePosition) (err er
 			err = ses.SudoCopy(req, stmt)
 		}
 		if err != nil {
-			fmt.Fprintf(req.stderr, "!!! %s\n", err)
+			req.mlog.Errf(`!!! %s`, err)
 			return err
 		}
 	}
@@ -496,8 +496,7 @@ func (ses *Session) executeScriptOnRemote(req *Request, pos linePosition) (err e
 			continue
 		}
 
-		fmt.Fprintf(req.stdout, "\n--> %s: %3d: %s\n",
-			ses.sshc.conn, x, stmt.String())
+		req.mlog.Outf("\n--> %s: %3d: %s", ses.sshc.conn, x, stmt.String())
 
 		switch stmt.kind {
 		case statementKindDefault:
@@ -615,7 +614,7 @@ func (ses *Session) initSSHClient(req *Request, sshSection *config.Section) (err
 		lastIdentFile = sshSection.IdentityFile[len(sshSection.IdentityFile)-1]
 	}
 
-	ses.sshc, err = newSshClient(sshSection, ses.dirTmp, req.stdout, req.stderr)
+	ses.sshc, err = newSshClient(sshSection, ses.dirTmp, req.mlog, nil)
 	if err != nil {
 		return fmt.Errorf(`%s: %w`, logp, err)
 	}

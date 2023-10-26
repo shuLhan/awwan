@@ -25,12 +25,13 @@ func TestExecLocal_sudo(t *testing.T) {
 		mockin  = &mockStdin{}
 		mockout = &bytes.Buffer{}
 		req     = &Request{
-			stdin:  mockin,
-			stdout: mockout,
-			stderr: mockout,
+			stdin: mockin,
 		}
 		err error
 	)
+
+	req.init()
+	req.registerLogWriter(`output`, mockout)
 
 	var cases = []testCase{{
 		desc: `SingleSudo`,
@@ -103,6 +104,7 @@ func TestExecLocal_sudo(t *testing.T) {
 				var expError = c.expError[x]
 				test.Assert(t, `error`, expError, err.Error())
 			}
+			req.mlog.Flush()
 		}
 
 		test.Assert(t, c.desc+` output`, c.expOutput, mockout.String())

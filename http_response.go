@@ -6,6 +6,5 @@ package awwan
 // HttpResponse contains the output of command execution.
 type HttpResponse struct {
 	*Request
-	Stdout []byte `json:"stdout"`
-	Stderr []byte `json:"stderr"`
+	Output []byte `json:"output"`
 }

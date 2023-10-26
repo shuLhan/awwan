@@ -209,8 +209,7 @@ func TestAwwanLocal_withEncryption(t *testing.T) {
 		lineRange string
 		pass      string
 		expError  string
-		expStdout string
-		expStderr string
+		expOutput string
 	}
 
 	var (
@@ -225,8 +224,6 @@ func TestAwwanLocal_withEncryption(t *testing.T) {
 
 	var (
 		basedir = filepath.Join(`testdata`, `local`)
-		mockout = bytes.Buffer{}
-		mockerr = bytes.Buffer{}
 		mockrw  = mock.ReadWriter{}
 		aww     = Awwan{}
 	)
@@ -243,7 +240,7 @@ func TestAwwanLocal_withEncryption(t *testing.T) {
 		script:    filepath.Join(basedir, `local_encrypted.aww`),
 		lineRange: `3`,
 		pass:      "s3cret\r",
-		expStdout: string(tdata.Output[`echo_encrypted`]),
+		expOutput: string(tdata.Output[`echo_encrypted`]),
 	}, {
 		desc:      `With encrypted value, no passphrase`,
 		script:    filepath.Join(basedir, `local_encrypted.aww`),
@@ -260,7 +257,7 @@ func TestAwwanLocal_withEncryption(t *testing.T) {
 		script:    filepath.Join(basedir, `sub`, `local_encrypted.aww`),
 		lineRange: `1`,
 		pass:      "s3cret\r",
-		expStdout: string(tdata.Output[`sub_echo_encrypted`]),
+		expOutput: string(tdata.Output[`sub_echo_encrypted`]),
 	}}
 
 	var c testCase
@@ -268,12 +265,13 @@ func TestAwwanLocal_withEncryption(t *testing.T) {
 	for _, c = range cases {
 		t.Logf(c.desc)
 
-		var req = NewRequest(CommandModeLocal, c.script, c.lineRange)
+		var (
+			req = NewRequest(CommandModeLocal, c.script, c.lineRange)
 
-		mockout.Reset()
-		mockerr.Reset()
-		req.stdout = &mockout
-		req.stderr = &mockerr
+			logw bytes.Buffer
+		)
+
+		req.registerLogWriter(`output`, &logw)
 
 		// Mock terminal to read passphrase for private key.
 		mockrw.BufRead.Reset()
@@ -285,8 +283,7 @@ func TestAwwanLocal_withEncryption(t *testing.T) {
 			test.Assert(t, `Local error`, c.expError, err.Error())
 		}
 
-		test.Assert(t, `stderr`, c.expStderr, mockerr.String())
-		test.Assert(t, `stdout`, c.expStdout, mockout.String())
+		test.Assert(t, `output`, c.expOutput, logw.String())
 	}
 }
 
@@ -450,9 +447,7 @@ func TestAwwanLocal_Put(t *testing.T) {
 	}}
 
 	var (
-		mockout = bytes.Buffer{}
-		mockerr = bytes.Buffer{}
-		mockrw  = mock.ReadWriter{}
+		mockrw = mock.ReadWriter{}
 
 		aww        *Awwan
 		c          testCase
@@ -481,11 +476,6 @@ func TestAwwanLocal_Put(t *testing.T) {
 
 		var req = NewRequest(CommandModeLocal, script, c.lineRange)
 
-		mockout.Reset()
-		mockerr.Reset()
-		req.stdout = &mockout
-		req.stderr = &mockerr
-
 		err = aww.Local(req)
 		if err != nil {
 			test.Assert(t, `Local error`, c.expError, err.Error())
@@ -510,6 +500,6 @@ func TestAwwanLocal_Put(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		test.Assert(t, `error`, c.expMode, fi.Mode())
+		test.Assert(t, `mode`, c.expMode, fi.Mode())
 	}
 }
