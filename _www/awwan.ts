@@ -7,7 +7,6 @@ import { WuiResponseInterface } from "./wui/response.js";
 import { WuiVfs, WuiVfsOptions, WuiVfsNodeInterface } from "./wui/vfs/vfs.js";
 
 const CLASS_EDITOR_ACTION = "editor_action";
-const ID_BTN_CLEAR_SELECTION = "com_btn_clear_selection";
 const ID_BTN_EXEC_LOCAL = "com_btn_local";
 const ID_BTN_EXEC_REMOTE = "com_btn_remote";
 const ID_BTN_NEW_DIR = "com_btn_new_dir";
@@ -15,6 +14,7 @@ const ID_BTN_NEW_FILE = "com_btn_new_file";
 const ID_BTN_REMOVE = "com_btn_remove";
 const ID_BTN_SAVE = "com_btn_save";
 const ID_EDITOR = "com_editor";
+const ID_INP_LINE_RANGE = "com_inp_line_range";
 const ID_INP_VFS_NEW = "com_inp_vfs_new";
 const ID_VFS = "com_vfs";
 const ID_VFS_PATH = "vfs_path";
@@ -39,53 +39,43 @@ export function renderHtml() {
   const el = document.createElement("div");
   el.classList.add("awwan");
   el.innerHTML = `
-			<div class="awwan_nav_left">
-				<div id="${ID_VFS}"></div>
+      <div class="awwan_nav_left">
+        <div id="${ID_VFS}"></div>
 
-				<br/>
-				<div class="${ID_INP_VFS_NEW}">
-					<input id="${ID_INP_VFS_NEW}" />
-				</div>
-				<button id="${ID_BTN_NEW_DIR}">New directory</button>
-				<button id="${ID_BTN_NEW_FILE}">New file</button>
-				<button id="${ID_BTN_REMOVE}">Remove</button>
-			</div>
-			<div class="awwan_content">
-				<div class="editor_file">
-					File: <span id="${ID_VFS_PATH}">-</span>
-					<button id="${ID_BTN_SAVE}" disabled="true">Save</button>
-				</div>
-				<div id="${ID_EDITOR}"></div>
-				<div>
-					<div class="${CLASS_EDITOR_ACTION}">
-						<button id="${ID_BTN_CLEAR_SELECTION}">Clear selection</button>
-					</div>
-					<div class="${CLASS_EDITOR_ACTION}">
-						Execute script on
-						<button id="${ID_BTN_EXEC_LOCAL}" disabled="true">Local</button>
-						or
-						<button id="${ID_BTN_EXEC_REMOTE}" disabled="true">Remote</button>
-					</div>
-				</div>
-				<p>Hints:</p>
-				<ul>
-					<li>
-						Click and drag on the line numbers to select the specific line to be
-						executed.
-					</li>
-					<li>Press ESC to clear selection.</li>
-				</ul>
-				<div class="boxheader">Standard output:</div>
-				<div id="${ID_STDOUT}"></div>
-				<div class="boxheader">Standard error:</div>
-				<div id="${ID_STDERR}"></div>
-			</div>
-		`;
+        <br/>
+        <div class="${ID_INP_VFS_NEW}">
+          <input id="${ID_INP_VFS_NEW}" />
+        </div>
+        <button id="${ID_BTN_NEW_DIR}">New directory</button>
+        <button id="${ID_BTN_NEW_FILE}">New file</button>
+        <button id="${ID_BTN_REMOVE}">Remove</button>
+      </div>
+      <div class="awwan_content">
+        <div class="editor_file">
+          File: <span id="${ID_VFS_PATH}">-</span>
+          <button id="${ID_BTN_SAVE}" disabled="true">Save</button>
+        </div>
+        <div id="${ID_EDITOR}"></div>
+        <div>
+          <div class="${CLASS_EDITOR_ACTION}">
+            Execute
+            <input id="${ID_INP_LINE_RANGE}" />
+            on
+            <button id="${ID_BTN_EXEC_LOCAL}" disabled="true">Local</button>
+            or
+            <button id="${ID_BTN_EXEC_REMOTE}" disabled="true">Remote</button>
+          </div>
+        </div>
+        <div class="boxheader">Standard output:</div>
+        <div id="${ID_STDOUT}"></div>
+        <div class="boxheader">Standard error:</div>
+        <div id="${ID_STDERR}"></div>
+      </div>
+    `;
   document.body.appendChild(el);
 }
 
 export class Awwan {
-  private comBtnClear!: HTMLButtonElement;
   private comBtnLocal!: HTMLButtonElement;
   private comBtnNewDir!: HTMLButtonElement;
   private comBtnNewFile!: HTMLButtonElement;
@@ -93,6 +83,7 @@ export class Awwan {
   private comBtnRemove!: HTMLButtonElement;
   private comBtnSave!: HTMLButtonElement;
   private comFilePath!: HTMLElement;
+  private comInputLineRange!: HTMLInputElement;
   private comInputVfsNew!: HTMLInputElement;
   private comStdout!: HTMLElement;
   private comStderr!: HTMLElement;
@@ -108,15 +99,7 @@ export class Awwan {
   private vfs: WuiVfs;
 
   constructor() {
-    let el = document.getElementById(ID_BTN_CLEAR_SELECTION);
-    if (el) {
-      this.comBtnClear = el as HTMLButtonElement;
-      this.comBtnClear.onclick = () => {
-        this.editor.clearSelection();
-      };
-    }
-
-    el = document.getElementById(ID_BTN_EXEC_LOCAL);
+    let el = document.getElementById(ID_BTN_EXEC_LOCAL);
     if (el) {
       this.comBtnLocal = el as HTMLButtonElement;
       this.comBtnLocal.onclick = () => {
@@ -161,6 +144,14 @@ export class Awwan {
       };
     }
 
+    el = document.getElementById(ID_INP_LINE_RANGE);
+    if (!el) {
+      console.error(`failed to get element by ID #${ID_INP_LINE_RANGE}`);
+      return;
+    }
+
+    this.comInputLineRange = el as HTMLInputElement;
+
     el = document.getElementById(ID_INP_VFS_NEW);
     if (el) {
       this.comInputVfsNew = el as HTMLInputElement;
@@ -182,9 +173,6 @@ export class Awwan {
     const editorOpts: WuiEditorOptions = {
       id: ID_EDITOR,
       is_editable: true,
-      onSelection: (beginAt: number, endAt: number) => {
-        this.editorOnSelection(beginAt, endAt);
-      },
       onSave: this.editorOnSave,
     };
     this.editor = new WuiEditor(editorOpts);
@@ -338,20 +326,18 @@ export class Awwan {
     return res;
   }
 
-  editorOnSelection(begin: number, end: number) {
-    const stmts = this.editor.lines.slice(begin, end + 1);
-    for (const stmt of stmts) {
-      console.log("stmt:", stmt.x, stmt.text);
-    }
-  }
-
   // execLocal request to execute the selected script on local system.
   execLocal() {
     if (this.request.script == "") {
       this.notif.error(`Execute on local: no file selected`);
       return;
     }
-    this.httpApiExecute("local");
+    const lineRange = this.comInputLineRange.value.trim();
+    if (lineRange === "") {
+      this.notif.error(`Empty line range`);
+      return;
+    }
+    this.httpApiExecute("local", lineRange);
   }
 
   // execRemote request to execute the selected script on remote system.
@@ -360,30 +346,21 @@ export class Awwan {
       this.notif.error(`Execute on remote: no file selected`);
       return;
     }
-    this.httpApiExecute("remote");
+    const lineRange = this.comInputLineRange.value.trim();
+    if (lineRange === "") {
+      this.notif.error(`Empty line range`);
+      return;
+    }
+    this.httpApiExecute("remote", lineRange);
   }
 
-  async httpApiExecute(mode: string) {
-    let beginAt = 0;
-    let endAt = 0;
-    const selectionRange = this.editor.getSelectionRange();
-    if (selectionRange.begin_at > 0) {
-      beginAt = selectionRange.begin_at + 1;
-    }
-    if (selectionRange.end_at > 0) {
-      endAt = selectionRange.end_at + 1;
-    }
-
+  async httpApiExecute(mode: string, lineRange: string) {
     this.comStdout.innerText = "";
     this.comStderr.innerText = "";
 
     this.request.mode = mode;
     this.request.content = btoa(this.editor.getContent());
-    if (beginAt === endAt) {
-      this.request.line_range = `${beginAt}`;
-    } else {
-      this.request.line_range = `${beginAt}-${endAt}`;
-    }
+    this.request.line_range = lineRange;
 
     const httpRes = await fetch("/awwan/api/execute", {
       method: "POST",
