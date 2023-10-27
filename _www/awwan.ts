@@ -13,6 +13,7 @@ const ID_BTN_NEW_DIR = "com_btn_new_dir";
 const ID_BTN_NEW_FILE = "com_btn_new_file";
 const ID_BTN_REMOVE = "com_btn_remove";
 const ID_BTN_SAVE = "com_btn_save";
+const ID_COM_RESIZE = "com_resize";
 const ID_EDITOR = "com_editor";
 const ID_INP_LINE_RANGE = "com_inp_line_range";
 const ID_INP_VFS_NEW = "com_inp_vfs_new";
@@ -63,8 +64,10 @@ export function renderHtml() {
             <button id="${ID_BTN_EXEC_LOCAL}" disabled="true">Local</button>
             or
             <button id="${ID_BTN_EXEC_REMOTE}" disabled="true">Remote</button>
+
           </div>
         </div>
+        <button id="${ID_COM_RESIZE}">&#9868;</button>
         <div class="output">
           <div class="boxheader">Output:</div>
           <div id="${ID_OUTPUT}"></div>
@@ -81,6 +84,7 @@ export class Awwan {
   private comBtnRemote!: HTMLButtonElement;
   private comBtnRemove!: HTMLButtonElement;
   private comBtnSave!: HTMLButtonElement;
+  private comEditor!: HTMLElement;
   private comFilePath!: HTMLElement;
   private comInputLineRange!: HTMLInputElement;
   private comInputVfsNew!: HTMLInputElement;
@@ -170,6 +174,7 @@ export class Awwan {
       onSave: this.editorOnSave,
     };
     this.editor = new WuiEditor(editorOpts);
+    this.comEditor = document.getElementById(ID_EDITOR);
 
     this.notif = new WuiNotif();
 
@@ -190,6 +195,18 @@ export class Awwan {
       const url = new URL(hashchange.newURL);
       this.onHashChange(url.hash);
     };
+
+    const elResize = document.getElementById(ID_COM_RESIZE);
+
+    elResize.addEventListener("mousedown", () => {
+      document._posy = 0;
+      document.addEventListener("mousemove", this.doResize, false);
+    });
+
+    document.addEventListener("mouseup", () => {
+      document.removeEventListener("mousemove", this.doResize, false);
+      document._posy = 0;
+    });
   }
 
   onHashChange(hash: string) {
@@ -455,5 +472,35 @@ export class Awwan {
       this.notif.error(`remove: ${res.message}`);
       return;
     }
+  }
+
+  doResize(ev: MouseEvent) {
+    if (this._posy == 0) {
+      this._posy = ev.screenY;
+      return true;
+    }
+    const diff = this._posy - ev.screenY;
+    if (diff > 0) {
+      this._awwan.resizeUp(diff);
+    } else if (diff < 0) {
+      this._awwan.resizeDown(diff * -1);
+    }
+    this._posy = ev.screenY;
+  }
+
+  resizeUp(diff: number) {
+    if (this.comEditor.clientHeight <= 126) {
+      return;
+    }
+    this.comEditor.style.height = `${this.comEditor.clientHeight - diff}px`;
+    this.comOutput.style.height = `${this.comOutput.clientHeight + diff}px`;
+  }
+
+  resizeDown(diff: number) {
+    if (this.comOutput.clientHeight <= 126) {
+      return;
+    }
+    this.comEditor.style.height = `${this.comEditor.clientHeight + diff}px`;
+    this.comOutput.style.height = `${this.comOutput.clientHeight - diff}px`;
   }
 }
