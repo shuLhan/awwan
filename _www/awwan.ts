@@ -50,7 +50,7 @@ export function renderHtml() {
         <button id="${ID_BTN_REMOVE}">Remove</button>
       </div>
       <div class="awwan_content">
-        <div class="editor_file">
+        <div class="boxheader">
           File: <span id="${ID_VFS_PATH}">-</span>
           <button id="${ID_BTN_SAVE}" disabled="true">Save</button>
         </div>
@@ -65,8 +65,10 @@ export function renderHtml() {
             <button id="${ID_BTN_EXEC_REMOTE}" disabled="true">Remote</button>
           </div>
         </div>
-        <div class="boxheader">Output:</div>
-        <div id="${ID_OUTPUT}"></div>
+        <div class="output">
+          <div class="boxheader">Output:</div>
+          <div id="${ID_OUTPUT}"></div>
+        </div>
       </div>
     `;
   document.body.appendChild(el);

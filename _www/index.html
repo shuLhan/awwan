@@ -55,15 +55,11 @@
             margin-right: 10px;
         }
 
-        #editor {
-            width: 100%;
-            height: 600px;
+        #com_editor {
+            width: calc(100% - 2px);
+            height: calc(100% - 272px);
             border: 1px solid silver;
-        }
-
-        .editor_file {
-            border: 1px solid silver;
-            padding: 10px;
+            resize: vertical;
         }
 
         .editor_action {
@@ -75,13 +71,18 @@
             border: 1px solid silver;
         }
 
+        .output {
+            position: relative;
+            bottom: 0px;
+            height: 126px;
+        }
+
         #output {
             background-color: lavender;
             border: 1px solid silver;
             font-family: monospace;
-            min-height: 200px;
+            height: 100%;
             overflow: auto;
-            padding: 10px;
             white-space: pre;
         }
 
