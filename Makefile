@@ -32,7 +32,7 @@ build: embed
 	go build ./cmd/awwan
 
 .PHONY: install
-install: embed
+install: lint-www embed
 	go install ./cmd/awwan
 
 .PHONY: dev
@@ -41,8 +41,8 @@ dev:
 
 #{{{ Task to lint the TypeScript files.
 
-.PHONY: _www-lint
-_www-lint:
+.PHONY: lint-www
+lint-www:
 	cd _www && eslint --fix .
 
 #}}}
