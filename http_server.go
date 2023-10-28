@@ -182,9 +182,7 @@ func (httpd *httpServer) awwanApiFsGet(epr *libhttp.EndpointRequest) (resb []byt
 
 // awwanApiFsDelete an HTTP API to delete a file.
 //
-// # Request
-//
-// Format,
+// Request format,
 //
 //	DELETE /awwan/api/fs
 //	Content-Type: application/json
@@ -194,9 +192,7 @@ func (httpd *httpServer) awwanApiFsGet(epr *libhttp.EndpointRequest) (resb []byt
 //		"is_dir": <boolean>, true if its directory.
 //	}
 //
-// # Response
-//
-// Format,
+// Response format,
 //
 //	Content-Type: application/json
 //
@@ -236,6 +232,16 @@ func (httpd *httpServer) awwanApiFsDelete(epr *libhttp.EndpointRequest) (resb []
 		return nil, res
 	}
 
+	var (
+		basePath = path.Base(req.Path)
+		child    = nodeParent.Child(basePath)
+	)
+
+	if child == nil {
+		res.Message = fmt.Sprintf(`%s: child not found %q`, logp, basePath)
+		return nil, res
+	}
+
 	sysPath = filepath.Join(nodeParent.SysPath, path.Base(req.Path))
 	sysPath, err = filepath.Abs(sysPath)
 	if err != nil {
@@ -253,6 +259,8 @@ func (httpd *httpServer) awwanApiFsDelete(epr *libhttp.EndpointRequest) (resb []
 		res.Message = fmt.Sprintf("%s: %s", logp, err)
 		return nil, res
 	}
+
+	_ = httpd.memfsBase.RemoveChild(nodeParent, child)
 
 	res.Code = http.StatusOK
 	res.Message = fmt.Sprintf("%s: %q has been removed", logp, sysPath)
