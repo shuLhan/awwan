@@ -1195,6 +1195,8 @@ var awwan = (() => {
         this.notif.error(`remove: ${res.message}`);
         return;
       }
+      this.notif.info(`${res.message}`);
+      this.vfs.openDir(this.currentNode.path);
     }
     doResize(ev) {
       if (this._posy == 0) {
