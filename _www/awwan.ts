@@ -177,7 +177,9 @@ export class Awwan {
     const editorOpts: WuiEditorOptions = {
       id: ID_EDITOR,
       is_editable: true,
-      onSave: this.editorOnSave,
+      onSave: (content) => {
+        this.editorOnSave(content);
+      },
     };
     this.editor = new WuiEditor(editorOpts);
     this.comEditor = document.getElementById(ID_EDITOR);
