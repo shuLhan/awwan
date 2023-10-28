@@ -20,6 +20,7 @@ const ID_INP_VFS_NEW = "com_inp_vfs_new";
 const ID_VFS = "com_vfs";
 const ID_VFS_PATH = "vfs_path";
 const ID_OUTPUT = "output";
+const ID_OUTPUT_WRAPPER = "output_wrapper";
 const MAX_FILE_SIZE = 3000000;
 
 interface RequestInterface {
@@ -68,7 +69,7 @@ export function renderHtml() {
           </div>
         </div>
         <button id="${ID_COM_RESIZE}">&#9868;</button>
-        <div class="output">
+        <div id="${ID_OUTPUT_WRAPPER}" class="output">
           <div class="boxheader">Output:</div>
           <div id="${ID_OUTPUT}"></div>
         </div>
@@ -89,6 +90,7 @@ export class Awwan {
   private comInputLineRange!: HTMLInputElement;
   private comInputVfsNew!: HTMLInputElement;
   private comOutput!: HTMLElement;
+  private comOutputWrapper!: HTMLElement;
   private currentNode: WuiVfsNodeInterface | null = null;
   private request: RequestInterface = {
     mode: "local",
@@ -166,6 +168,10 @@ export class Awwan {
     el = document.getElementById(ID_OUTPUT);
     if (el) {
       this.comOutput = el;
+    }
+    el = document.getElementById(ID_OUTPUT_WRAPPER);
+    if (el) {
+      this.comOutputWrapper = el;
     }
 
     const editorOpts: WuiEditorOptions = {
@@ -493,14 +499,18 @@ export class Awwan {
       return;
     }
     this.comEditor.style.height = `${this.comEditor.clientHeight - diff}px`;
-    this.comOutput.style.height = `${this.comOutput.clientHeight + diff}px`;
+    this.comOutputWrapper.style.height = `${
+      this.comOutputWrapper.clientHeight + diff
+    }px`;
   }
 
   resizeDown(diff: number) {
-    if (this.comOutput.clientHeight <= 126) {
+    if (this.comOutputWrapper.clientHeight <= 126) {
       return;
     }
     this.comEditor.style.height = `${this.comEditor.clientHeight + diff}px`;
-    this.comOutput.style.height = `${this.comOutput.clientHeight - diff}px`;
+    this.comOutputWrapper.style.height = `${
+      this.comOutputWrapper.clientHeight - diff
+    }px`;
   }
 }

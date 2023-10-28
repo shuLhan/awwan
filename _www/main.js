@@ -822,6 +822,7 @@ var awwan = (() => {
   var ID_VFS = "com_vfs";
   var ID_VFS_PATH = "vfs_path";
   var ID_OUTPUT = "output";
+  var ID_OUTPUT_WRAPPER = "output_wrapper";
   var MAX_FILE_SIZE = 3e6;
   function renderHtml() {
     const el = document.createElement("div");
@@ -856,7 +857,7 @@ var awwan = (() => {
           </div>
         </div>
         <button id="${ID_COM_RESIZE}">&#9868;</button>
-        <div class="output">
+        <div id="${ID_OUTPUT_WRAPPER}" class="output">
           <div class="boxheader">Output:</div>
           <div id="${ID_OUTPUT}"></div>
         </div>
@@ -932,6 +933,10 @@ var awwan = (() => {
       el = document.getElementById(ID_OUTPUT);
       if (el) {
         this.comOutput = el;
+      }
+      el = document.getElementById(ID_OUTPUT_WRAPPER);
+      if (el) {
+        this.comOutputWrapper = el;
       }
       const editorOpts = {
         id: ID_EDITOR,
@@ -1207,14 +1212,14 @@ var awwan = (() => {
         return;
       }
       this.comEditor.style.height = `${this.comEditor.clientHeight - diff}px`;
-      this.comOutput.style.height = `${this.comOutput.clientHeight + diff}px`;
+      this.comOutputWrapper.style.height = `${this.comOutputWrapper.clientHeight + diff}px`;
     }
     resizeDown(diff) {
-      if (this.comOutput.clientHeight <= 126) {
+      if (this.comOutputWrapper.clientHeight <= 126) {
         return;
       }
       this.comEditor.style.height = `${this.comEditor.clientHeight + diff}px`;
-      this.comOutput.style.height = `${this.comOutput.clientHeight - diff}px`;
+      this.comOutputWrapper.style.height = `${this.comOutputWrapper.clientHeight - diff}px`;
     }
   };
 
