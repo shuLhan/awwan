@@ -59,11 +59,11 @@ func ParseScript(ses *Session, path string, content []byte) (script *Script, err
 	}
 
 	raw = bytes.TrimRight(raw, " \t\r\n\v")
-	splits = bytes.Split(raw, newLine)
+	splits = bytes.Split(raw, []byte{'\n'})
 
 	// Add empty line at the beginning to make the start index start from
 	// 1, not 0.
-	rawLines = [][]byte{newLine}
+	rawLines = [][]byte{{'\n'}}
 	rawLines = append(rawLines, splits...)
 	rawLines = joinStatements(rawLines)
 	rawLines = joinRequireStatements(rawLines)

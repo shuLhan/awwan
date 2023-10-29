@@ -41,8 +41,6 @@ const defEncryptExt = `.vault`
 // defFileEnvVault default awwan environment file name that is encrypted.
 const defFileEnvVault = `.awwan.env.vault`
 
-var newLine = []byte("\n")
-
 // Awwan is the service that run script in local or remote.
 // Awwan contains cache of sessions and cache of environment files.
 type Awwan struct {
