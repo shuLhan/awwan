@@ -22,8 +22,25 @@ import (
 // This variable will initialize by initMemfsWui.
 var MemfsWui *memfs.MemFS
 
-// Build compile all TypeScript files inside _wui into JavaScript and embed
-// them into memfs_wui.go.
+// DocConvertOpts ciigo options for converting markup files.
+var DocConvertOpts = ciigo.ConvertOptions{
+	Root:         `_wui/doc`,
+	HtmlTemplate: `_wui/doc/template.gohtml`,
+}
+
+// docEmbedOpts options for embedding files in "_www/doc" into Go code.
+var docEmbedOpts = ciigo.EmbedOptions{
+	ConvertOptions: DocConvertOpts,
+	EmbedOptions: memfs.EmbedOptions{
+		PackageName: `main`,
+		VarName:     `MemfsWww`,
+		GoFileName:  `internal/cmd/www-awwan/memfs.go`,
+	},
+}
+
+// Build compile all TypeScript files inside _wui into JavaScript, and all
+// markup files into HTML, and then embed them into "memfs_wui.go" and
+// "memfs_www.go".
 func Build() (err error) {
 	var (
 		logp = `Build`
@@ -43,12 +60,17 @@ func Build() (err error) {
 		return fmt.Errorf(`%s: %w`, logp, err)
 	}
 
-	err = convertMarkup()
+	err = ciigo.Convert(&DocConvertOpts)
 	if err != nil {
 		return fmt.Errorf(`%s: %w`, logp, err)
 	}
 
 	err = initMemfsWui()
+	if err != nil {
+		return fmt.Errorf(`%s: %w`, logp, err)
+	}
+
+	err = MemfsWui.Remount()
 	if err != nil {
 		return fmt.Errorf(`%s: %w`, logp, err)
 	}
@@ -73,12 +95,12 @@ func Watch() {
 		err       error
 	)
 
-	err = convertMarkup()
+	err = ciigo.Convert(&DocConvertOpts)
 	if err != nil {
 		log.Fatalf(`%s: %s`, logp, err)
 	}
 
-	ciigoConv, err = ciigo.NewConverter(`_wui/doc/template.gohtml`)
+	ciigoConv, err = ciigo.NewConverter(DocConvertOpts.HtmlTemplate)
 	if err != nil {
 		log.Fatalf(`%s: %s`, logp, err)
 	}
@@ -99,13 +121,18 @@ func Watch() {
 		}
 	}
 
-	var dw = &memfs.DirWatcher{
-		Options: memfs.Options{
-			Root: `_wui`,
-			Includes: []string{
-				`.*\.(adoc|html|js|json|md|ts)$`,
+	var (
+		wuiWatchOpts = memfs.WatchOptions{
+			Watches: []string{
+				`.*\.(adoc|md|ts)$`,
 			},
-		},
+		}
+		dw *memfs.DirWatcher
+	)
+
+	dw, err = MemfsWui.Watch(wuiWatchOpts)
+	if err != nil {
+		log.Fatalf(`%s: %s`, logp, err)
 	}
 
 	err = dw.Start()
@@ -113,8 +140,10 @@ func Watch() {
 		log.Fatalf(`%s: %s`, logp, err)
 	}
 
+	defer dw.Stop()
+
 	var (
-		buildTicker = time.NewTicker(500 * time.Millisecond)
+		buildTicker = time.NewTicker(200 * time.Millisecond)
 
 		ns         memfs.NodeState
 		tsCount    int
@@ -124,7 +153,7 @@ func Watch() {
 	for {
 		select {
 		case ns = <-dw.C:
-			fmt.Printf("%s: update on %s\n", logp, ns.Node.SysPath)
+			fmt.Printf("%s: update on Path=%q SysPath=%q\n", logp, ns.Node.Path, ns.Node.SysPath)
 
 			switch {
 			case strings.HasSuffix(ns.Node.SysPath, `.adoc`),
@@ -149,6 +178,13 @@ func Watch() {
 				tsCount++
 
 			case strings.HasSuffix(ns.Node.SysPath, `.js`) || strings.HasSuffix(ns.Node.SysPath, `.html`):
+				embedCount++
+
+			case strings.HasSuffix(ns.Node.SysPath, DocConvertOpts.HtmlTemplate):
+				err = ciigo.Convert(&DocConvertOpts)
+				if err != nil {
+					mlog.Errf(`%s: %s`, logp, err)
+				}
 				embedCount++
 			}
 
@@ -192,22 +228,19 @@ func buildTypeScript(esctx esapi.BuildContext) (err error) {
 	return fmt.Errorf(`%s: %v`, logp, buildResult.Errors[0])
 }
 
-// convertMarkup convert all markup files inside _wui/doc directory to HTML.
-func convertMarkup() (err error) {
-	var opts = &ciigo.ConvertOptions{
-		Root:         `_wui/doc`,
-		HtmlTemplate: `_wui/doc/template.gohtml`,
-	}
-
-	err = ciigo.Convert(opts)
-	return err
-}
-
 func goEmbed() (err error) {
+	var logp = `goEmbed`
+
 	err = MemfsWui.GoEmbed()
 	if err != nil {
-		return fmt.Errorf(`goEmbed: %w`, err)
+		return fmt.Errorf(`%s: %w`, logp, err)
 	}
+
+	err = ciigo.GoEmbed(&docEmbedOpts)
+	if err != nil {
+		log.Fatalf(`%s: %s`, logp, err)
+	}
+
 	return nil
 }
 

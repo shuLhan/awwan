@@ -82,12 +82,8 @@ test-all:
 #}}}
 #{{{ Tasks to test or deploy awwan.org website.
 
-.PHONY: embed-www
-embed-www:
-	go run ./internal/cmd/www-awwan/ embed
-
 .PHONY: build-www
-build-www: embed-www
+build-www: embed
 	go build ./internal/cmd/www-awwan/
 
 serve-www:

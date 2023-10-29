@@ -46,9 +46,9 @@ History of each awwan release.
 Link to download and/or install awwan manually from source code.
 
 [Manual page](https://awwan.org/awwan.html) --
-The manual page describe how to use and setup awwan workspace.
+The manual page describe how to setup and use awwan.
 
-[GoDoc](https://pkg.go.dev/git.sr.ht/~shulhan/awwan) --
+[Go documentation](https://pkg.go.dev/git.sr.ht/~shulhan/awwan) --
 Go module documentation of awwan as library.
 
 ##  Development

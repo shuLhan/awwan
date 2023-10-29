@@ -14,11 +14,13 @@ import (
 	"path/filepath"
 	"syscall"
 
+	"git.sr.ht/~shulhan/awwan/internal"
 	"git.sr.ht/~shulhan/ciigo"
 	"github.com/shuLhan/share/lib/memfs"
 )
 
-var memFS *memfs.MemFS
+// MemfsWww contains the embedded files under "_wui/doc" for website.
+var MemfsWww *memfs.MemFS
 
 func main() {
 	var flagDev = flag.Bool(`dev`, false, `Watch local changes`)
@@ -26,25 +28,11 @@ func main() {
 	flag.Parse()
 
 	var (
-		binName          = filepath.Base(os.Args[0])
-		cmd              = flag.Arg(0)
-		ciigoConvertOpts = ciigo.ConvertOptions{
-			Root:         `_wui/doc`,
-			HtmlTemplate: `_wui/doc/template.gohtml`,
-		}
-	)
-
-	switch cmd {
-	case `embed`:
-		doEmbed(ciigoConvertOpts)
-		return
-	}
-
-	var (
+		binName   = filepath.Base(os.Args[0])
 		optsServe = &ciigo.ServeOptions{
-			Mfs:            memFS,
+			Mfs:            MemfsWww,
 			Address:        `127.0.0.1:4358`,
-			ConvertOptions: ciigoConvertOpts,
+			ConvertOptions: internal.DocConvertOpts,
 			IsDevelopment:  *flagDev,
 		}
 
@@ -65,22 +53,5 @@ func main() {
 	err = ciigo.Serve(optsServe)
 	if err != nil {
 		log.Fatal(err)
-	}
-}
-
-// doEmbed embed the files in "_wui/doc" into memfswww.
-func doEmbed(ciigoConvertOpts ciigo.ConvertOptions) {
-	var optsEmbed = ciigo.EmbedOptions{
-		ConvertOptions: ciigoConvertOpts,
-		EmbedOptions: memfs.EmbedOptions{
-			PackageName: `main`,
-			VarName:     `memFS`,
-			GoFileName:  `internal/cmd/www-awwan/memfs.go`,
-		},
-	}
-
-	var err = ciigo.GoEmbed(&optsEmbed)
-	if err != nil {
-		log.Fatalf(`doEmbed: %s`, err)
 	}
 }
