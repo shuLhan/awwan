@@ -218,12 +218,10 @@ func initMemfsWui() (err error) {
 			`.*\.(css|js|html|jpg|png|ico)$`,
 		},
 		Excludes: []string{
-			`.*\.adoc$`,
-			`/\.eslintrc.yaml`,
-			`/\.gitignore`,
-			`/node_modules`,
-			`/tsconfig.json$`,
-			`/wui`,
+			`.*\.(adoc|json|yaml)$`,
+			`.gitignore`,
+			`_wui/node_modules`,
+			`_wui/wui`,
 		},
 		Embed: memfs.EmbedOptions{
 			CommentHeader: "// SPDX-FileCopyrightText: 2021 M. Shulhan <ms@kilabit.info>\n" +

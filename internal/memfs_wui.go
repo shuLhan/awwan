@@ -243,21 +243,19 @@ func init() {
 	MemfsWui = &memfs.MemFS{
 		PathNodes: memfs.NewPathNode(),
 		Opts: &memfs.Options{
-			Root: "_wui",
+			Root:        "_wui",
 			MaxFileSize: 5242880,
 			Includes: []string{
 				`.*\.(css|js|html|jpg|png|ico)$`,
 			},
 			Excludes: []string{
-				`.*\.adoc$`,
-				`/\.eslintrc.yaml`,
-				`/\.gitignore`,
-				`/node_modules`,
-				`/tsconfig.json$`,
-				`/wui`,
+				`.*\.(adoc|json|yaml)$`,
+				`.gitignore`,
+				`_wui/node_modules`,
+				`_wui/wui`,
 			},
 			Embed: memfs.EmbedOptions{
-				CommentHeader:  `// SPDX-FileCopyrightText: 2021 M. Shulhan <ms@kilabit.info>
+				CommentHeader: `// SPDX-FileCopyrightText: 2021 M. Shulhan <ms@kilabit.info>
 // SPDX-License-Identifier: GPL-3.0-or-later
 `,
 				PackageName:    "internal",
@@ -297,4 +295,9 @@ func init() {
 		_MemfsWui_getNode(MemfsWui, "/main.js", generate__wui_main_js))
 
 	MemfsWui.Root = MemfsWui.PathNodes.Get("/")
+
+	var err = MemfsWui.Init()
+	if err != nil {
+		panic("MemfsWui: " + err.Error())
+	}
 }
