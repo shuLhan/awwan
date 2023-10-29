@@ -1,6 +1,6 @@
 "use strict";
 var awwan = (() => {
-  // _www/wui/editor/editor.js
+  // _wui/wui/editor/editor.js
   var WUI_EDITOR_CLASS = "wui_editor";
   var WUI_EDITOR_CLASS_LINE = "wui_editor_line";
   var WUI_EDITOR_CLASS_LINE_NUMBER = "wui_editor_line_number";
@@ -613,7 +613,7 @@ var awwan = (() => {
     }
   };
 
-  // _www/wui/notif/notif.js
+  // _wui/wui/notif/notif.js
   var WUI_NOTIF_ID = "wui_notif";
   var WUI_NOTIF_CLASS_INFO = "wui_notif_info";
   var WUI_NOTIF_CLASS_ERROR = "wui_notif_error";
@@ -673,7 +673,7 @@ var awwan = (() => {
     }
   };
 
-  // _www/wui/vfs/vfs.js
+  // _wui/wui/vfs/vfs.js
   var CLASS_VFS_PATH = "wui_vfs_path";
   var CLASS_VFS_LIST = "wui_vfs_list";
   var WuiVfs = class {
@@ -807,7 +807,7 @@ var awwan = (() => {
     }
   };
 
-  // _www/awwan.ts
+  // _wui/awwan.ts
   var CLASS_EDITOR_ACTION = "editor_action";
   var ID_BTN_EXEC_LOCAL = "com_btn_local";
   var ID_BTN_EXEC_REMOTE = "com_btn_remote";
@@ -1251,7 +1251,7 @@ var awwan = (() => {
     }
   };
 
-  // _www/main.ts
+  // _wui/main.ts
   renderHtml();
   document._awwan = new Awwan();
   document._awwan.onHashChange(window.location.hash);

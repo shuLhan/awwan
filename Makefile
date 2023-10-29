@@ -21,7 +21,7 @@ lint:
 	-shadow ./...
 	-revive ./...
 
-## embed convert the TypeScript files into JavaScript and embed all _www
+## embed convert the TypeScript files into JavaScript and embed all _wui
 ## assets into memfs for web-user interface.
 .PHONY: embed
 embed:
@@ -43,7 +43,7 @@ dev:
 
 .PHONY: lint-www
 lint-www:
-	cd _www && eslint --fix .
+	cd _wui && eslint --fix .
 
 #}}}
 #{{{ Testing with container using mkosi.

@@ -18,12 +18,12 @@ import (
 	"github.com/shuLhan/share/lib/mlog"
 )
 
-// MemfsWww The embedded _www for web-user interface.
-// This variable will initialize by initMemfsWww.
-var MemfsWww *memfs.MemFS
+// MemfsWui contains the embedded files under _wui for web-user interface.
+// This variable will initialize by initMemfsWui.
+var MemfsWui *memfs.MemFS
 
-// Build compile all TypeScript files inside _www into JavaScript and embed
-// them into memfs_www.go.
+// Build compile all TypeScript files inside _wui into JavaScript and embed
+// them into memfs_wui.go.
 func Build() (err error) {
 	var (
 		logp = `Build`
@@ -48,7 +48,7 @@ func Build() (err error) {
 		return fmt.Errorf(`%s: %w`, logp, err)
 	}
 
-	err = initMemfsWww()
+	err = initMemfsWui()
 	if err != nil {
 		return fmt.Errorf(`%s: %w`, logp, err)
 	}
@@ -60,11 +60,11 @@ func Build() (err error) {
 	return nil
 }
 
-// Watch any update on the .js/.html/.ts files inside the _www directory.
+// Watch any update on the .js/.html/.ts files inside the _wui directory.
 // If the .ts files changes it will execute TypeScript compiler, esbuild, to
 // compile the .ts into .js.
 // If the .js or .html files changes it will update the node content and
-// re-generate the Go embed file memfs_www.go.
+// re-generate the Go embed file memfs_wui.go.
 func Watch() {
 	var (
 		logp = `Watch`
@@ -78,7 +78,7 @@ func Watch() {
 		log.Fatalf(`%s: %s`, logp, err)
 	}
 
-	ciigoConv, err = ciigo.NewConverter(`_www/doc/template.gohtml`)
+	ciigoConv, err = ciigo.NewConverter(`_wui/doc/template.gohtml`)
 	if err != nil {
 		log.Fatalf(`%s: %s`, logp, err)
 	}
@@ -92,8 +92,8 @@ func Watch() {
 
 	defer esctx.Dispose()
 
-	if MemfsWww == nil {
-		err = initMemfsWww()
+	if MemfsWui == nil {
+		err = initMemfsWui()
 		if err != nil {
 			log.Fatalf(`%s: %s`, logp, err)
 		}
@@ -101,7 +101,7 @@ func Watch() {
 
 	var dw = &memfs.DirWatcher{
 		Options: memfs.Options{
-			Root: `_www`,
+			Root: `_wui`,
 			Includes: []string{
 				`.*\.(adoc|html|js|json|md|ts)$`,
 			},
@@ -192,11 +192,11 @@ func buildTypeScript(esctx esapi.BuildContext) (err error) {
 	return fmt.Errorf(`%s: %v`, logp, buildResult.Errors[0])
 }
 
-// convertMarkup convert all markup files inside _www/doc directory to HTML.
+// convertMarkup convert all markup files inside _wui/doc directory to HTML.
 func convertMarkup() (err error) {
 	var opts = &ciigo.ConvertOptions{
-		Root:         `_www/doc`,
-		HtmlTemplate: `_www/doc/template.gohtml`,
+		Root:         `_wui/doc`,
+		HtmlTemplate: `_wui/doc/template.gohtml`,
 	}
 
 	err = ciigo.Convert(opts)
@@ -204,16 +204,16 @@ func convertMarkup() (err error) {
 }
 
 func goEmbed() (err error) {
-	err = MemfsWww.GoEmbed()
+	err = MemfsWui.GoEmbed()
 	if err != nil {
 		return fmt.Errorf(`goEmbed: %w`, err)
 	}
 	return nil
 }
 
-func initMemfsWww() (err error) {
+func initMemfsWui() (err error) {
 	var mfsOpts = &memfs.Options{
-		Root: `_www`,
+		Root: `_wui`,
 		Includes: []string{
 			`.*\.(css|js|html|jpg|png|ico)$`,
 		},
@@ -229,14 +229,14 @@ func initMemfsWww() (err error) {
 			CommentHeader: "// SPDX-FileCopyrightText: 2021 M. Shulhan <ms@kilabit.info>\n" +
 				"// SPDX-License-Identifier: GPL-3.0-or-later\n",
 			PackageName: `internal`,
-			VarName:     `MemfsWww`,
-			GoFileName:  `internal/memfs_www.go`,
+			VarName:     `MemfsWui`,
+			GoFileName:  `internal/memfs_wui.go`,
 		},
 	}
 
-	MemfsWww, err = memfs.New(mfsOpts)
+	MemfsWui, err = memfs.New(mfsOpts)
 	if err != nil {
-		return fmt.Errorf(`initMemfsWww: %w`, err)
+		return fmt.Errorf(`initMemfsWui: %w`, err)
 	}
 	return nil
 }
@@ -246,9 +246,9 @@ func initMemfsWww() (err error) {
 func newEsbuild() (esctx api.BuildContext, err error) {
 	var (
 		esBuildOptions = esapi.BuildOptions{
-			EntryPoints: []string{`_www/main.ts`},
+			EntryPoints: []string{`_wui/main.ts`},
 			Platform:    esapi.PlatformBrowser,
-			Outfile:     `_www/main.js`,
+			Outfile:     `_wui/main.js`,
 			GlobalName:  `awwan`,
 			Bundle:      true,
 			Write:       true,

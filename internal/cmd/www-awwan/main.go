@@ -29,8 +29,8 @@ func main() {
 		binName          = filepath.Base(os.Args[0])
 		cmd              = flag.Arg(0)
 		ciigoConvertOpts = ciigo.ConvertOptions{
-			Root:         `_www/doc`,
-			HtmlTemplate: `_www/doc/template.gohtml`,
+			Root:         `_wui/doc`,
+			HtmlTemplate: `_wui/doc/template.gohtml`,
 		}
 	)
 
@@ -68,7 +68,7 @@ func main() {
 	}
 }
 
-// doEmbed embed the files in "_www/doc" into memfswww.
+// doEmbed embed the files in "_wui/doc" into memfswww.
 func doEmbed(ciigoConvertOpts ciigo.ConvertOptions) {
 	var optsEmbed = ciigo.EmbedOptions{
 		ConvertOptions: ciigoConvertOpts,

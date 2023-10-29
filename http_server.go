@@ -67,7 +67,7 @@ func newHttpServer(aww *Awwan) (httpd *httpServer, err error) {
 	}
 
 	var serverOpts = &libhttp.ServerOptions{
-		Memfs:   internal.MemfsWww,
+		Memfs:   internal.MemfsWui,
 		Address: defListenAddress,
 	}
 
