@@ -215,11 +215,12 @@ func initMemfsWww() (err error) {
 	var mfsOpts = &memfs.Options{
 		Root: `_www`,
 		Includes: []string{
-			`.*\.(js|html|jpg|png|ico)$`,
+			`.*\.(css|js|html|jpg|png|ico)$`,
 		},
 		Excludes: []string{
-			`/.eslintrc.yaml$`,
-			`/.gitignore$`,
+			`.*\.adoc$`,
+			`/\.eslintrc.yaml`,
+			`/\.gitignore`,
 			`/node_modules`,
 			`/tsconfig.json$`,
 			`/wui`,

@@ -3,9 +3,9 @@
 awwan is configuration management software, infrastructure as file and
 directory layout.
 
-In other words, `awwan` is a command-line interface to shell script, that
-can execute multiple lines of commands in local or remote server using shell
-or SSH.
+In other words, `awwan` is a command-line interface (CLI) to shell script,
+that can execute multiple lines of commands in local or remote server using
+shell or SSH.
 
 Do you have a collection of shell scripts to manage one more similar server?
 Do you ever want to execute only part of your script?
@@ -25,6 +25,14 @@ Features,
   lines to be executed, either by number or by range.
 * Provisioning in local environment using basic shell.
 * Provisioning in remote server using SSH and SFTP.
+
+From the CLI perspective, awwan is feature complete.
+
+Most enhancements and bug fixes probably in the web user interface with
+clear use cases and issues.
+
+Feel free to open new feature or report a bug in our
+[issue tracker](https://todo.sr.ht/~shulhan/awwan).
 
 
 ##  Documentation
