@@ -15,10 +15,6 @@ import (
 	"github.com/shuLhan/share/lib/mlog"
 )
 
-// EnvDevelopment if its set, the "serve" command will run in development
-// mode, watching any files changes under _www.
-const EnvDevelopment = `AWWAN_DEVELOPMENT`
-
 // MemfsWww The embedded _www for web-user interface.
 // This variable will initialize by initMemfsWww.
 var MemfsWww *memfs.MemFS

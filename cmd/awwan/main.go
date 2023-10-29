@@ -104,9 +104,10 @@ Run the web-user interface using the current directory as workspace,
 }
 
 func main() {
-	var logp = "awwan"
-
-	log.SetFlags(0)
+	var (
+		logp  = `awwan`
+		isDev = flag.Bool(`dev`, false, `run the "serve" command in development mode`)
+	)
 
 	flag.Parse()
 
@@ -197,7 +198,7 @@ func main() {
 	case awwan.CommandModePlay:
 		err = aww.Play(req)
 	case awwan.CommandModeServe:
-		err = aww.Serve()
+		err = aww.Serve(*isDev)
 	}
 	if err != nil {
 		log.Fatalf(`%s: %s`, logp, err)

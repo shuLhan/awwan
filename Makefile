@@ -37,7 +37,7 @@ install: lint-www embed
 
 .PHONY: dev
 dev:
-	AWWAN_DEVELOPMENT=1 go run ./cmd/awwan serve $(AWWAN_WORKSPACE)
+	go run ./cmd/awwan -dev serve $(AWWAN_WORKSPACE)
 
 #{{{ Task to lint the TypeScript files.
 

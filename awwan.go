@@ -307,13 +307,10 @@ func (aww *Awwan) Play(req *Request) (err error) {
 }
 
 // Serve start the web-user interface that serve awwan actions through HTTP.
-func (aww *Awwan) Serve() (err error) {
-	var (
-		logp   = `Serve`
-		envDev = os.Getenv(internal.EnvDevelopment)
-	)
+func (aww *Awwan) Serve(isDev bool) (err error) {
+	var logp = `Serve`
 
-	if len(envDev) > 0 {
+	if isDev {
 		go internal.Watch()
 	}
 
