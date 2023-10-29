@@ -99,15 +99,16 @@ func Watch() {
 		}
 	}
 
-	var watchOpts = memfs.WatchOptions{
-		Watches: []string{
-			`.*\.(adoc|md|ts)$`,
+	var dw = &memfs.DirWatcher{
+		Options: memfs.Options{
+			Root: `_www`,
+			Includes: []string{
+				`.*\.(adoc|html|js|json|md|ts)$`,
+			},
 		},
 	}
 
-	var dw *memfs.DirWatcher
-
-	dw, err = MemfsWww.Watch(watchOpts)
+	err = dw.Start()
 	if err != nil {
 		log.Fatalf(`%s: %s`, logp, err)
 	}
@@ -145,7 +146,6 @@ func Watch() {
 				embedCount++
 
 			case strings.HasSuffix(ns.Node.SysPath, `.ts`) || strings.HasSuffix(ns.Node.SysPath, `tsconfig.json`):
-				mlog.Outf(`%s: update %s`, logp, ns.Node.SysPath)
 				tsCount++
 
 			case strings.HasSuffix(ns.Node.SysPath, `.js`) || strings.HasSuffix(ns.Node.SysPath, `.html`):
