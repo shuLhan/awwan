@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2023 M. Shulhan <ms@kilabit.info>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 // Program www-awwan serve the awwan.org website.
 //
 // This command must be run/build from root repository.

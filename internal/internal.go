@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2023 M. Shulhan <ms@kilabit.info>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 // Package internal provide internal types and functions for building and
 // developing awwan, not consumed by user nor the main program.
 package internal

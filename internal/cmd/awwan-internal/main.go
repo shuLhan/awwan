@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2023 M. Shulhan <ms@kilabit.info>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 // Program awwan-internal provides internal commands for developing and
 // building awwan.
 package main
