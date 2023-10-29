@@ -78,7 +78,7 @@ func Watch() {
 		log.Fatalf(`%s: %s`, logp, err)
 	}
 
-	ciigoConv, err = ciigo.NewConverter(``)
+	ciigoConv, err = ciigo.NewConverter(`_www/doc/template.gohtml`)
 	if err != nil {
 		log.Fatalf(`%s: %s`, logp, err)
 	}
@@ -113,7 +113,7 @@ func Watch() {
 	}
 
 	var (
-		buildTicker = time.NewTicker(3 * time.Second)
+		buildTicker = time.NewTicker(500 * time.Millisecond)
 
 		ns         memfs.NodeState
 		tsCount    int
@@ -195,7 +195,8 @@ func buildTypeScript(esctx esapi.BuildContext) (err error) {
 // convertMarkup convert all markup files inside _www/doc directory to HTML.
 func convertMarkup() (err error) {
 	var opts = &ciigo.ConvertOptions{
-		Root: `_www/doc`,
+		Root:         `_www/doc`,
+		HtmlTemplate: `_www/doc/template.gohtml`,
 	}
 
 	err = ciigo.Convert(opts)
