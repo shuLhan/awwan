@@ -101,6 +101,7 @@ export class Awwan {
   private editor: WuiEditor;
   private notif: WuiNotif;
   private vfs: WuiVfs;
+  private orgContent: string;
 
   constructor() {
     let el = document.getElementById(ID_BTN_EXEC_LOCAL);
@@ -226,6 +227,24 @@ export class Awwan {
     this.vfs.openDir(hash);
   }
 
+  // confirmWhenDirty check if the editor content has changes before opening
+  // new file.
+  // If yes, display dialog box to confirm whether continuing opening file
+  // or cancel it.
+  // It will return true to continue opening file or false if user wants to
+  // cancel it.
+  confirmWhenDirty() {
+    if (this.request.script === "") {
+      // No file opened yet.
+      return true;
+    }
+    const newContent = this.editor.getContent();
+    if (this.orgContent == newContent) {
+      return true;
+    }
+    return window.confirm("File has changes, continue without save?");
+  }
+
   // open fetch the node content from remote server.
   async open(path: string, isDir: boolean): Promise<WuiResponseInterface> {
     const httpRes = await fetch("/awwan/api/fs?path=" + path);
@@ -254,6 +273,7 @@ export class Awwan {
     this.request.script = path;
 
     this.editor.open(node);
+    this.orgContent = this.editor.getContent();
     this.comBtnLocal.disabled = false;
     this.comBtnRemote.disabled = false;
     this.comBtnSave.disabled = false;
@@ -264,13 +284,20 @@ export class Awwan {
   // openNode is an handler that will called when user click on of the
   // item in the list.
   async openNode(node: WuiVfsNodeInterface): Promise<WuiResponseInterface> {
-    const resAllow = this.isEditAllowed(node);
-    if (resAllow.code != 200) {
+    let res = this.isEditAllowed(node);
+    if (res.code != 200) {
       this.notif.error(resAllow.message);
-      return resAllow;
+      return res;
     }
 
-    const res = await this.open(node.path, node.is_dir);
+    if (!node.isDir) {
+      const ok = this.confirmWhenDirty();
+      if (!ok) {
+        return res;
+      }
+    }
+
+    res = await this.open(node.path, node.is_dir);
     return res;
   }
 
@@ -342,6 +369,8 @@ export class Awwan {
     }
 
     this.notif.info(`File ${path} has been saved.`);
+    this.orgContent = content;
+
     return res;
   }
 

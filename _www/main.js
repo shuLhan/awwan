@@ -981,6 +981,22 @@ var awwan = (() => {
       hash = hash.substring(1);
       this.vfs.openDir(hash);
     }
+    // confirmWhenDirty check if the editor content has changes before opening
+    // new file.
+    // If yes, display dialog box to confirm whether continuing opening file
+    // or cancel it.
+    // It will return true to continue opening file or false if user wants to
+    // cancel it.
+    confirmWhenDirty() {
+      if (this.request.script === "") {
+        return true;
+      }
+      const newContent = this.editor.getContent();
+      if (this.orgContent == newContent) {
+        return true;
+      }
+      return window.confirm("File has changes, continue without save?");
+    }
     // open fetch the node content from remote server.
     async open(path, isDir) {
       const httpRes = await fetch("/awwan/api/fs?path=" + path);
@@ -996,14 +1012,15 @@ var awwan = (() => {
         window.location.hash = "#" + path;
         return res;
       }
-      const resAllow = this.isEditAllowed(node);
-      if (resAllow.code != 200) {
-        this.notif.error(resAllow.message);
-        return resAllow;
+      const resAllow2 = this.isEditAllowed(node);
+      if (resAllow2.code != 200) {
+        this.notif.error(resAllow2.message);
+        return resAllow2;
       }
       this.comFilePath.innerText = path;
       this.request.script = path;
       this.editor.open(node);
+      this.orgContent = this.editor.getContent();
       this.comBtnLocal.disabled = false;
       this.comBtnRemote.disabled = false;
       this.comBtnSave.disabled = false;
@@ -1012,12 +1029,18 @@ var awwan = (() => {
     // openNode is an handler that will called when user click on of the
     // item in the list.
     async openNode(node) {
-      const resAllow = this.isEditAllowed(node);
-      if (resAllow.code != 200) {
+      let res = this.isEditAllowed(node);
+      if (res.code != 200) {
         this.notif.error(resAllow.message);
-        return resAllow;
+        return res;
       }
-      const res = await this.open(node.path, node.is_dir);
+      if (!node.isDir) {
+        const ok = this.confirmWhenDirty();
+        if (!ok) {
+          return res;
+        }
+      }
+      res = await this.open(node.path, node.is_dir);
       return res;
     }
     isEditAllowed(node) {
@@ -1074,6 +1097,7 @@ var awwan = (() => {
         return null;
       }
       this.notif.info(`File ${path} has been saved.`);
+      this.orgContent = content;
       return res;
     }
     // execLocal request to execute the selected script on local system.
