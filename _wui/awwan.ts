@@ -215,13 +215,15 @@ export class Awwan {
 
     const elResize = document.getElementById(ID_COM_RESIZE);
     if (elResize) {
+      const onMouseMove = (ev: MouseEvent) => this.doResize(ev);
+
       elResize.addEventListener("mousedown", () => {
         this._posy = 0;
-        document.addEventListener("mousemove", this.doResize, false);
+        document.addEventListener("mousemove", onMouseMove);
       });
 
       document.addEventListener("mouseup", () => {
-        document.removeEventListener("mousemove", this.doResize, false);
+        document.removeEventListener("mousemove", onMouseMove);
         this._posy = 0;
       });
     }
