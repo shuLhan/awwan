@@ -334,12 +334,14 @@ func TestAwwanLocal_withEncryption(t *testing.T) {
 		script:    filepath.Join(basedir, `local_encrypted.aww`),
 		lineRange: `3`,
 		expError:  string(tdata.Output[`echo_encrypted_no_pass`]),
+		expOutput: string(tdata.Output[`echo_encrypted_no_pass:output`]),
 	}, {
 		desc:      `With encrypted value, invalid passphrase`,
 		script:    filepath.Join(basedir, `local_encrypted.aww`),
 		lineRange: `3`,
 		pass:      "invalid\r",
 		expError:  string(tdata.Output[`echo_encrypted_invalid_pass`]),
+		expOutput: string(tdata.Output[`echo_encrypted_invalid_pass:output`]),
 	}, {
 		desc:      `With encrypted value in sub`,
 		script:    filepath.Join(basedir, `sub`, `local_encrypted.aww`),
@@ -348,22 +350,21 @@ func TestAwwanLocal_withEncryption(t *testing.T) {
 		expOutput: string(tdata.Output[`sub_echo_encrypted`]),
 	}}
 
-	var c testCase
+	var (
+		c    testCase
+		logw bytes.Buffer
+		req  *Request
+	)
 
 	for _, c = range cases {
 		t.Logf(c.desc)
-
-		var (
-			req *Request
-
-			logw bytes.Buffer
-		)
 
 		req, err = NewRequest(CommandModeLocal, c.script, c.lineRange)
 		if err != nil {
 			t.Fatal(err)
 		}
 
+		logw.Reset()
 		req.registerLogWriter(`output`, &logw)
 
 		// Mock terminal to read passphrase for private key.

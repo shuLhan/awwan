@@ -5,7 +5,6 @@ package awwan
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -165,23 +164,22 @@ func (aww *Awwan) Encrypt(file string) (fileVault string, err error) {
 
 // Local execute the script in the local machine using shell.
 func (aww *Awwan) Local(req *Request) (err error) {
-	if len(req.lineRange.list) == 0 {
-		// No position to be executed.
-		return nil
-	}
-
 	var (
-		logp = "Local"
+		logp       = `Local`
+		sessionDir = filepath.Dir(req.scriptPath)
 
-		ses        *Session
-		sessionDir string
+		ses *Session
+		pos linePosition
 	)
 
-	sessionDir = filepath.Dir(req.scriptPath)
+	if len(req.lineRange.list) == 0 {
+		// No position to be executed.
+		goto out
+	}
 
 	ses, err = NewSession(aww, sessionDir)
 	if err != nil {
-		return fmt.Errorf("%s: %w", logp, err)
+		goto out
 	}
 
 	if len(req.Content) == 0 {
@@ -190,76 +188,78 @@ func (aww *Awwan) Local(req *Request) (err error) {
 		req.script, err = ParseScript(ses, req.scriptPath, req.Content)
 	}
 	if err != nil {
-		return fmt.Errorf("%s: %w", logp, err)
+		goto out
 	}
 
 	// Create temporary directory.
 	err = os.MkdirAll(ses.dirTmp, 0700)
 	if err != nil {
-		return fmt.Errorf("%s: %s: %w", logp, ses.dirTmp, err)
+		goto out
 	}
-	defer func() {
-		var errRemove = os.RemoveAll(ses.dirTmp)
-		if errRemove != nil {
-			log.Printf(`%s: %s`, logp, errRemove)
-		}
 
-		req.close()
-	}()
-
-	var pos linePosition
 	for _, pos = range req.lineRange.list {
 		err = ses.executeRequires(req, pos)
 		if err != nil {
-			return fmt.Errorf(`%s: %w`, logp, err)
+			goto out
 		}
 
 		err = ses.executeScriptOnLocal(req, pos)
 		if err != nil {
-			return fmt.Errorf(`%s: %w`, logp, err)
+			goto out
 		}
 	}
-
-	return nil
+out:
+	if ses != nil {
+		var errRemove = os.RemoveAll(ses.dirTmp)
+		if errRemove != nil {
+			req.mlog.Errf(`!!! %s: %s`, logp, errRemove)
+		}
+	}
+	if err != nil {
+		req.mlog.Errf(`!!! %s`, err)
+		err = fmt.Errorf(`%s: %w`, logp, err)
+	}
+	req.close()
+	return err
 }
 
 // Play execute the script in the remote machine using SSH.
 func (aww *Awwan) Play(req *Request) (err error) {
-	if len(req.lineRange.list) == 0 {
-		// No position to be executed.
-		return nil
-	}
-
 	var (
-		logp = "Play"
+		logp       = `Play`
+		sessionDir = filepath.Dir(req.scriptPath)
 
-		sessionDir string
 		ses        *Session
 		sshSection *config.Section
+		pos        linePosition
 	)
 
-	sessionDir = filepath.Dir(req.scriptPath)
+	if len(req.lineRange.list) == 0 {
+		// No position to be executed.
+		goto out
+	}
 
 	ses, err = NewSession(aww, sessionDir)
 	if err != nil {
-		return fmt.Errorf("%s: %w", logp, err)
+		goto out
 	}
 
 	if aww.sshConfig == nil {
 		err = aww.loadSshConfig()
 		if err != nil {
-			return fmt.Errorf("%s: %w", logp, err)
+			goto out
 		}
 	}
 
 	sshSection = aww.sshConfig.Get(ses.hostname)
 	if sshSection == nil {
-		return fmt.Errorf("%s: can not find Host %q in SSH config", logp, ses.hostname)
+		err = fmt.Errorf(`can not find Host %q in SSH config`, ses.hostname)
+		goto out
 	}
 
 	err = ses.initSSHClient(req, sshSection)
 	if err != nil {
-		return fmt.Errorf("%s: %w", logp, err)
+		goto out
 	}
 
 	if len(req.Content) == 0 {
@@ -268,28 +268,30 @@ func (aww *Awwan) Play(req *Request) (err error) {
 		req.script, err = ParseScript(ses, req.scriptPath, req.Content)
 	}
 	if err != nil {
-		return fmt.Errorf("%s: %w", logp, err)
+		goto out
 	}
 
-	defer func() {
-		ses.sshc.rmdirAll(ses.sshc.dirTmp)
-		req.close()
-	}()
-
-	var pos linePosition
 	for _, pos = range req.lineRange.list {
 		err = ses.executeRequires(req, pos)
 		if err != nil {
-			return fmt.Errorf("%s: %w", logp, err)
+			goto out
 		}
 
 		err = ses.executeScriptOnRemote(req, pos)
 		if err != nil {
-			return fmt.Errorf(`%s: %w`, logp, err)
+			goto out
 		}
 	}
-
-	return nil
+out:
+	if ses != nil && ses.sshc != nil {
+		ses.sshc.rmdirAll(ses.sshc.dirTmp)
+	}
+	if err != nil {
+		req.mlog.Errf(`!!! %s`, err)
+		err = fmt.Errorf(`%s: %s`, logp, err)
+	}
+	req.close()
+	return err
 }
 
 // Serve start the web-user interface that serve awwan actions through HTTP.
