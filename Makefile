@@ -32,7 +32,7 @@ build: embed
 	go build ./cmd/awwan
 
 .PHONY: install
-install: lint-www embed
+install: lint-www lint embed
 	go install ./cmd/awwan
 
 .PHONY: dev
