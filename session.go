@@ -441,6 +441,8 @@ func (ses *Session) executeScriptOnLocal(req *Request, pos linePosition) (err er
 		pos.end = max - 1
 	}
 
+	req.mlog.Outf(`=== BEGIN: %s %s %s`, req.Mode, req.Script, req.LineRange)
+
 	for x := pos.start; x <= pos.end; x++ {
 		stmt := req.script.stmts[x]
 		if stmt == nil {
@@ -453,7 +455,7 @@ func (ses *Session) executeScriptOnLocal(req *Request, pos linePosition) (err er
 			continue
 		}
 
-		req.mlog.Outf(`--> local: %3d: %s`, x, stmt.String())
+		req.mlog.Outf(`--> %3d: %s`, x, stmt.String())
 
 		switch stmt.kind {
 		case statementKindDefault:
@@ -472,6 +474,7 @@ func (ses *Session) executeScriptOnLocal(req *Request, pos linePosition) (err er
 			return err
 		}
 	}
+	req.mlog.Outf(`=== END`)
 	return nil
 }
 
@@ -483,6 +486,8 @@ func (ses *Session) executeScriptOnRemote(req *Request, pos linePosition) (err e
 	if pos.end == 0 {
 		pos.end = max - 1
 	}
+
+	req.mlog.Outf(`=== BEGIN: %s %s %s`, req.Mode, req.Script, req.LineRange)
 
 	for x := pos.start; x <= pos.end; x++ {
 		stmt := req.script.stmts[x]
@@ -496,7 +501,7 @@ func (ses *Session) executeScriptOnRemote(req *Request, pos linePosition) (err e
 			continue
 		}
 
-		req.mlog.Outf(`--> %s: %3d: %s`, ses.sshc.conn, x, stmt.String())
+		req.mlog.Outf(`--> %3d: %s`, x, stmt.String())
 
 		switch stmt.kind {
 		case statementKindDefault:
@@ -516,6 +521,7 @@ func (ses *Session) executeScriptOnRemote(req *Request, pos linePosition) (err e
 			return err
 		}
 	}
+	req.mlog.Outf(`=== END`)
 	return nil
 }
 
@@ -614,7 +620,7 @@ func (ses *Session) initSSHClient(req *Request, sshSection *config.Section) (err
 		lastIdentFile = sshSection.IdentityFile[len(sshSection.IdentityFile)-1]
 	}
 
-	ses.sshc, err = newSshClient(sshSection, ses.dirTmp, req.mlog, nil)
+	ses.sshc, err = newSshClient(sshSection, ses.dirTmp, req.mlog, req.mlog)
 	if err != nil {
 		return fmt.Errorf(`%s: %w`, logp, err)
 	}

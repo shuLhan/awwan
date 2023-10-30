@@ -1,8 +1,10 @@
 Test on "local" command.
 
 <<< local:output
-- local.aww --> local:   1: echo "hello"
+- local.aww === BEGIN: local testdata/local/local.aww 1-
+- local.aww -->   1: echo "hello"
 hello
-- local.aww --> local:   4: #local: echo "nothing"
-- local.aww --> local:   6: echo "local"
+- local.aww -->   4: #local: echo "nothing"
+- local.aww -->   6: echo "local"
 local
+- local.aww === END
