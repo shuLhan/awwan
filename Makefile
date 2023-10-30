@@ -62,6 +62,17 @@ test-with-mkosi:
 	machinectl shell awwan@awwan-test \
 		/bin/sh -c "cd src; ./awwan.test -test.v"
 
+.PHONY: test-all-mkosi
+test-all-mkosi:
+	rm -f _coverage/*
+	go test -cover ./... -test.gocoverdir=_coverage
+	machinectl shell awwan@awwan-test \
+		/bin/sh -c "cd src; \
+		go test -cover -tags=integration ./... -test.gocoverdir=_coverage"
+	go tool covdata textfmt -i=_coverage -o cover.txt
+	go tool cover -html=cover.txt -o cover.html
+	go tool covdata percent -i=_coverage
+
 ## The following tasks must be executed inside the container.
 
 .PHONY: test-integration
