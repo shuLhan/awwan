@@ -1,8 +1,7 @@
 {
   "compilerOptions": {
     "target": "es2018",
-    "module": "es2020",
-    "isolatedModules": true,
+    "module": "amd",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
@@ -18,5 +17,6 @@
     "noImplicitOverride": true,
     "noPropertyAccessFromIndexSignature": true,
     "skipLibCheck": true,
+    "outFile": "main.js"
   }
 }

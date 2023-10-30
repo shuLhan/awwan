@@ -31,6 +31,9 @@ var awwan = (() => {
       }
       this.sel = sel;
       this.range = document.createRange();
+      document.onkeydown = (ev) => {
+        this.onKeydownDocument(this, ev);
+      };
       document.onkeyup = (ev) => {
         this.onKeyupDocument(this, ev);
       };
@@ -103,23 +106,8 @@ var awwan = (() => {
           this.deleteLine(x);
           this.setCaret(elTextPrev, off);
           return false;
-        case "Control":
-          this.is_key_control = false;
-          break;
         case "Enter":
           ev.preventDefault();
-          break;
-        case "r":
-          if (this.is_key_control) {
-            ev.preventDefault();
-            return;
-          }
-          break;
-        case "z":
-          if (this.is_key_control) {
-            ev.preventDefault();
-            return;
-          }
           break;
         default:
           if (this.is_key_control) {
@@ -173,9 +161,6 @@ var awwan = (() => {
             this.el.scrollTop += 25;
           }
           return false;
-        case "Control":
-          this.is_key_control = true;
-          break;
         case "Delete":
           ev.preventDefault();
           isJoinLineAfter = false;
@@ -231,30 +216,6 @@ var awwan = (() => {
           elText.innerText = textAfter;
           this.raw_lines[x] = textAfter;
           this.setCaret(elText, off + 1);
-          break;
-        case "r":
-          if (this.is_key_control) {
-            ev.preventDefault();
-            this.doRedo();
-            return;
-          }
-          break;
-        case "s":
-          if (this.is_key_control) {
-            ev.preventDefault();
-            ev.stopPropagation();
-            if (this.opts.onSave) {
-              this.opts.onSave(this.getContent());
-            }
-            return false;
-          }
-          break;
-        case "z":
-          if (this.is_key_control) {
-            ev.preventDefault();
-            this.doUndo();
-            return;
-          }
           break;
       }
       return true;
@@ -440,14 +401,44 @@ var awwan = (() => {
       this.render();
       this.setCaret(newline.elText, 0);
     }
+    onKeydownDocument(ed, ev) {
+      switch (ev.key) {
+        case "Control":
+          ed.is_key_control = true;
+          return;
+        case "r":
+          if (ed.is_key_control) {
+            ev.preventDefault();
+            ed.doRedo();
+          }
+          return;
+        case "s":
+          if (ed.is_key_control) {
+            ev.preventDefault();
+            ev.stopPropagation();
+            if (ed.opts.onSave) {
+              ed.opts.onSave(ed.getContent());
+            }
+          }
+          return;
+        case "z":
+          if (ed.is_key_control) {
+            ev.preventDefault();
+            ed.doUndo();
+          }
+          return;
+      }
+    }
     onKeyupDocument(ed, ev) {
       switch (ev.key) {
+        case "Control":
+          ed.is_key_control = false;
+          return;
         case "Escape":
           ev.preventDefault();
           ed.clearSelection();
-          break;
+          return;
       }
-      return true;
     }
     render() {
       this.el.innerHTML = "";
@@ -874,6 +865,8 @@ var awwan = (() => {
         content: "",
         line_range: ""
       };
+      this.orgContent = "";
+      this._posy = 0;
       let el = document.getElementById(ID_BTN_EXEC_LOCAL);
       if (el) {
         this.comBtnLocal = el;
@@ -943,10 +936,15 @@ var awwan = (() => {
         is_editable: true,
         onSave: (content) => {
           this.editorOnSave(content);
+        },
+        onSelection: () => {
         }
       };
       this.editor = new WuiEditor(editorOpts);
-      this.comEditor = document.getElementById(ID_EDITOR);
+      el = document.getElementById(ID_EDITOR);
+      if (el) {
+        this.comEditor = el;
+      }
       this.notif = new WuiNotif();
       const vfsOpts = {
         id: ID_VFS,
@@ -965,14 +963,16 @@ var awwan = (() => {
         this.onHashChange(url.hash);
       };
       const elResize = document.getElementById(ID_COM_RESIZE);
-      elResize.addEventListener("mousedown", () => {
-        document._posy = 0;
-        document.addEventListener("mousemove", this.doResize, false);
-      });
-      document.addEventListener("mouseup", () => {
-        document.removeEventListener("mousemove", this.doResize, false);
-        document._posy = 0;
-      });
+      if (elResize) {
+        elResize.addEventListener("mousedown", () => {
+          this._posy = 0;
+          document.addEventListener("mousemove", this.doResize, false);
+        });
+        document.addEventListener("mouseup", () => {
+          document.removeEventListener("mousemove", this.doResize, false);
+          this._posy = 0;
+        });
+      }
     }
     onHashChange(hash) {
       if (hash === "") {
@@ -1012,10 +1012,10 @@ var awwan = (() => {
         window.location.hash = "#" + path;
         return res;
       }
-      const resAllow2 = this.isEditAllowed(node);
-      if (resAllow2.code != 200) {
-        this.notif.error(resAllow2.message);
-        return resAllow2;
+      const resAllow = this.isEditAllowed(node);
+      if (resAllow.code != 200) {
+        this.notif.error(resAllow.message);
+        return resAllow;
       }
       this.comFilePath.innerText = path;
       this.request.script = path;
@@ -1031,10 +1031,10 @@ var awwan = (() => {
     async openNode(node) {
       let res = this.isEditAllowed(node);
       if (res.code != 200) {
-        this.notif.error(resAllow.message);
+        this.notif.error(res.message);
         return res;
       }
-      if (!node.isDir) {
+      if (!node.is_dir) {
         const ok = this.confirmWhenDirty();
         if (!ok) {
           return res;
@@ -1229,11 +1229,12 @@ var awwan = (() => {
       }
       const diff = this._posy - ev.screenY;
       if (diff > 0) {
-        this._awwan.resizeUp(diff);
+        this.resizeUp(diff);
       } else if (diff < 0) {
-        this._awwan.resizeDown(diff * -1);
+        this.resizeDown(diff * -1);
       }
       this._posy = ev.screenY;
+      return true;
     }
     resizeUp(diff) {
       if (this.comEditor.clientHeight <= 126) {
@@ -1253,6 +1254,6 @@ var awwan = (() => {
 
   // _wui/main.ts
   renderHtml();
-  document._awwan = new Awwan();
-  document._awwan.onHashChange(window.location.hash);
+  var awwan = new Awwan();
+  awwan.onHashChange(window.location.hash);
 })();

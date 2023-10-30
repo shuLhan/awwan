@@ -4,66 +4,60 @@ import { WuiEditor } from "./wui/editor/editor.js";
 import { WuiNotif } from "./wui/notif/notif.js";
 import { WuiVfs } from "./wui/vfs/vfs.js";
 const CLASS_EDITOR_ACTION = "editor_action";
-const ID_BTN_CLEAR_SELECTION = "com_btn_clear_selection";
 const ID_BTN_EXEC_LOCAL = "com_btn_local";
 const ID_BTN_EXEC_REMOTE = "com_btn_remote";
 const ID_BTN_NEW_DIR = "com_btn_new_dir";
 const ID_BTN_NEW_FILE = "com_btn_new_file";
 const ID_BTN_REMOVE = "com_btn_remove";
 const ID_BTN_SAVE = "com_btn_save";
+const ID_COM_RESIZE = "com_resize";
 const ID_EDITOR = "com_editor";
+const ID_INP_LINE_RANGE = "com_inp_line_range";
 const ID_INP_VFS_NEW = "com_inp_vfs_new";
 const ID_VFS = "com_vfs";
 const ID_VFS_PATH = "vfs_path";
-const ID_STDOUT = "stdout";
-const ID_STDERR = "stderr";
+const ID_OUTPUT = "output";
+const ID_OUTPUT_WRAPPER = "output_wrapper";
 const MAX_FILE_SIZE = 3000000;
 export function renderHtml() {
     const el = document.createElement("div");
     el.classList.add("awwan");
     el.innerHTML = `
-			<div class="awwan_nav_left">
-				<div id="${ID_VFS}"></div>
+      <div class="awwan_nav_left">
+        <div id="${ID_VFS}"></div>
 
-				<br/>
-				<div class="${ID_INP_VFS_NEW}">
-					<input id="${ID_INP_VFS_NEW}" />
-				</div>
-				<button id="${ID_BTN_NEW_DIR}">New directory</button>
-				<button id="${ID_BTN_NEW_FILE}">New file</button>
-				<button id="${ID_BTN_REMOVE}">Remove</button>
-			</div>
-			<div class="awwan_content">
-				<div class="editor_file">
-					File: <span id="${ID_VFS_PATH}">-</span>
-					<button id="${ID_BTN_SAVE}" disabled="true">Save</button>
-				</div>
-				<div id="${ID_EDITOR}"></div>
-				<div>
-					<div class="${CLASS_EDITOR_ACTION}">
-						<button id="${ID_BTN_CLEAR_SELECTION}">Clear selection</button>
-					</div>
-					<div class="${CLASS_EDITOR_ACTION}">
-						Execute script on
-						<button id="${ID_BTN_EXEC_LOCAL}" disabled="true">Local</button>
-						or
-						<button id="${ID_BTN_EXEC_REMOTE}" disabled="true">Remote</button>
-					</div>
-				</div>
-				<p>Hints:</p>
-				<ul>
-					<li>
-						Click and drag on the line numbers to select the specific line to be
-						executed.
-					</li>
-					<li>Press ESC to clear selection.</li>
-				</ul>
-				<div class="boxheader">Standard output:</div>
-				<div id="${ID_STDOUT}"></div>
-				<div class="boxheader">Standard error:</div>
-				<div id="${ID_STDERR}"></div>
-			</div>
-		`;
+        <br/>
+        <div class="${ID_INP_VFS_NEW}">
+          <input id="${ID_INP_VFS_NEW}" />
+        </div>
+        <button id="${ID_BTN_NEW_DIR}">New directory</button>
+        <button id="${ID_BTN_NEW_FILE}">New file</button>
+        <button id="${ID_BTN_REMOVE}">Remove</button>
+      </div>
+      <div class="awwan_content">
+        <div class="boxheader">
+          File: <span id="${ID_VFS_PATH}">-</span>
+          <button id="${ID_BTN_SAVE}" disabled="true">Save</button>
+        </div>
+        <div id="${ID_EDITOR}"></div>
+        <div>
+          <div class="${CLASS_EDITOR_ACTION}">
+            Execute
+            <input id="${ID_INP_LINE_RANGE}" />
+            on
+            <button id="${ID_BTN_EXEC_LOCAL}" disabled="true">Local</button>
+            or
+            <button id="${ID_BTN_EXEC_REMOTE}" disabled="true">Remote</button>
+
+          </div>
+        </div>
+        <button id="${ID_COM_RESIZE}">&#9868;</button>
+        <div id="${ID_OUTPUT_WRAPPER}" class="output">
+          <div class="boxheader">Output:</div>
+          <div id="${ID_OUTPUT}"></div>
+        </div>
+      </div>
+    `;
     document.body.appendChild(el);
 }
 export class Awwan {
@@ -75,14 +69,9 @@ export class Awwan {
             content: "",
             line_range: "",
         };
-        let el = document.getElementById(ID_BTN_CLEAR_SELECTION);
-        if (el) {
-            this.comBtnClear = el;
-            this.comBtnClear.onclick = () => {
-                this.editor.clearSelection();
-            };
-        }
-        el = document.getElementById(ID_BTN_EXEC_LOCAL);
+        this.orgContent = "";
+        this._posy = 0;
+        let el = document.getElementById(ID_BTN_EXEC_LOCAL);
         if (el) {
             this.comBtnLocal = el;
             this.comBtnLocal.onclick = () => {
@@ -124,6 +113,12 @@ export class Awwan {
                 this.onClickSave();
             };
         }
+        el = document.getElementById(ID_INP_LINE_RANGE);
+        if (!el) {
+            console.error(`failed to get element by ID #${ID_INP_LINE_RANGE}`);
+            return;
+        }
+        this.comInputLineRange = el;
         el = document.getElementById(ID_INP_VFS_NEW);
         if (el) {
             this.comInputVfsNew = el;
@@ -132,23 +127,27 @@ export class Awwan {
         if (el) {
             this.comFilePath = el;
         }
-        el = document.getElementById(ID_STDOUT);
+        el = document.getElementById(ID_OUTPUT);
         if (el) {
-            this.comStdout = el;
+            this.comOutput = el;
         }
-        el = document.getElementById(ID_STDERR);
+        el = document.getElementById(ID_OUTPUT_WRAPPER);
         if (el) {
-            this.comStderr = el;
+            this.comOutputWrapper = el;
         }
         const editorOpts = {
             id: ID_EDITOR,
             is_editable: true,
-            onSelection: (beginAt, endAt) => {
-                this.editorOnSelection(beginAt, endAt);
+            onSave: (content) => {
+                this.editorOnSave(content);
             },
-            onSave: this.editorOnSave,
+            onSelection: () => { },
         };
         this.editor = new WuiEditor(editorOpts);
+        el = document.getElementById(ID_EDITOR);
+        if (el) {
+            this.comEditor = el;
+        }
         this.notif = new WuiNotif();
         const vfsOpts = {
             id: ID_VFS,
@@ -166,6 +165,17 @@ export class Awwan {
             const url = new URL(hashchange.newURL);
             this.onHashChange(url.hash);
         };
+        const elResize = document.getElementById(ID_COM_RESIZE);
+        if (elResize) {
+            elResize.addEventListener("mousedown", () => {
+                this._posy = 0;
+                document.addEventListener("mousemove", this.doResize, false);
+            });
+            document.addEventListener("mouseup", () => {
+                document.removeEventListener("mousemove", this.doResize, false);
+                this._posy = 0;
+            });
+        }
     }
     onHashChange(hash) {
         if (hash === "") {
@@ -173,6 +183,23 @@ export class Awwan {
         }
         hash = hash.substring(1);
         this.vfs.openDir(hash);
+    }
+    // confirmWhenDirty check if the editor content has changes before opening
+    // new file.
+    // If yes, display dialog box to confirm whether continuing opening file
+    // or cancel it.
+    // It will return true to continue opening file or false if user wants to
+    // cancel it.
+    confirmWhenDirty() {
+        if (this.request.script === "") {
+            // No file opened yet.
+            return true;
+        }
+        const newContent = this.editor.getContent();
+        if (this.orgContent == newContent) {
+            return true;
+        }
+        return window.confirm("File has changes, continue without save?");
     }
     // open fetch the node content from remote server.
     async open(path, isDir) {
@@ -197,6 +224,7 @@ export class Awwan {
         this.comFilePath.innerText = path;
         this.request.script = path;
         this.editor.open(node);
+        this.orgContent = this.editor.getContent();
         this.comBtnLocal.disabled = false;
         this.comBtnRemote.disabled = false;
         this.comBtnSave.disabled = false;
@@ -205,12 +233,18 @@ export class Awwan {
     // openNode is an handler that will called when user click on of the
     // item in the list.
     async openNode(node) {
-        const resAllow = this.isEditAllowed(node);
-        if (resAllow.code != 200) {
-            this.notif.error(resAllow.message);
-            return resAllow;
+        let res = this.isEditAllowed(node);
+        if (res.code != 200) {
+            this.notif.error(res.message);
+            return res;
         }
-        const res = await this.open(node.path, node.is_dir);
+        if (!node.is_dir) {
+            const ok = this.confirmWhenDirty();
+            if (!ok) {
+                return res;
+            }
+        }
+        res = await this.open(node.path, node.is_dir);
         return res;
     }
     isEditAllowed(node) {
@@ -272,13 +306,8 @@ export class Awwan {
             return null;
         }
         this.notif.info(`File ${path} has been saved.`);
+        this.orgContent = content;
         return res;
-    }
-    editorOnSelection(begin, end) {
-        const stmts = this.editor.lines.slice(begin, end + 1);
-        for (const stmt of stmts) {
-            console.log("stmt:", stmt.x, stmt.text);
-        }
     }
     // execLocal request to execute the selected script on local system.
     execLocal() {
@@ -286,7 +315,12 @@ export class Awwan {
             this.notif.error(`Execute on local: no file selected`);
             return;
         }
-        this.httpApiExecute("local");
+        const lineRange = this.comInputLineRange.value.trim();
+        if (lineRange === "") {
+            this.notif.error(`Empty line range`);
+            return;
+        }
+        this.httpApiExecute("local", lineRange);
     }
     // execRemote request to execute the selected script on remote system.
     execRemote() {
@@ -294,28 +328,18 @@ export class Awwan {
             this.notif.error(`Execute on remote: no file selected`);
             return;
         }
-        this.httpApiExecute("remote");
+        const lineRange = this.comInputLineRange.value.trim();
+        if (lineRange === "") {
+            this.notif.error(`Empty line range`);
+            return;
+        }
+        this.httpApiExecute("remote", lineRange);
     }
-    async httpApiExecute(mode) {
-        let beginAt = 0;
-        let endAt = 0;
-        const selectionRange = this.editor.getSelectionRange();
-        if (selectionRange.begin_at > 0) {
-            beginAt = selectionRange.begin_at + 1;
-        }
-        if (selectionRange.end_at > 0) {
-            endAt = selectionRange.end_at + 1;
-        }
-        this.comStdout.innerText = "";
-        this.comStderr.innerText = "";
+    async httpApiExecute(mode, lineRange) {
+        this.comOutput.innerText = "";
         this.request.mode = mode;
         this.request.content = btoa(this.editor.getContent());
-        if (beginAt === endAt) {
-            this.request.line_range = `${beginAt}`;
-        }
-        else {
-            this.request.line_range = `${beginAt}-${endAt}`;
-        }
+        this.request.line_range = lineRange;
         const httpRes = await fetch("/awwan/api/execute", {
             method: "POST",
             headers: {
@@ -329,11 +353,8 @@ export class Awwan {
             this.notif.error(`Execute failed: ${res.message}`);
             return;
         }
-        if (res.data.stdout) {
-            this.comStdout.innerText = atob(res.data.stdout);
-        }
-        if (res.data.stderr) {
-            this.comStderr.innerText = atob(res.data.stderr);
+        if (res.data.output) {
+            this.comOutput.innerText = atob(res.data.output);
         }
         this.notif.info(`Successfully execute ${this.request.script} on ${mode}.`);
     }
@@ -407,5 +428,36 @@ export class Awwan {
             this.notif.error(`remove: ${res.message}`);
             return;
         }
+        this.notif.info(`${res.message}`);
+        this.vfs.openDir(this.currentNode.path);
+    }
+    doResize(ev) {
+        if (this._posy == 0) {
+            this._posy = ev.screenY;
+            return true;
+        }
+        const diff = this._posy - ev.screenY;
+        if (diff > 0) {
+            this.resizeUp(diff);
+        }
+        else if (diff < 0) {
+            this.resizeDown(diff * -1);
+        }
+        this._posy = ev.screenY;
+        return true;
+    }
+    resizeUp(diff) {
+        if (this.comEditor.clientHeight <= 126) {
+            return;
+        }
+        this.comEditor.style.height = `${this.comEditor.clientHeight - diff}px`;
+        this.comOutputWrapper.style.height = `${this.comOutputWrapper.clientHeight + diff}px`;
+    }
+    resizeDown(diff) {
+        if (this.comOutputWrapper.clientHeight <= 126) {
+            return;
+        }
+        this.comEditor.style.height = `${this.comEditor.clientHeight + diff}px`;
+        this.comOutputWrapper.style.height = `${this.comOutputWrapper.clientHeight - diff}px`;
     }
 }

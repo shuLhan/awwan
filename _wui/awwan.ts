@@ -98,10 +98,11 @@ export class Awwan {
     content: "",
     line_range: "",
   };
-  private editor: WuiEditor;
-  private notif: WuiNotif;
-  private vfs: WuiVfs;
-  private orgContent: string;
+  private editor!: WuiEditor;
+  private notif!: WuiNotif;
+  private vfs!: WuiVfs;
+  private orgContent: string = "";
+  private _posy: number = 0;
 
   constructor() {
     let el = document.getElementById(ID_BTN_EXEC_LOCAL);
@@ -181,9 +182,15 @@ export class Awwan {
       onSave: (content) => {
         this.editorOnSave(content);
       },
+      onSelection: () => {},
     };
+
     this.editor = new WuiEditor(editorOpts);
-    this.comEditor = document.getElementById(ID_EDITOR);
+
+    el = document.getElementById(ID_EDITOR);
+    if (el) {
+      this.comEditor = el;
+    }
 
     this.notif = new WuiNotif();
 
@@ -196,6 +203,7 @@ export class Awwan {
         return this.openNode(node);
       },
     };
+
     this.vfs = new WuiVfs(vfsOpts);
 
     window.onhashchange = (ev: Event) => {
@@ -206,16 +214,17 @@ export class Awwan {
     };
 
     const elResize = document.getElementById(ID_COM_RESIZE);
+    if (elResize) {
+      elResize.addEventListener("mousedown", () => {
+        this._posy = 0;
+        document.addEventListener("mousemove", this.doResize, false);
+      });
 
-    elResize.addEventListener("mousedown", () => {
-      document._posy = 0;
-      document.addEventListener("mousemove", this.doResize, false);
-    });
-
-    document.addEventListener("mouseup", () => {
-      document.removeEventListener("mousemove", this.doResize, false);
-      document._posy = 0;
-    });
+      document.addEventListener("mouseup", () => {
+        document.removeEventListener("mousemove", this.doResize, false);
+        this._posy = 0;
+      });
+    }
   }
 
   onHashChange(hash: string) {
@@ -286,11 +295,11 @@ export class Awwan {
   async openNode(node: WuiVfsNodeInterface): Promise<WuiResponseInterface> {
     let res = this.isEditAllowed(node);
     if (res.code != 200) {
-      this.notif.error(resAllow.message);
+      this.notif.error(res.message);
       return res;
     }
 
-    if (!node.isDir) {
+    if (!node.is_dir) {
       const ok = this.confirmWhenDirty();
       if (!ok) {
         return res;
@@ -521,11 +530,12 @@ export class Awwan {
     }
     const diff = this._posy - ev.screenY;
     if (diff > 0) {
-      this._awwan.resizeUp(diff);
+      this.resizeUp(diff);
     } else if (diff < 0) {
-      this._awwan.resizeDown(diff * -1);
+      this.resizeDown(diff * -1);
     }
     this._posy = ev.screenY;
+    return true;
   }
 
   resizeUp(diff: number) {

@@ -5,7 +5,7 @@ import { renderHtml, Awwan } from "./awwan";
 
 renderHtml();
 
-document._awwan = new Awwan();
+const awwan = new Awwan();
 
 // Open path based on hash.
-document._awwan.onHashChange(window.location.hash);
+awwan.onHashChange(window.location.hash);
