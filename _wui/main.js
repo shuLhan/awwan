@@ -1148,7 +1148,13 @@ var awwan = (() => {
       if (res.data.output) {
         this.comOutput.innerText = atob(res.data.output);
       }
-      this.notif.info(`Successfully execute ${this.request.script} on ${mode}.`);
+      if (res.data.error) {
+        this.notif.error(res.data.error);
+      } else {
+        this.notif.info(
+          `Successfully execute ${this.request.script} on ${mode}.`
+        );
+      }
     }
     async newNode(isDir) {
       if (!this.currentNode) {

@@ -396,8 +396,6 @@ func (httpd *httpServer) awwanApiExecute(epr *libhttp.EndpointRequest) (resb []b
 		logp = "awwanApiExecute"
 		req  = &Request{}
 		res  = &libhttp.EndpointResponse{}
-
-		data *HttpResponse
 	)
 
 	res.Code = http.StatusInternalServerError
@@ -412,7 +410,13 @@ func (httpd *httpServer) awwanApiExecute(epr *libhttp.EndpointRequest) (resb []b
 	req.lineRange = parseLineRange(req.LineRange)
 	req.init()
 
-	var logw bytes.Buffer
+	var (
+		data = &HttpResponse{
+			Request: req,
+		}
+
+		logw bytes.Buffer
+	)
 
 	req.registerLogWriter(`output`, &logw)
 
@@ -422,14 +426,10 @@ func (httpd *httpServer) awwanApiExecute(epr *libhttp.EndpointRequest) (resb []b
 		err = httpd.aww.Play(req)
 	}
 	if err != nil {
-		res.Message = fmt.Sprintf("%s: %s", logp, err)
-		return nil, res
+		data.Error = err.Error()
 	}
 
-	data = &HttpResponse{
-		Request: req,
-		Output:  logw.Bytes(),
-	}
+	data.Output = logw.Bytes()
 
 	res.Code = http.StatusOK
 	res.Data = data
