@@ -453,7 +453,7 @@ func (ses *Session) executeScriptOnLocal(req *Request, pos linePosition) (err er
 			continue
 		}
 
-		req.mlog.Outf("\n--> local: %3d: %s", x, stmt.String())
+		req.mlog.Outf(`--> local: %3d: %s`, x, stmt.String())
 
 		switch stmt.kind {
 		case statementKindDefault:
@@ -496,7 +496,7 @@ func (ses *Session) executeScriptOnRemote(req *Request, pos linePosition) (err e
 			continue
 		}
 
-		req.mlog.Outf("\n--> %s: %3d: %s", ses.sshc.conn, x, stmt.String())
+		req.mlog.Outf(`--> %s: %3d: %s`, ses.sshc.conn, x, stmt.String())
 
 		switch stmt.kind {
 		case statementKindDefault:

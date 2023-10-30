@@ -177,12 +177,6 @@ func (aww *Awwan) Local(req *Request) (err error) {
 		sessionDir string
 	)
 
-	req.scriptPath = filepath.Clean(req.Script)
-	req.scriptPath, err = filepath.Abs(req.scriptPath)
-	if err != nil {
-		return fmt.Errorf("%s: %w", logp, err)
-	}
-
 	sessionDir = filepath.Dir(req.scriptPath)
 
 	ses, err = NewSession(aww, sessionDir)
@@ -210,7 +204,7 @@ func (aww *Awwan) Local(req *Request) (err error) {
 			log.Printf(`%s: %s`, logp, errRemove)
 		}
 
-		req.mlog.Flush()
+		req.close()
 	}()
 
 	var pos linePosition
@@ -243,12 +237,6 @@ func (aww *Awwan) Play(req *Request) (err error) {
 		ses        *Session
 		sshSection *config.Section
 	)
-
-	req.scriptPath = filepath.Clean(req.Script)
-	req.scriptPath, err = filepath.Abs(req.scriptPath)
-	if err != nil {
-		return fmt.Errorf("%s: %w", logp, err)
-	}
 
 	sessionDir = filepath.Dir(req.scriptPath)
 
@@ -285,7 +273,7 @@ func (aww *Awwan) Play(req *Request) (err error) {
 
 	defer func() {
 		ses.sshc.rmdirAll(ses.sshc.dirTmp)
-		req.mlog.Flush()
+		req.close()
 	}()
 
 	var pos linePosition

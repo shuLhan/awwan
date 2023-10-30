@@ -87,6 +87,7 @@ func TestAwwan_Local_SudoGet(t *testing.T) {
 		script = filepath.Join(baseDir, `get.aww`)
 		mockin = &mockStdin{}
 
+		req        *Request
 		c          testCase
 		gotContent []byte
 	)
@@ -94,7 +95,10 @@ func TestAwwan_Local_SudoGet(t *testing.T) {
 	for _, c = range cases {
 		t.Log(c.desc)
 
-		var req = NewRequest(CommandModeLocal, script, c.lineRange)
+		req, err = NewRequest(CommandModeLocal, script, c.lineRange)
+		if err != nil {
+			t.Fatal(err)
+		}
 
 		// Mock the request stdin to read password from buffer.
 		mockin.buf.Reset()
@@ -180,6 +184,7 @@ func TestAwwan_Local_SudoPut(t *testing.T) {
 		mockTerm = mock.ReadWriter{}
 
 		aww        *Awwan
+		req        *Request
 		c          testCase
 		gotContent []byte
 	)
@@ -200,7 +205,10 @@ func TestAwwan_Local_SudoPut(t *testing.T) {
 			_ = os.Remove(c.fileDest)
 		}
 
-		var req = NewRequest(CommandModeLocal, script, c.lineRange)
+		req, err = NewRequest(CommandModeLocal, script, c.lineRange)
+		if err != nil {
+			t.Fatal(err)
+		}
 
 		mockin.buf.Reset()
 		mockin.buf.WriteString(c.sudoPass)

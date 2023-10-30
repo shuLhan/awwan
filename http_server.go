@@ -408,7 +408,12 @@ func (httpd *httpServer) awwanApiExecute(epr *libhttp.EndpointRequest) (resb []b
 
 	req.Script = filepath.Join(httpd.memfsBase.Opts.Root, req.Script)
 	req.lineRange = parseLineRange(req.LineRange)
-	req.init()
+
+	err = req.init()
+	if err != nil {
+		res.Message = fmt.Sprintf(`%s: %s`, logp, err)
+		return nil, res
+	}
 
 	var (
 		data = &HttpResponse{

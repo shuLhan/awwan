@@ -4,11 +4,18 @@
 package awwan
 
 import (
+	"fmt"
 	"io"
 	"os"
+	"path/filepath"
+	"time"
 
 	"github.com/shuLhan/share/lib/mlog"
 )
+
+// defLogTimeFormat define the default log time format.
+// This is set as variable to make it easy overwriting it in testing.
+var defLogTimeFormat = time.RFC3339
 
 // Request for executing local or remote script.
 // Each request define the Mode of execution, Script file to be executed,
@@ -20,6 +27,10 @@ type Request struct {
 	stdin io.Reader
 
 	mlog *mlog.MultiLogger
+
+	// flog the log file where all input and output will be
+	// recorded.
+	flog *os.File
 
 	scriptPath string // The actual or cleaned up path of the Script.
 	script     *Script
@@ -34,7 +45,7 @@ type Request struct {
 
 // NewRequest create new Request and initialize stdout and stderr to os.Stdout
 // and os.Stderr.
-func NewRequest(mode, script, lineRange string) (req *Request) {
+func NewRequest(mode, script, lineRange string) (req *Request, err error) {
 	req = &Request{
 		Mode:      mode,
 		Script:    script,
@@ -42,23 +53,62 @@ func NewRequest(mode, script, lineRange string) (req *Request) {
 	}
 
 	req.lineRange = parseLineRange(lineRange)
-	req.init()
 
-	return req
+	err = req.init()
+	if err != nil {
+		return nil, fmt.Errorf(`NewRequest: %w`, err)
+	}
+
+	return req, nil
 }
 
-// init initialize all fields in Request.
-func (req *Request) init() {
+// close flush and release all resources.
+func (req *Request) close() {
+	req.mlog.Flush()
+
+	var err = req.flog.Sync()
+	if err != nil {
+		mlog.Errf(`%s`, err)
+	}
+
+	err = req.flog.Close()
+	if err != nil {
+		mlog.Errf(`%s`, err)
+	}
+}
+
+// init initialize multi loggers to write all output.
+func (req *Request) init() (err error) {
 	if req.mlog == nil {
 		var (
 			namedStdout = mlog.NewNamedWriter(`stdout`, os.Stdout)
 			namedStderr = mlog.NewNamedWriter(`stderr`, os.Stderr)
 		)
-		req.mlog = mlog.NewMultiLogger(``, ``,
+
+		req.mlog = mlog.NewMultiLogger(defLogTimeFormat, filepath.Base(req.Script),
 			[]mlog.NamedWriter{namedStdout},
 			[]mlog.NamedWriter{namedStderr},
 		)
 	}
+
+	req.scriptPath = filepath.Clean(req.Script)
+	req.scriptPath, err = filepath.Abs(req.scriptPath)
+	if err != nil {
+		return err
+	}
+
+	// Create log file to record all input and output for audit in the
+	// future.
+	var fileLog = req.scriptPath + `.log`
+
+	req.flog, err = os.OpenFile(fileLog, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
+	if err != nil {
+		return err
+	}
+
+	req.registerLogWriter(`file`, req.flog)
+
+	return nil
 }
 
 // registerLogWriter register a writer w to mlog output and error.

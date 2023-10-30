@@ -51,10 +51,14 @@ func TestAwwan_Play_withLocal(t *testing.T) {
 	}
 
 	var (
-		req = NewRequest(CommandModePlay, scriptFile, `1-`)
-
+		req  *Request
 		logw bytes.Buffer
 	)
+
+	req, err = NewRequest(CommandModePlay, scriptFile, `1-`)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	req.registerLogWriter(`output`, &logw)
 
@@ -108,6 +112,7 @@ func TestAwwan_Play_Get(t *testing.T) {
 	}}
 
 	var (
+		req        *Request
 		c          testCaseGetPut
 		fi         os.FileInfo
 		gotContent []byte
@@ -120,7 +125,10 @@ func TestAwwan_Play_Get(t *testing.T) {
 			_ = os.Remove(c.fileDest)
 		}
 
-		var req = NewRequest(CommandModePlay, scriptFile, c.lineRange)
+		req, err = NewRequest(CommandModePlay, scriptFile, c.lineRange)
+		if err != nil {
+			t.Fatal(err)
+		}
 
 		err = aww.Play(req)
 		if err != nil {
@@ -191,6 +199,7 @@ func TestAwwan_Play_Put(t *testing.T) {
 	}}
 
 	var (
+		req        *Request
 		c          testCaseGetPut
 		fi         os.FileInfo
 		gotContent []byte
@@ -203,7 +212,10 @@ func TestAwwan_Play_Put(t *testing.T) {
 			_ = os.Remove(c.fileDest)
 		}
 
-		var req = NewRequest(CommandModePlay, scriptFile, c.lineRange)
+		req, err = NewRequest(CommandModePlay, scriptFile, c.lineRange)
+		if err != nil {
+			t.Fatal(err)
+		}
 
 		err = aww.Play(req)
 		if err != nil {
@@ -280,6 +292,7 @@ func TestAwwan_Play_SudoGet(t *testing.T) {
 	var (
 		mockin = &mockStdin{}
 
+		req        *Request
 		c          testCaseGetPut
 		fi         os.FileInfo
 		gotContent []byte
@@ -292,7 +305,10 @@ func TestAwwan_Play_SudoGet(t *testing.T) {
 			_ = os.Remove(c.fileDest)
 		}
 
-		var req = NewRequest(CommandModePlay, scriptFile, c.lineRange)
+		req, err = NewRequest(CommandModePlay, scriptFile, c.lineRange)
+		if err != nil {
+			t.Fatal(err)
+		}
 
 		// Mock the request stdin to read password from buffer.
 		mockin.buf.Reset()
@@ -369,6 +385,7 @@ func TestAwwan_Play_SudoPut(t *testing.T) {
 	}}
 
 	var (
+		req        *Request
 		c          testCaseGetPut
 		fi         os.FileInfo
 		gotContent []byte
@@ -381,7 +398,10 @@ func TestAwwan_Play_SudoPut(t *testing.T) {
 			_ = os.Remove(c.fileDest)
 		}
 
-		var req = NewRequest(CommandModePlay, scriptFile, c.lineRange)
+		req, err = NewRequest(CommandModePlay, scriptFile, c.lineRange)
+		if err != nil {
+			t.Fatal(err)
+		}
 
 		err = aww.Play(req)
 		if err != nil {

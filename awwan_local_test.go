@@ -47,7 +47,10 @@ func TestAwwanLocal(t *testing.T) {
 		logw bytes.Buffer
 	)
 
-	req = NewRequest(CommandModeLocal, scriptFile, `1-`)
+	req, err = NewRequest(CommandModeLocal, scriptFile, `1-`)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	req.registerLogWriter(`output`, &logw)
 
@@ -131,7 +134,10 @@ func TestAwwanLocal_Get(t *testing.T) {
 
 		var req *Request
 
-		req = NewRequest(CommandModeLocal, script, c.lineRange)
+		req, err = NewRequest(CommandModeLocal, script, c.lineRange)
+		if err != nil {
+			t.Fatal(err)
+		}
 
 		err = aww.Local(req)
 		if err != nil {
@@ -251,7 +257,10 @@ func TestAwwanLocal_Put(t *testing.T) {
 
 		var req *Request
 
-		req = NewRequest(CommandModeLocal, script, c.lineRange)
+		req, err = NewRequest(CommandModeLocal, script, c.lineRange)
+		if err != nil {
+			t.Fatal(err)
+		}
 
 		err = aww.Local(req)
 		if err != nil {
@@ -350,7 +359,10 @@ func TestAwwanLocal_withEncryption(t *testing.T) {
 			logw bytes.Buffer
 		)
 
-		req = NewRequest(CommandModeLocal, c.script, c.lineRange)
+		req, err = NewRequest(CommandModeLocal, c.script, c.lineRange)
+		if err != nil {
+			t.Fatal(err)
+		}
 
 		req.registerLogWriter(`output`, &logw)
 

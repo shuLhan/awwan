@@ -1,11 +1,8 @@
 Test on "local" command.
 
 <<< local:output
-
---> local:   1: echo "hello"
+- local.aww --> local:   1: echo "hello"
 hello
-
---> local:   4: #local: echo "nothing"
-
---> local:   6: echo "local"
+- local.aww --> local:   4: #local: echo "nothing"
+- local.aww --> local:   6: echo "local"
 local

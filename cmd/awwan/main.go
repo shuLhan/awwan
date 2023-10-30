@@ -150,7 +150,7 @@ func main() {
 		return
 
 	case awwan.CommandModeLocal, awwan.CommandModePlay:
-		req = awwan.NewRequest(cmdMode, flag.Arg(1), flag.Arg(2))
+		req, err = awwan.NewRequest(cmdMode, flag.Arg(1), flag.Arg(2))
 
 	case awwan.CommandModeServe:
 		if flag.NArg() <= 1 {
