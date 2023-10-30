@@ -5,7 +5,6 @@ package awwan
 
 import (
 	"fmt"
-	"io"
 	"io/fs"
 	"path/filepath"
 
@@ -27,33 +26,24 @@ type sshClient struct {
 	conn  *ssh.Client
 	sftpc *sftp.Client
 
-	stdout io.Writer
-	stderr io.Writer
-
 	// dirTmp temporary directory for sudoGet or sudoPut operations.
 	dirTmp string
 }
 
 // newSshClient create new clients using the SSH config section.
-// The stdout parameter define the writer where output from server will be
-// written.
-// The stderr parameter define the writer where error from server will be
-// written.
 //
 // Once connection established, the client create new temporary directory on
 // server at dirTmp for sudoGet or sudoPut operations.
-func newSshClient(section *config.Section, dirTmp string, stdout, stderr io.Writer) (sshc *sshClient, err error) {
+func newSshClient(req *Request, section *config.Section, dirTmp string) (sshc *sshClient, err error) {
 	var logp = `newSshClient`
 
-	fmt.Fprintf(stdout, "--- SSH connection: %s@%s:%s\n",
+	req.mlog.Outf(`--- SSH connection: %s@%s:%s`,
 		section.User(), section.Hostname(), section.Port())
 
-	fmt.Fprintf(stdout, "--- SSH identity file: %v\n", section.IdentityFile)
+	req.mlog.Outf(`--- SSH identity file: %v`, section.IdentityFile)
 
 	sshc = &sshClient{
 		section: section,
-		stdout:  stdout,
-		stderr:  stderr,
 		dirTmp:  dirTmp,
 	}
 
@@ -61,12 +51,12 @@ func newSshClient(section *config.Section, dirTmp string, stdout, stderr io.Writ
 	if err != nil {
 		return nil, err
 	}
-	sshc.conn.SetSessionOutputError(stdout, stderr)
+	sshc.conn.SetSessionOutputError(req.mlog, req.mlog)
 
 	// Try initialize the sftp client.
 	sshc.sftpc, err = sftp.NewClient(sshc.conn.Client)
 	if err != nil {
-		fmt.Fprintf(stderr, "%s: %s\n", logp, err)
+		req.mlog.Errf(`%s: %s`, logp, err)
 	}
 
 	if len(dirTmp) == 0 {
@@ -142,17 +132,15 @@ func (sshc *sshClient) put(local, remote string) (err error) {
 }
 
 // rmdirAll remove the directory on server recursively.
-func (sshc *sshClient) rmdirAll(dir string) {
-	var (
-		rmdirStmt = fmt.Sprintf(`rm -rf %s`, dir)
-
-		err error
-	)
+func (sshc *sshClient) rmdirAll(dir string) (err error) {
+	var rmdirStmt = fmt.Sprintf(`rm -rf %s`, dir)
 
 	err = sshc.conn.Execute(rmdirStmt)
 	if err != nil {
-		fmt.Fprintf(sshc.stderr, "rmdirAll: %s: %s\n", dir, err)
+		return fmt.Errorf(`rmdirAll: %s: %w`, dir, err)
 	}
+
+	return nil
 }
 
 // sudoChmod change the permission of remoteFile using sudo.

@@ -620,7 +620,7 @@ func (ses *Session) initSSHClient(req *Request, sshSection *config.Section) (err
 		lastIdentFile = sshSection.IdentityFile[len(sshSection.IdentityFile)-1]
 	}
 
-	ses.sshc, err = newSshClient(sshSection, ses.dirTmp, req.mlog, req.mlog)
+	ses.sshc, err = newSshClient(req, sshSection, ses.dirTmp)
 	if err != nil {
 		return fmt.Errorf(`%s: %w`, logp, err)
 	}

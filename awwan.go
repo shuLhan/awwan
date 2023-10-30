@@ -284,7 +284,10 @@ func (aww *Awwan) Play(req *Request) (err error) {
 	}
 out:
 	if ses != nil && ses.sshc != nil {
-		ses.sshc.rmdirAll(ses.sshc.dirTmp)
+		var errRemove = ses.sshc.rmdirAll(ses.sshc.dirTmp)
+		if errRemove != nil {
+			req.mlog.Errf(`!!! %s`, errRemove)
+		}
 	}
 	if err != nil {
 		req.mlog.Errf(`!!! %s`, err)

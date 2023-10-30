@@ -68,7 +68,7 @@ func TestAwwan_Play_withLocal(t *testing.T) {
 	}
 
 	var exp = string(tdata.Output[`play_with_local:output`])
-	test.Assert(t, `output`, exp, logw.String())
+	test.Assert(t, `play_with_local:output`, exp, logw.String())
 }
 
 func TestAwwan_Play_Get(t *testing.T) {
