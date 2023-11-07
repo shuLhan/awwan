@@ -121,11 +121,24 @@ build-all-amd64:
 			./cmd/awwan/;\
 	done
 
+.PHONY: build-all-arm64
+build-all-arm64: GOARCH=arm64
+build-all-arm64: LD_FLAGS+=-X 'git.sr.ht/~shulhan/awwan.Version=$(VERSION)'
+build-all-arm64:
+	for os in "darwin" "freebsd" "linux" "netbsd" "openbsd" "windows"; do \
+		echo ">>> Building for $$os/$(GOARCH)";\
+		GOOS=$$os go build \
+			-o _bin/awwan-$$os-$(GOARCH) \
+			-trimpath \
+			-ldflags="$(LD_FLAGS)" \
+			./cmd/awwan/;\
+	done
+
 .PHONY: release-sync
 release-sync:
 	rclone sync --progress ./_bin info-kilabit:/pub/awwan
 
 .PHONY: release-tip
-release-tip: embed build-all-amd64 release-sync
+release-tip: embed build-all-amd64 build-all-arm64 release-sync
 
 #}}}

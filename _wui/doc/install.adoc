@@ -16,21 +16,33 @@ The following binary is the build based on latest tip on main branch.
 
 https://sin1.contabostorage.com/57fb451d5f5f46fa91560a02facf49f8:pub/awwan/awwan-darwin-amd64[Apple macOS (x86-64)]
 
+https://sin1.contabostorage.com/57fb451d5f5f46fa91560a02facf49f8:pub/awwan/awwan-darwin-arm64[Apple macOS (ARM64)]
+
 https://sin1.contabostorage.com/57fb451d5f5f46fa91560a02facf49f8:pub/awwan/awwan-dragonfly-amd64[DragonFly (x86-64)]
 
 https://sin1.contabostorage.com/57fb451d5f5f46fa91560a02facf49f8:pub/awwan/awwan-freebsd-amd64[FreeBSD (x86-64)]
 
+https://sin1.contabostorage.com/57fb451d5f5f46fa91560a02facf49f8:pub/awwan/awwan-freebsd-arm64[FreeBSD (ARM64)]
+
 https://sin1.contabostorage.com/57fb451d5f5f46fa91560a02facf49f8:pub/awwan/awwan-linux-amd64[Linux (x86-64)]
+
+https://sin1.contabostorage.com/57fb451d5f5f46fa91560a02facf49f8:pub/awwan/awwan-linux-arm64[Linux (ARM64)]
 
 https://sin1.contabostorage.com/57fb451d5f5f46fa91560a02facf49f8:pub/awwan/awwan-netbsd-amd64[NetBSD (x86-64)]
 
+https://sin1.contabostorage.com/57fb451d5f5f46fa91560a02facf49f8:pub/awwan/awwan-netbsd-arm64[NetBSD (ARM64)]
+
 https://sin1.contabostorage.com/57fb451d5f5f46fa91560a02facf49f8:pub/awwan/awwan-openbsd-amd64[OpenBSD (x86-64)]
+
+https://sin1.contabostorage.com/57fb451d5f5f46fa91560a02facf49f8:pub/awwan/awwan-openbsd-arm64[OpenBSD (ARM64)]
 
 https://sin1.contabostorage.com/57fb451d5f5f46fa91560a02facf49f8:pub/awwan/awwan-plan9-amd64[Plan9 (x86-64)]
 
 https://sin1.contabostorage.com/57fb451d5f5f46fa91560a02facf49f8:pub/awwan/awwan-solaris-amd64[Solaris (x86-64)]
 
 https://sin1.contabostorage.com/57fb451d5f5f46fa91560a02facf49f8:pub/awwan/awwan-windows-amd64[Windows (x86-64)]
+
+https://sin1.contabostorage.com/57fb451d5f5f46fa91560a02facf49f8:pub/awwan/awwan-windows-arm64[Windows (ARM64)]
 
 Once the binary filed downloaded, set the execute permission,
 
