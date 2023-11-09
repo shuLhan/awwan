@@ -1,21 +1,19 @@
 "use strict";
 var awwan = (() => {
-  // _wui/wui/editor/editor.js
+  // _wui/wui/editor/editor.ts
   var WUI_EDITOR_CLASS = "wui_editor";
-  var WUI_EDITOR_CLASS_LINE = "wui_editor_line";
   var WUI_EDITOR_CLASS_LINE_NUMBER = "wui_editor_line_number";
-  var WUI_EDITOR_CLASS_LINE_TEXT = "wui_editor_line_text";
+  var WUI_EDITOR_CLASS_CONTENT = "wui_editor_content";
   var WuiEditor = class {
     constructor(opts) {
       this.opts = opts;
-      this.lines = [];
-      this.range_begin = -1;
-      this.range_end = -1;
-      this.raw_lines = [];
-      this.is_key_control = false;
-      this.unre = new WuiEditorUndoRedo();
+      this.content = "";
+      this.totalLine = 0;
+      this.elLineNumber = document.createElement("div");
+      this.elContent = document.createElement("div");
+      this.isKeyControl = false;
       this.id = opts.id;
-      this.is_editable = opts.is_editable;
+      this.isEditable = opts.isEditable;
       const el = document.getElementById(opts.id);
       if (!el) {
         console.error("WuiEditor: element ID not found:", opts.id);
@@ -23,592 +21,162 @@ var awwan = (() => {
       }
       this.el = el;
       this.initStyle();
+      this.initLineNumber();
+      this.initContent();
       this.el.classList.add(WUI_EDITOR_CLASS);
-      const sel = window.getSelection();
-      if (!sel) {
-        console.error("WuiEditor: cannot get window selection", opts.id);
-        return;
-      }
-      this.sel = sel;
-      this.range = document.createRange();
-      document.onkeydown = (ev) => {
-        this.onKeydownDocument(this, ev);
-      };
-      document.onkeyup = (ev) => {
-        this.onKeyupDocument(this, ev);
-      };
     }
     // getContent return content of file.
     getContent() {
       let content = "";
-      for (let x = 0; x < this.lines.length; x++) {
-        if (x > 0) {
-          content += "\n";
+      let el;
+      let line;
+      this.elContent.childNodes.forEach((node) => {
+        switch (node.nodeType) {
+          case Node.ELEMENT_NODE:
+            el = node;
+            line = el.innerText;
+            break;
+          case Node.TEXT_NODE:
+            line = node.nodeValue || "";
+            break;
         }
-        content += this.lines[x].elText.innerText;
-      }
+        if (line == "\n") {
+          content += line;
+        } else {
+          content += line + "\n";
+        }
+      });
+      content = content.trim();
       return content;
-    }
-    getSelectionRange() {
-      return {
-        begin_at: this.range_begin,
-        end_at: this.range_end
-      };
-    }
-    onClickText() {
-      const sel = window.getSelection();
-      if (sel) {
-        this.sel = sel;
-      }
-    }
-    onKeyup(x, ev) {
-      let elTextCurr;
-      let elTextPrev;
-      let textBefore;
-      let textAfter;
-      let off;
-      switch (ev.key) {
-        case "Alt":
-        case "ArrowDown":
-        case "ArrowLeft":
-        case "ArrowRight":
-        case "ArrowUp":
-        case "CapsLock":
-        case "ContextMenu":
-        case "End":
-        case "Home":
-        case "Insert":
-        case "OS":
-        case "PageDown":
-        case "PageUp":
-        case "Pause":
-        case "PrintScreen":
-        case "ScrollLock":
-        case "Shift":
-          break;
-        case "Backspace":
-          ev.preventDefault();
-          textBefore = this.raw_lines[x];
-          elTextCurr = this.lines[x].elText;
-          textAfter = elTextCurr.innerText;
-          off = this.sel.focusOffset;
-          if (off > 0) {
-            this.unre.doUpdate(x, textBefore, textAfter);
-            this.raw_lines[x] = textAfter;
-            this.setCaret(elTextCurr, off);
-            return false;
-          }
-          elTextPrev = this.lines[x - 1].elText;
-          this.unre.doJoin(x - 1, elTextPrev.innerText, elTextCurr.innerText);
-          off = elTextPrev.innerText.length;
-          elTextPrev.innerText = elTextPrev.innerText + elTextCurr.innerText;
-          this.raw_lines[x - 1] = elTextPrev.innerText;
-          this.deleteLine(x);
-          this.setCaret(elTextPrev, off);
-          return false;
-        case "Enter":
-          ev.preventDefault();
-          break;
-        default:
-          if (this.is_key_control) {
-            break;
-          }
-          this.unre.doUpdate(x, this.raw_lines[x], this.lines[x].elText.innerText);
-          this.raw_lines[x] = this.lines[x].elText.innerText;
-      }
-      return true;
-    }
-    onKeydownOnLine(x, ev) {
-      var _a;
-      let textBefore;
-      let textAfter;
-      let off;
-      let elText;
-      let elTextCurrent;
-      let text;
-      let isJoinLineAfter;
-      switch (ev.key) {
-        case "ArrowUp":
-          if (x == 0) {
-            return false;
-          }
-          ev.preventDefault();
-          elText = this.lines[x - 1].elText;
-          off = this.sel.focusOffset;
-          if (off > elText.innerText.length) {
-            off = elText.innerText.length;
-          }
-          this.setCaret(elText, off);
-          if (x == 1) {
-            this.el.scrollTop = 0;
-          } else if (x * 23 < this.el.scrollTop) {
-            this.el.scrollTop -= 25;
-          }
-          return false;
-        case "ArrowDown":
-          if (x == this.lines.length - 1) {
-            return false;
-          }
-          ev.preventDefault();
-          elText = this.lines[x + 1].elText;
-          off = this.sel.focusOffset;
-          if (off > elText.innerText.length) {
-            off = elText.innerText.length;
-          }
-          this.setCaret(elText, off);
-          x += 2;
-          if (x * 25 >= this.el.clientHeight + this.el.scrollTop) {
-            this.el.scrollTop += 25;
-          }
-          return false;
-        case "Delete":
-          ev.preventDefault();
-          isJoinLineAfter = false;
-          elTextCurrent = this.lines[x].elText;
-          off = this.sel.focusOffset;
-          textBefore = elTextCurrent.innerText;
-          textAfter = "";
-          if (textBefore.length === 0 || off === textBefore.length) {
-            isJoinLineAfter = true;
-          }
-          if (isJoinLineAfter) {
-            if (x + 1 < this.lines.length) {
-              const elTextAfter = this.lines[x + 1].elText;
-              textAfter = elTextAfter.innerText;
-              elTextAfter.innerText = "";
-              this.unre.doJoin(x, textBefore, textAfter);
-              this.deleteLine(x + 1);
-              textAfter = textBefore + textAfter;
-            }
-          } else {
-            textAfter = textBefore.slice(0, off) + textBefore.slice(off + 1, textBefore.length);
-            this.unre.doUpdate(x, textBefore, textAfter);
-          }
-          this.lines[x].elText.innerText = textAfter;
-          this.raw_lines[x] = textAfter;
-          this.setCaret(elTextCurrent, off);
-          break;
-        case "Enter":
-          ev.preventDefault();
-          elText = this.lines[x].elText;
-          off = this.sel.focusOffset;
-          text = elText.innerText;
-          textBefore = text.slice(0, off);
-          textAfter = text.slice(off, text.length);
-          this.unre.doSplit(x, textBefore, textAfter);
-          elText.innerText = textBefore;
-          this.raw_lines[x] = textBefore;
-          this.insertNewline(x + 1, textAfter);
-          if (x + 3 >= this.raw_lines.length) {
-            this.el.scrollTop = this.el.scrollHeight;
-          }
-          break;
-        case "Tab":
-          ev.preventDefault();
-          elText = (_a = this.lines[x]) === null || _a === void 0 ? void 0 : _a.elText;
-          if (!elText) {
-            break;
-          }
-          off = this.sel.focusOffset;
-          textBefore = elText.innerText;
-          textAfter = textBefore.slice(0, off) + "	" + textBefore.slice(off, textBefore.length);
-          this.unre.doUpdate(x, textBefore, textAfter);
-          elText.innerText = textAfter;
-          this.raw_lines[x] = textAfter;
-          this.setCaret(elText, off + 1);
-          break;
-      }
-      return true;
-    }
-    onMouseDownAtLine(x) {
-      this.range_begin = x;
-    }
-    onMouseUpAtLine(x) {
-      var _a, _b, _c;
-      this.range_end = x;
-      if (this.range_end < this.range_begin) {
-        return;
-      }
-      let y = 0;
-      for (; y < this.range_begin; y++) {
-        (_a = this.el.children[y]) === null || _a === void 0 ? void 0 : _a.setAttribute("style", "");
-      }
-      for (; y <= this.range_end; y++) {
-        (_b = this.el.children[y]) === null || _b === void 0 ? void 0 : _b.setAttribute("style", "background-color:lightsalmon");
-      }
-      for (; y < this.el.children.length; y++) {
-        (_c = this.el.children[y]) === null || _c === void 0 ? void 0 : _c.setAttribute("style", "");
-      }
-      if (this.opts.onSelection) {
-        this.opts.onSelection(this.range_begin, this.range_end);
-      }
-    }
-    // setEditOff make the content not editable.
-    setEditOff() {
-      this.lines.forEach((line) => {
-        line.setEditOff();
-      });
-    }
-    // setEditOn make the content to be editable.
-    setEditOn() {
-      this.lines.forEach((line) => {
-        line.setEditOn();
-      });
     }
     // open the node for editing.
     // The content MUST be encoded in base64.
     open(node) {
-      let content = atob(node.content);
-      content = content.replace("\r\n", "\n");
-      this.raw_lines = content.split("\n");
-      this.lines = [];
-      this.raw_lines.forEach((rawLine, x) => {
-        const line = new WuiEditorLine(x, rawLine, this);
-        this.lines.push(line);
-      });
-      this.render();
+      this.content = atob(node.content);
+      this.content = this.content.replace("\r\n", "\n");
+      this.render(this.content);
     }
-    // clearSelection clear selection range indicator.
-    clearSelection() {
-      var _a;
-      if (this.range_begin < 0 || this.range_end == 0) {
-        return;
+    addNewLine() {
+      this.totalLine++;
+      const elLine = document.createElement("div");
+      elLine.innerText = `${this.totalLine}`;
+      this.elLineNumber.appendChild(elLine);
+    }
+    initLineNumber() {
+      this.elLineNumber.classList.add(WUI_EDITOR_CLASS_LINE_NUMBER);
+      this.el.appendChild(this.elLineNumber);
+    }
+    initContent() {
+      if (this.opts.isEditable) {
+        this.elContent.setAttribute("contenteditable", "true");
+        this.elContent.setAttribute("spellcheck", "false");
+        this.elContent.addEventListener("paste", () => {
+          setTimeout(() => {
+            this.render(this.getContent());
+          }, 100);
+        });
+        this.elContent.onkeydown = (ev) => {
+          this.onKeydownDocument(this, ev);
+        };
+        this.elContent.onkeyup = (ev) => {
+          this.onKeyupDocument(this, ev);
+        };
       }
-      for (let x = this.range_begin; x <= this.range_end; x++) {
-        (_a = this.el.children[x]) === null || _a === void 0 ? void 0 : _a.setAttribute("style", "");
-      }
-      this.range_begin = -1;
-      this.range_end = -1;
+      this.elContent.classList.add(WUI_EDITOR_CLASS_CONTENT);
+      this.el.appendChild(this.elContent);
     }
     initStyle() {
       const style = document.createElement("style");
       style.type = "text/css";
       style.innerText = `
-			[contenteditable] {
-				outline: 0px solid transparent;
-			}
-			.${WUI_EDITOR_CLASS} {
-				background-color: cornsilk;
-				font-family: monospace;
-				overflow-y: auto;
-				width: 100%;
-			}
-			.${WUI_EDITOR_CLASS_LINE} {
-				display: block;
-				width: 100%;
-			}
-			.${WUI_EDITOR_CLASS_LINE_NUMBER} {
-				color: dimgrey;
-				cursor: pointer;
-				display: inline-block;
-				padding: 4px 10px 4px 4px;
-				text-align: right;
-				user-select: none;
-				vertical-align: top;
-				width: 30px;
-			}
-			.${WUI_EDITOR_CLASS_LINE_NUMBER}:hover {
-				background-color: lightsalmon;
-			}
-			.${WUI_EDITOR_CLASS_LINE_TEXT} {
-				display: inline-block;
-				padding: 4px;
-				border-color: lightblue;
-				border-width: 0px;
-				border-style: solid;
-				white-space: pre-wrap;
-				width: calc(100% - 60px);
-			}
-		`;
+      [contenteditable] {
+        outline: 0px solid transparent;
+      }
+      .${WUI_EDITOR_CLASS} {
+        background-color: cornsilk;
+        border: 1px solid brown;
+        font-family: monospace;
+        line-height: 1.6em;
+        overflow-y: scroll;
+        width: 100%;
+      }
+      .${WUI_EDITOR_CLASS_LINE_NUMBER} {
+        background-color: bisque;
+        border-right: 1px dashed brown;
+        color: dimgrey;
+        font-family: monospace;
+        float: left;
+        left: 0px;
+        margin-right: 8px;
+        padding: 0px 8px;
+        position: sticky;
+        text-align: right;
+        width: 3em;
+      }
+      .${WUI_EDITOR_CLASS_CONTENT} {
+        // Do not use "float: left" to fix line break.
+        display: inline-block;
+        padding: 0px 8px;
+        white-space: pre;
+        width: calc(100% - 6em);
+        word-wrap: normal;
+      }
+    `;
       document.head.appendChild(style);
-    }
-    doJoin(changes) {
-      const line = this.lines[changes.currLine];
-      if (!line) {
-        return;
-      }
-      line.elText.innerText = changes.currText;
-      this.deleteLine(changes.nextLine);
-      this.setCaret(line.elText, 0);
-    }
-    doSplit(changes) {
-      const line = this.lines[changes.currLine];
-      if (!line) {
-        return;
-      }
-      line.elText.innerText = changes.currText;
-      this.insertNewline(changes.nextLine, changes.nextText);
-    }
-    doUpdate(changes) {
-      const line = this.lines[changes.currLine];
-      if (!line) {
-        return;
-      }
-      line.elText.innerText = changes.currText;
-      this.setCaret(line.elText, 0);
-    }
-    doRedo() {
-      const act = this.unre.redo();
-      if (!act) {
-        return;
-      }
-      switch (act.kind) {
-        case "join":
-          this.doJoin(act.after);
-          break;
-        case "split":
-          this.doSplit(act.after);
-          break;
-        case "update":
-          this.doUpdate(act.after);
-          break;
-      }
-    }
-    doUndo() {
-      const act = this.unre.undo();
-      if (!act) {
-        return;
-      }
-      switch (act.kind) {
-        case "join":
-          this.doSplit(act.before);
-          break;
-        case "split":
-          this.doJoin(act.before);
-          break;
-        case "update":
-          this.doUpdate(act.before);
-          break;
-      }
-    }
-    deleteLine(x) {
-      var _a;
-      this.lines.splice(x, 1);
-      this.raw_lines.splice(x, 1);
-      for (; x < this.lines.length; x++) {
-        (_a = this.lines[x]) === null || _a === void 0 ? void 0 : _a.setNumber(x);
-      }
-      this.render();
-    }
-    insertNewline(x, text) {
-      var _a;
-      const newline = new WuiEditorLine(x, text, this);
-      for (let y = x; y < this.lines.length; y++) {
-        (_a = this.lines[y]) === null || _a === void 0 ? void 0 : _a.setNumber(y + 1);
-      }
-      this.lines.splice(x, 0, newline);
-      this.raw_lines.splice(x, 0, text);
-      this.render();
-      this.setCaret(newline.elText, 0);
     }
     onKeydownDocument(ed, ev) {
       switch (ev.key) {
         case "Control":
-          ed.is_key_control = true;
-          return;
-        case "r":
-          if (ed.is_key_control) {
-            ev.preventDefault();
-            ed.doRedo();
-          }
-          return;
+          ed.isKeyControl = true;
+          break;
+        case "Enter":
+          this.addNewLine();
+          break;
         case "s":
-          if (ed.is_key_control) {
+          if (ed.isKeyControl) {
             ev.preventDefault();
             ev.stopPropagation();
             if (ed.opts.onSave) {
               ed.opts.onSave(ed.getContent());
             }
           }
-          return;
-        case "z":
-          if (ed.is_key_control) {
-            ev.preventDefault();
-            ed.doUndo();
-          }
-          return;
+          break;
       }
+      return true;
     }
     onKeyupDocument(ed, ev) {
       switch (ev.key) {
         case "Control":
-          ed.is_key_control = false;
-          return;
-        case "Escape":
-          ev.preventDefault();
-          ed.clearSelection();
-          return;
+          ed.isKeyControl = false;
+          return true;
       }
+      return true;
     }
-    render() {
-      this.el.innerHTML = "";
-      for (const line of this.lines) {
-        this.el.appendChild(line.el);
-      }
-    }
-    setCaret(elText, off) {
-      if (elText.firstChild) {
-        this.range.setStart(elText.firstChild, off);
-      } else {
-        this.range.setStart(elText, off);
-      }
-      this.range.collapse(true);
-      this.sel.removeAllRanges();
-      this.sel.addRange(this.range);
-    }
-  };
-  var WuiEditorLine = class {
-    constructor(x, text, ed) {
-      this.x = x;
-      this.text = text;
-      this.lineNum = 0;
-      this.lineNum = x;
-      this.el = document.createElement("div");
-      this.el.classList.add(WUI_EDITOR_CLASS_LINE);
-      this.el_number = document.createElement("span");
-      this.el_number.classList.add(WUI_EDITOR_CLASS_LINE_NUMBER);
-      this.el_number.innerText = this.lineNum + 1 + "";
-      this.el_number.onmousedown = () => {
-        ed.onMouseDownAtLine(this.lineNum);
-      };
-      this.el_number.onmouseup = () => {
-        ed.onMouseUpAtLine(this.lineNum);
-      };
-      this.elText = document.createElement("span");
-      this.elText.classList.add(WUI_EDITOR_CLASS_LINE_TEXT);
-      this.elText.innerText = text;
-      this.elText.contentEditable = "true";
-      this.elText.onclick = () => {
-        ed.onClickText();
-      };
-      this.elText.onkeydown = (ev) => {
-        return ed.onKeydownOnLine(this.lineNum, ev);
-      };
-      this.elText.onkeyup = (ev) => {
-        return ed.onKeyup(this.lineNum, ev);
-      };
-      this.elText.addEventListener("paste", (ev) => {
-        if (!ev.clipboardData) {
-          return;
+    render(content) {
+      const lines = content.split("\n");
+      this.elContent.innerText = "";
+      this.elLineNumber.innerText = "";
+      lines.forEach((line, x) => {
+        const el = document.createElement("div");
+        el.innerText = `${x + 1}`;
+        this.elLineNumber.appendChild(el);
+        const div = document.createElement("div");
+        div.innerText = line;
+        if (line == "") {
+          div.appendChild(document.createElement("br"));
         }
-        ev.preventDefault();
-        const text2 = ev.clipboardData.getData("text/plain");
-        document.execCommand("insertHTML", false, text2);
+        this.elContent.appendChild(div);
       });
-      this.el.appendChild(this.el_number);
-      this.el.appendChild(this.elText);
-    }
-    setNumber(x) {
-      this.lineNum = x;
-      this.el_number.innerText = x + 1 + "";
-    }
-    setEditOn() {
-      this.elText.contentEditable = "true";
-    }
-    setEditOff() {
-      this.elText.contentEditable = "false";
-    }
-  };
-  var WuiEditorUndoRedo = class {
-    constructor() {
-      this.idx = 0;
-      this.actions = [];
-    }
-    doJoin(prevLine, prevText, currText) {
-      const action = {
-        kind: "join",
-        before: {
-          currLine: prevLine,
-          currText: prevText,
-          nextLine: prevLine + 1,
-          nextText: currText
-        },
-        after: {
-          currLine: prevLine,
-          currText: prevText + currText,
-          nextLine: prevLine + 1,
-          nextText: ""
-        }
-      };
-      if (this.actions.length > 0) {
-        this.actions = this.actions.slice(0, this.idx);
-      }
-      this.actions.push(action);
-      this.idx++;
-    }
-    doSplit(currLine, currText, nextText) {
-      const action = {
-        kind: "split",
-        before: {
-          currLine,
-          currText: currText + nextText,
-          nextLine: currLine + 1,
-          nextText: ""
-        },
-        after: {
-          currLine,
-          currText,
-          nextLine: currLine + 1,
-          nextText
-        }
-      };
-      if (this.actions.length > 0) {
-        this.actions = this.actions.slice(0, this.idx);
-      }
-      this.actions.push(action);
-      this.idx++;
-    }
-    doUpdate(lineNum, textBefore, textAfter) {
-      const action = {
-        kind: "update",
-        before: {
-          currLine: lineNum,
-          currText: textBefore,
-          nextLine: 0,
-          nextText: ""
-        },
-        after: {
-          currLine: lineNum,
-          currText: textAfter,
-          nextLine: 0,
-          nextText: ""
-        }
-      };
-      if (this.actions.length > 0) {
-        this.actions = this.actions.slice(0, this.idx);
-      }
-      this.actions.push(action);
-      this.idx++;
-    }
-    undo() {
-      if (this.idx == 0) {
-        return null;
-      }
-      this.idx--;
-      const action = this.actions[this.idx];
-      if (!action) {
-        return null;
-      }
-      return action;
-    }
-    redo() {
-      if (this.idx == this.actions.length) {
-        return null;
-      }
-      const action = this.actions[this.idx];
-      if (!action) {
-        return null;
-      }
-      this.idx++;
-      return action;
+      this.totalLine = lines.length;
     }
   };
 
-  // _wui/wui/notif/notif.js
+  // _wui/wui/notif/notif.ts
   var WUI_NOTIF_ID = "wui_notif";
   var WUI_NOTIF_CLASS_INFO = "wui_notif_info";
   var WUI_NOTIF_CLASS_ERROR = "wui_notif_error";
   var WuiNotif = class {
+    // 5 seconds timeout
     constructor() {
       this.timeout = 5e3;
       this.el = document.createElement("div");
@@ -664,7 +232,7 @@ var awwan = (() => {
     }
   };
 
-  // _wui/wui/vfs/vfs.js
+  // _wui/wui/vfs/vfs.ts
   var CLASS_VFS_PATH = "wui_vfs_path";
   var CLASS_VFS_LIST = "wui_vfs_list";
   var WuiVfs = class {
@@ -933,11 +501,9 @@ var awwan = (() => {
       }
       const editorOpts = {
         id: ID_EDITOR,
-        is_editable: true,
+        isEditable: true,
         onSave: (content) => {
           this.editorOnSave(content);
-        },
-        onSelection: () => {
         }
       };
       this.editor = new WuiEditor(editorOpts);
@@ -1099,6 +665,8 @@ var awwan = (() => {
       }
       this.notif.info(`File ${path} has been saved.`);
       this.orgContent = content;
+      const node = res.data;
+      this.editor.open(node);
       return res;
     }
     // execLocal request to execute the selected script on local system.

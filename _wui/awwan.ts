@@ -178,11 +178,10 @@ export class Awwan {
 
     const editorOpts: WuiEditorOptions = {
       id: ID_EDITOR,
-      is_editable: true,
+      isEditable: true,
       onSave: (content) => {
         this.editorOnSave(content);
       },
-      onSelection: () => {},
     };
 
     this.editor = new WuiEditor(editorOpts);
@@ -381,6 +380,9 @@ export class Awwan {
 
     this.notif.info(`File ${path} has been saved.`);
     this.orgContent = content;
+
+    const node = res.data as WuiVfsNodeInterface;
+    this.editor.open(node);
 
     return res;
   }
