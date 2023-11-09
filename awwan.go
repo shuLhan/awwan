@@ -297,15 +297,15 @@ out:
 	return err
 }
 
-// Serve start the web-user interface that serve awwan actions through HTTP.
-func (aww *Awwan) Serve(isDev bool) (err error) {
+// Serve start the web-user interface that serve awwan through HTTP.
+func (aww *Awwan) Serve(address string, isDev bool) (err error) {
 	var logp = `Serve`
 
 	if isDev {
 		go internal.Watch()
 	}
 
-	aww.httpd, err = newHttpServer(aww)
+	aww.httpd, err = newHttpServer(aww, address)
 	if err != nil {
 		return fmt.Errorf(`%s: %w`, logp, err)
 	}

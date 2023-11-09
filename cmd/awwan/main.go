@@ -60,9 +60,11 @@ command = "decrypt" / "encrypt" / "help" / "local" / "play" / "serve" / "version
 		Execute the script in the remote server from line <start>
 		until line <end>.
 
-	serve <workspace>
-		Run the web-user interface using <workspace> directory as base
-		directory.
+	serve [-address] <workspace>
+		Run the web-user interface (WUI) using <workspace> directory
+		as base directory.
+		The "-address" option define the HTTP server address to
+		serve the WUI.
 
 	version
 		Print the application version to standard output.
@@ -105,8 +107,10 @@ Run the web-user interface using the current directory as workspace,
 
 func main() {
 	var (
-		logp  = `awwan`
-		isDev = flag.Bool(`dev`, false, `run the "serve" command in development mode`)
+		logp         = `awwan`
+		isDev        = flag.Bool(`dev`, false, `run the "serve" command in development mode`)
+		serveAddress = flag.String(`address`, awwan.DefListenAddress,
+			`HTTP server address to serve WUI.`)
 	)
 
 	flag.Parse()
@@ -198,7 +202,7 @@ func main() {
 	case awwan.CommandModePlay:
 		err = aww.Play(req)
 	case awwan.CommandModeServe:
-		err = aww.Serve(*isDev)
+		err = aww.Serve(*serveAddress, *isDev)
 	}
 	if err != nil {
 		log.Fatalf(`%s: %s`, logp, err)

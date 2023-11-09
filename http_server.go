@@ -26,7 +26,8 @@ const (
 
 const paramNamePath = `path`
 
-const defListenAddress = `127.0.0.1:17600`
+// DefListenAddress default HTTP server address to serve WUI.
+const DefListenAddress = `127.0.0.1:17600`
 
 // httpServer awwan HTTP server for HTTP API and web user interface feature.
 type httpServer struct {
@@ -40,7 +41,7 @@ type httpServer struct {
 
 // newHttpServer create and initialize HTTP server to serve awwan HTTP API
 // and web user interface.
-func newHttpServer(aww *Awwan) (httpd *httpServer, err error) {
+func newHttpServer(aww *Awwan, address string) (httpd *httpServer, err error) {
 	var (
 		logp = `newHttpServer`
 	)
@@ -68,7 +69,7 @@ func newHttpServer(aww *Awwan) (httpd *httpServer, err error) {
 
 	var serverOpts = &libhttp.ServerOptions{
 		Memfs:   internal.MemfsWui,
-		Address: defListenAddress,
+		Address: address,
 	}
 
 	httpd.Server, err = libhttp.NewServer(serverOpts)
