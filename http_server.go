@@ -380,6 +380,12 @@ func (httpd *httpServer) awwanApiFsPut(epr *libhttp.EndpointRequest) (rawBody []
 		return nil, res
 	}
 
+	// Make sure that the file end with LF.
+	var lenContent = len(req.Content)
+	if lenContent != 0 && req.Content[lenContent-1] != '\n' {
+		req.Content = append(req.Content, '\n')
+	}
+
 	err = node.Save(req.Content)
 	if err != nil {
 		res.Message = fmt.Sprintf("%s: %s", logp, err)
