@@ -18,8 +18,8 @@ key=value
 `
 
 		scriptContent = `
-multiline\
-command {{.Val "section::key"}};\
+multiline \
+command {{.Val "section::key"}}; \
 end;
 `
 

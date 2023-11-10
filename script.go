@@ -197,12 +197,13 @@ func joinStatements(in [][]byte) (out [][]byte) {
 			continue
 		}
 
-		stmt = bytes.TrimRight(stmt, "\\ \t")
-		stmt = append(stmt, ' ')
+		// Start joining multiline statement.
+
+		stmt = bytes.TrimRight(stmt, "\\")
 
 		y = x + 1
 		for ; y < len(in); y++ {
-			nextStmt = bytes.TrimSpace(in[y])
+			nextStmt = in[y]
 			if len(nextStmt) == 0 {
 				in[y] = nil
 				out[y] = nil
@@ -213,10 +214,8 @@ func joinStatements(in [][]byte) (out [][]byte) {
 			lastc = nextStmt[endc]
 
 			if lastc == '\\' {
-				nextStmt = bytes.TrimRight(nextStmt, "\\ \t")
-				nextStmt = append(nextStmt, ' ')
+				nextStmt = bytes.TrimRight(nextStmt, "\\")
 			}
-
 			stmt = append(stmt, nextStmt...)
 
 			in[y] = nil

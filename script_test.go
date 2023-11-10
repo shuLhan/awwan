@@ -49,24 +49,30 @@ func TestJoinStatements(t *testing.T) {
 		exp [][]byte
 	}
 
+	var (
+		tdata *test.Data
+		err   error
+	)
+
+	tdata, err = test.LoadData(`testdata/script_joinStatements_test.data`)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	var cases = []testCase{{
-		in: bytes.Split([]byte(`
-a
-b \
-c
-d \
-e 	\
-f
-g`), []byte("\n")),
+		in: bytes.Split(tdata.Input[`case_0`], []byte("\n")),
 		exp: [][]byte{
 			nil,
 			[]byte("a"),
 			[]byte("b c"),
 			nil,
-			[]byte("d e f"),
+			[]byte("d e 	f"),
 			nil,
 			nil,
-			[]byte("g"),
+			[]byte(`gh,i`),
+			nil,
+			[]byte(`j k`),
+			nil,
 		},
 	}}
 
