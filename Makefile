@@ -1,7 +1,6 @@
 ## SPDX-FileCopyrightText: 2019 M. Shulhan <ms@kilabit.info>
 ## SPDX-License-Identifier: GPL-3.0-or-later
 
-AWWAN_WORKSPACE:=_example
 LD_FLAGS=-s -w
 VERSION=$(shell git describe --long | sed 's/\([^-]*-g\)/r\1/;s/-/./g')
 
@@ -37,7 +36,7 @@ install: lint-www lint embed
 
 .PHONY: dev
 dev:
-	go run ./cmd/awwan -dev serve $(AWWAN_WORKSPACE)
+	go run ./cmd/awwan -dev -address 127.0.0.1:17500 serve _example
 
 #{{{ Task to lint the TypeScript files.
 

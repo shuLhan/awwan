@@ -400,24 +400,24 @@ var awwan = (() => {
       </div>
       <div class="awwan_content">
         <div class="boxheader">
-          File: <span id="${ID_VFS_PATH}">-</span>
+          <span class="tag">File</span>
+          <span id="${ID_VFS_PATH}">-</span>
           <button id="${ID_BTN_SAVE}" disabled="true">Save</button>
         </div>
         <div id="${ID_EDITOR}"></div>
-        <div>
-          <div class="${CLASS_EDITOR_ACTION}">
-            Execute
-            <input id="${ID_INP_LINE_RANGE}" />
-            on
-            <button id="${ID_BTN_EXEC_LOCAL}" disabled="true">Local</button>
-            or
-            <button id="${ID_BTN_EXEC_REMOTE}" disabled="true">Remote</button>
-
-          </div>
-        </div>
-        <button id="${ID_COM_RESIZE}">&#9868;</button>
+        <div id="${ID_COM_RESIZE}">&#9868;</div>
         <div id="${ID_OUTPUT_WRAPPER}" class="output">
-          <div class="boxheader">Output:</div>
+          <div>
+            <div class="${CLASS_EDITOR_ACTION}">
+              Execute
+              <input id="${ID_INP_LINE_RANGE}" />
+              on
+              <button id="${ID_BTN_EXEC_LOCAL}" disabled="true">Local</button>
+              or
+              <button id="${ID_BTN_EXEC_REMOTE}" disabled="true">Remote</button>
+
+            </div>
+          </div>
           <div id="${ID_OUTPUT}"></div>
         </div>
       </div>

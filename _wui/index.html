@@ -12,12 +12,7 @@
 
         .header>.logo {
             width: 20px;
-            margin: 0px;
-        }
-
-        .header>.menu {
-            border-left: 1px solid cornflowerblue;
-            padding-left: 1em;
+            margin: 0px 8px;
         }
 
         .awwan_nav_left {
@@ -42,7 +37,7 @@
         }
 
         .awwan_content {
-            height: calc(100% - 112px);
+            height: calc(100% - 7em);
             left: 310px;
             margin: 0 10px;
             padding: 0 10px;
@@ -56,7 +51,7 @@
 
         #com_editor {
             width: calc(100% - 2px);
-            height: calc(100% - 272px);
+            height: 50%;
             border: 1px solid silver;
             resize: vertical;
         }
@@ -66,20 +61,32 @@
         }
 
         .boxheader {
-            padding: 10px;
             border: 1px solid silver;
         }
 
+        .boxheader>.tag {
+            background-color: bisque;
+            border-right: 1px dashed brown;
+            display: inline-block;
+            margin-right: 8px;
+            padding: 4px 2px 4px 0px;
+            text-align: center;
+            width: 50px;
+        }
+
         #com_resize {
+            background-color: gainsboro;
             border: 1px;
+            cursor: row-resize;
             font-size: 8px;
+            text-align: center;
             width: 100%;
         }
 
         .output {
             position: relative;
             bottom: 0px;
-            height: 126px;
+            height: 40%;
         }
 
         #output {
@@ -96,6 +103,7 @@
             .awwan_nav_left {
                 position: unset;
                 width: calc(100% - 10px);
+                height: 40em;
             }
 
             .awwan_nav_left .wui_vfs_list {
@@ -103,6 +111,7 @@
             }
 
             .awwan_content {
+                height: 40em;
                 margin: 20px 0 0 0;
                 overflow: unset;
                 padding: 0;
@@ -117,6 +126,10 @@
             #editor {
                 height: 400px;
             }
+
+            #output {
+                white-space: pre;
+            }
         }
     </style>
     <script type="module" src="/main.js"></script>
@@ -124,13 +137,9 @@
 
 <body>
     <div class="header">
-        A
+        Awwan
         <image class="logo" src="/favicon.ico"></image>
-        <image class="logo" src="/favicon.ico"></image>
-        an &nbsp;
-        <span class="menu">
-            <a href="/doc/" target="_blank">Documentation</a>
-        </span>
+        <a href="/doc/" target="_blank">Documentation</a>
     </div>
 </body>
 
