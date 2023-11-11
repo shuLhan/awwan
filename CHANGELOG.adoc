@@ -1,18 +1,20 @@
-// SPDX-FileCopyrightText: 2019 M. Shulhan <ms@kilabit.info>
-// SPDX-License-Identifier: GPL-3.0-or-later
 = Changelog for awwan
 :toc:
-:sectanchors:
 :sectlinks:
 
+This page document changes on each release.
+
 [#v0_9_0]
-== awwan v0.9.0 (2023-11-xx)
+== awwan v0.9.0 (2023-11-11)
 
 Awwan now have a website at https://awwan.org.
 
 [#v0_9_0__new_features]
 === New features
 
+all: implement remote "#get!" and "#put!" with owner and mode::
++
+--
 The magic command "#get" and "#put" now have an inline options to set the
 owner and permission of copied file.
 Example of usage are,
@@ -25,7 +27,36 @@ The $USER, $GROUP and $PERM are optionals.
 If $USER and/or $GROUP is set, a copied file will have owner set to user
 $USER and/or group to $GROUP.
 If $PERM is set, a copied file will have the mode permission set to $MODE.
+--
 
+all: add magic command "#local"::
++
+The magic command "#local" define the command to be executed using
+shell in local environment.
+Its have effect and can only be used in script that executed using
+"play".
+In script that is executed using "local" it does nothing.
+
+_www: replace button "Clear selection" with text input for line range::
++
+Instead of using mouse to select which lines to be executed, let
+user input it manually like in the CLI.
+
+all: log all execution into file::
++
+--
+For each script execution, a file suffixed with ".log" will be created
+in the same directory with the same name as script file.
+For example, if the script is path is "a/b/c.aww" then the log file
+would named "a/b/c.aww.log".
+
+This is to provides history and audit in the future.
+--
+
+cmd/awwan: add option "-address" to command serve::
++
+The "-address" option allow defining the HTTP server address to serve
+the web-user interface.
 
 [#v0_9_0__bug_fixes]
 === Bug fixes
@@ -36,12 +67,101 @@ Using vim, or UNIX in general, the file always end with "\\n".
 If we read the whole file then the passphrase will end with it, this
 cause the decryption may fail (or wrong encryption passphrase used).
 
+_www: fix saving file content using CTRL+s::
++
+The issue is using "this.editorOnSave" result on undefined "this" inside
+the editorOnSave.
+
+all: remove the node when requested from HTTP API /awwan/api/fs::
++
+--
+Previously, the HTTP API for deleting node only remove the file but
+not the node in the memfs.
+
+This changes remove the child node from memfs, so the next refresh on
+directory will not contains the removed file.
+--
+
+all: return the error as reponse in HTTP API execute::
++
+--
+Previously, when the command execution failed, we check the error and
+return it as HTTP status code 500.
+In this way, user cannot view the log and actual error.
+
+In this changes, if the command failed, we store the error in separate
+field "Error" and return to the caller with HTTP status code 200.
+--
+
 [#v0_9_0__enhancements]
 === Enhancements
 
 all: fix printing the statement to be executed::
 +
 This fix missing magic command not printed in stdout.
+
+all: use "mlog.MultiLogger" to log Request output and error::
++
+--
+By using "mlog.MultiLogger" every output or error can be written to
+stdout/stderr and additional log writer that can collect both of them,
+buffered and returned to the caller.
+
+This changes simplify the HttpResponse to use only single output that
+combine both stdout and stderr.
+--
+
+_www: add button to resize editor and output::
++
+The button can be dragged up and down to resize both the editor and
+output panes.
+
+_www: show confirmation when user open other file with unsaved changes::
++
+If user modify the current file without saving it and then open another
+file, it will show confirmation dialog to continue opening file or cancel
+it.
+
+all: on file save, make sure file end with line-feed::
++
+On some application, like haproxy configuration, line-feed (LF or "\n")
+are required, otherwise the application would not start.
+
+script: respect spaces when joining multi lines command::
++
+--
+If a multi lines command does not have spaces or have multiple
+spaces, join them as is.
+For example,
+
+----
+a\\
+b
+----
+
+should return the value as `ab`, while
+
+----
+a \\
+ b
+----
+
+should return "a<space><space>b".
+--
+
+_wui: various enhancements::
++
+--
+Changes,
+
+* The "File" tag now highlighted to distinguish with file name
+* The "Execute" action moved to replace the Output, so we have some
+  additional horizontal space
+* The "Output" tag removed
+* Fix layout on mobile devices where height is set to static
+* editor: re-render content after save
+* editor: handle paste event manually
+--
 
 
 [#v0_8_0]
@@ -487,3 +607,6 @@ deploying and managing postfix, dovecot, haproxy, and my personal server and
 services at kilabit.info.
 Also it has been used to deploy Go microservices using Kubernetes using
 combination of `gcloud` and `kubectl`.
+
+// SPDX-FileCopyrightText: 2019 M. Shulhan <ms@kilabit.info>
+// SPDX-License-Identifier: GPL-3.0-or-later

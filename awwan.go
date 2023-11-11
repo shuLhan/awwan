@@ -15,7 +15,7 @@ import (
 )
 
 // Version current version of this module (library and program).
-var Version = `0.9.0-alpha`
+var Version = `0.9.0`
 
 // List of command available for program awwan.
 const (
