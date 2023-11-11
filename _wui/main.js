@@ -1,6 +1,6 @@
 "use strict";
 var awwan = (() => {
-  // _wui/wui/editor/editor.ts
+  // _wui/wui/editor/editor.js
   var WUI_EDITOR_CLASS = "wui_editor";
   var WUI_EDITOR_CLASS_LINE_NUMBER = "wui_editor_line_number";
   var WUI_EDITOR_CLASS_CONTENT = "wui_editor_content";
@@ -70,10 +70,12 @@ var awwan = (() => {
       if (this.opts.isEditable) {
         this.elContent.setAttribute("contenteditable", "true");
         this.elContent.setAttribute("spellcheck", "false");
-        this.elContent.addEventListener("paste", () => {
-          setTimeout(() => {
-            this.render(this.getContent());
-          }, 100);
+        this.elContent.addEventListener("paste", (ev) => {
+          var _a;
+          ev.preventDefault();
+          const text = (_a = ev.clipboardData) === null || _a === void 0 ? void 0 : _a.getData("text/plain");
+          document.execCommand("insertText", false, text);
+          this.renderLineNumber(this.getContent());
         });
         this.elContent.onkeydown = (ev) => {
           this.onKeydownDocument(this, ev);
@@ -137,7 +139,9 @@ var awwan = (() => {
             ev.preventDefault();
             ev.stopPropagation();
             if (ed.opts.onSave) {
-              ed.opts.onSave(ed.getContent());
+              const content = ed.getContent();
+              ed.opts.onSave(content);
+              ed.render(content);
             }
           }
           break;
@@ -169,14 +173,23 @@ var awwan = (() => {
       });
       this.totalLine = lines.length;
     }
+    renderLineNumber(content) {
+      const lines = content.split("\n");
+      this.elLineNumber.innerText = "";
+      lines.forEach((_, x) => {
+        const el = document.createElement("div");
+        el.innerText = `${x + 1}`;
+        this.elLineNumber.appendChild(el);
+      });
+      this.totalLine = lines.length;
+    }
   };
 
-  // _wui/wui/notif/notif.ts
+  // _wui/wui/notif/notif.js
   var WUI_NOTIF_ID = "wui_notif";
   var WUI_NOTIF_CLASS_INFO = "wui_notif_info";
   var WUI_NOTIF_CLASS_ERROR = "wui_notif_error";
   var WuiNotif = class {
-    // 5 seconds timeout
     constructor() {
       this.timeout = 5e3;
       this.el = document.createElement("div");
@@ -232,7 +245,7 @@ var awwan = (() => {
     }
   };
 
-  // _wui/wui/vfs/vfs.ts
+  // _wui/wui/vfs/vfs.js
   var CLASS_VFS_PATH = "wui_vfs_path";
   var CLASS_VFS_LIST = "wui_vfs_list";
   var WuiVfs = class {
