@@ -122,18 +122,19 @@ func Watch() {
 	}
 
 	var (
-		wuiWatchOpts = memfs.WatchOptions{
-			Watches: []string{
-				`.*\.(adoc|md|ts)$`,
+		dw = memfs.DirWatcher{
+			Options: memfs.Options{
+				Root: MemfsWui.Opts.Root,
+				Includes: []string{
+					`.*\.(adoc|html|js|md|ts)$`,
+				},
+				Excludes: []string{
+					`node_modules`,
+				},
 			},
+			Delay: 200 * time.Millisecond,
 		}
-		dw *memfs.DirWatcher
 	)
-
-	dw, err = MemfsWui.Watch(wuiWatchOpts)
-	if err != nil {
-		log.Fatalf(`%s: %s`, logp, err)
-	}
 
 	err = dw.Start()
 	if err != nil {
@@ -146,6 +147,8 @@ func Watch() {
 		buildTicker = time.NewTicker(200 * time.Millisecond)
 
 		ns         memfs.NodeState
+		node       *memfs.Node
+		fmarkup    *ciigo.FileMarkup
 		tsCount    int
 		embedCount int
 	)
@@ -158,7 +161,6 @@ func Watch() {
 			switch {
 			case strings.HasSuffix(ns.Node.SysPath, `.adoc`),
 				strings.HasSuffix(ns.Node.SysPath, `.md`):
-				var fmarkup *ciigo.FileMarkup
 
 				fmarkup, err = ciigo.NewFileMarkup(ns.Node.SysPath, nil)
 				if err != nil {
@@ -178,6 +180,12 @@ func Watch() {
 				tsCount++
 
 			case strings.HasSuffix(ns.Node.SysPath, `.js`) || strings.HasSuffix(ns.Node.SysPath, `.html`):
+				node, err = MemfsWui.Get(ns.Node.Path)
+				if err != nil {
+					mlog.Errf(`%s %q: %s`, logp, ns.Node.SysPath, err)
+					continue
+				}
+				node.Update(&ns.Node, 0)
 				embedCount++
 
 			case strings.HasSuffix(ns.Node.SysPath, DocConvertOpts.HtmlTemplate):
