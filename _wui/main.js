@@ -251,7 +251,6 @@ var awwan = (() => {
   var WuiVfs = class {
     constructor(opts) {
       this.opts = opts;
-      this.opts = opts;
       const el = document.getElementById(opts.id);
       if (!el) {
         console.error("WuiVfs: element id", opts.id, "not found");
@@ -266,6 +265,10 @@ var awwan = (() => {
         this.openNode(node);
       });
       this.el.appendChild(this.com_list.el);
+    }
+    // filter the VFS list based on text value.
+    filter(text) {
+      this.com_list.filter(text);
     }
     // openNode is a handler that will be called when a node is clicked
     // inside the WuiVfsList.
@@ -302,9 +305,24 @@ var awwan = (() => {
       this.el.style.borderStyle = "solid";
       this.el.style.borderColor = "silver";
     }
+    // filter re-render the list by including only the node that have name
+    // match with "text".
+    filter(text) {
+      const regexp = new RegExp(text, "i");
+      for (const elChild of this.el.children) {
+        if (regexp.test(elChild.innerHTML)) {
+          elChild.removeAttribute("hidden");
+        } else {
+          elChild.setAttribute("hidden", "true");
+        }
+      }
+    }
     open(node) {
       this.node = node;
       this.el.innerHTML = "";
+      if (!this.node) {
+        return;
+      }
       if (!this.node.childs) {
         return;
       }
@@ -312,8 +330,9 @@ var awwan = (() => {
         const el = document.createElement("div");
         el.style.padding = "1em";
         el.style.cursor = "pointer";
-        el.innerHTML = c.name;
+        el.innerText = c.name;
         if (c.is_dir) {
+          el.innerText += "/";
           el.style.backgroundColor = "cornsilk";
         }
         el.onclick = () => {
@@ -390,7 +409,7 @@ var awwan = (() => {
   var ID_COM_RESIZE = "com_resize";
   var ID_EDITOR = "com_editor";
   var ID_INP_LINE_RANGE = "com_inp_line_range";
-  var ID_INP_VFS_NEW = "com_inp_vfs_new";
+  var ID_VFS_INPUT = "com_vfs_input";
   var ID_VFS = "com_vfs";
   var ID_VFS_PATH = "vfs_path";
   var ID_OUTPUT = "output";
@@ -401,15 +420,13 @@ var awwan = (() => {
     el.classList.add("awwan");
     el.innerHTML = `
       <div class="awwan_nav_left">
-        <div id="${ID_VFS}"></div>
-
-        <br/>
-        <div class="${ID_INP_VFS_NEW}">
-          <input id="${ID_INP_VFS_NEW}" />
+        <div class="${ID_VFS_INPUT}">
+          <input id="${ID_VFS_INPUT}" placeholder="Input text to filter (allow regexp)" />
         </div>
-        <button id="${ID_BTN_NEW_DIR}">New directory</button>
+        <button id="${ID_BTN_NEW_DIR}">New dir.</button>
         <button id="${ID_BTN_NEW_FILE}">New file</button>
         <button id="${ID_BTN_REMOVE}">Remove</button>
+        <div id="${ID_VFS}"></div>
       </div>
       <div class="awwan_content">
         <div class="boxheader">
@@ -496,9 +513,12 @@ var awwan = (() => {
         return;
       }
       this.comInputLineRange = el;
-      el = document.getElementById(ID_INP_VFS_NEW);
+      el = document.getElementById(ID_VFS_INPUT);
       if (el) {
-        this.comInputVfsNew = el;
+        this.comVfsInput = el;
+        this.comVfsInput.oninput = () => {
+          this.onVfsInputFilter(this.comVfsInput.value);
+        };
       }
       el = document.getElementById(ID_VFS_PATH);
       if (el) {
@@ -586,7 +606,6 @@ var awwan = (() => {
         return res;
       }
       const node = res.data;
-      this.comInputVfsNew.value = node.name;
       if (isDir) {
         this.currentNode = node;
         window.location.hash = "#" + path;
@@ -742,7 +761,7 @@ var awwan = (() => {
         this.notif.error("No active directory loaded or selected.");
         return;
       }
-      const name = this.comInputVfsNew.value;
+      const name = this.comVfsInput.value;
       if (name === "") {
         this.notif.error("Empty file name");
         return;
@@ -784,7 +803,7 @@ var awwan = (() => {
         this.notif.error("No file selected.");
         return;
       }
-      const name = this.comInputVfsNew.value;
+      const name = this.comVfsInput.value;
       if (name === "") {
         this.notif.error("Empty file name");
         return;
@@ -809,6 +828,10 @@ var awwan = (() => {
       }
       this.notif.info(`${res.message}`);
       this.vfs.openDir(this.currentNode.path);
+    }
+    // onVfsInputFilter filter the VFS list based on input val.
+    onVfsInputFilter(val) {
+      this.vfs.filter(val);
     }
     doResize(ev) {
       if (this._posy == 0) {

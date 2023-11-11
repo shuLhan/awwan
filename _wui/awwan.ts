@@ -16,7 +16,7 @@ const ID_BTN_SAVE = "com_btn_save";
 const ID_COM_RESIZE = "com_resize";
 const ID_EDITOR = "com_editor";
 const ID_INP_LINE_RANGE = "com_inp_line_range";
-const ID_INP_VFS_NEW = "com_inp_vfs_new";
+const ID_VFS_INPUT = "com_vfs_input";
 const ID_VFS = "com_vfs";
 const ID_VFS_PATH = "vfs_path";
 const ID_OUTPUT = "output";
@@ -41,15 +41,13 @@ export function renderHtml() {
   el.classList.add("awwan");
   el.innerHTML = `
       <div class="awwan_nav_left">
-        <div id="${ID_VFS}"></div>
-
-        <br/>
-        <div class="${ID_INP_VFS_NEW}">
-          <input id="${ID_INP_VFS_NEW}" />
+        <div class="${ID_VFS_INPUT}">
+          <input id="${ID_VFS_INPUT}" placeholder="Input text to filter (allow regexp)" />
         </div>
-        <button id="${ID_BTN_NEW_DIR}">New directory</button>
+        <button id="${ID_BTN_NEW_DIR}">New dir.</button>
         <button id="${ID_BTN_NEW_FILE}">New file</button>
         <button id="${ID_BTN_REMOVE}">Remove</button>
+        <div id="${ID_VFS}"></div>
       </div>
       <div class="awwan_content">
         <div class="boxheader">
@@ -88,7 +86,7 @@ export class Awwan {
   private comEditor!: HTMLElement;
   private comFilePath!: HTMLElement;
   private comInputLineRange!: HTMLInputElement;
-  private comInputVfsNew!: HTMLInputElement;
+  private comVfsInput!: HTMLInputElement;
   private comOutput!: HTMLElement;
   private comOutputWrapper!: HTMLElement;
   private currentNode: WuiVfsNodeInterface | null = null;
@@ -158,9 +156,12 @@ export class Awwan {
 
     this.comInputLineRange = el as HTMLInputElement;
 
-    el = document.getElementById(ID_INP_VFS_NEW);
+    el = document.getElementById(ID_VFS_INPUT);
     if (el) {
-      this.comInputVfsNew = el as HTMLInputElement;
+      this.comVfsInput = el as HTMLInputElement;
+      this.comVfsInput.oninput = () => {
+        this.onVfsInputFilter(this.comVfsInput.value);
+      };
     }
 
     el = document.getElementById(ID_VFS_PATH);
@@ -265,7 +266,6 @@ export class Awwan {
     }
 
     const node = res.data as WuiVfsNodeInterface;
-    this.comInputVfsNew.value = node.name;
 
     if (isDir) {
       this.currentNode = node;
@@ -456,7 +456,7 @@ export class Awwan {
       return;
     }
 
-    const name = this.comInputVfsNew.value;
+    const name = this.comVfsInput.value;
     if (name === "") {
       this.notif.error("Empty file name");
       return;
@@ -503,7 +503,7 @@ export class Awwan {
       return;
     }
 
-    const name = this.comInputVfsNew.value;
+    const name = this.comVfsInput.value;
     if (name === "") {
       this.notif.error("Empty file name");
       return;
@@ -531,6 +531,11 @@ export class Awwan {
 
     this.notif.info(`${res.message}`);
     this.vfs.openDir(this.currentNode.path);
+  }
+
+  // onVfsInputFilter filter the VFS list based on input val.
+  private onVfsInputFilter(val: string) {
+    this.vfs.filter(val);
   }
 
   doResize(ev: MouseEvent) {
