@@ -270,6 +270,7 @@ export class Awwan {
     if (isDir) {
       this.currentNode = node;
       window.location.hash = "#" + path;
+      this.comVfsInput.value = "";
       return res;
     }
 

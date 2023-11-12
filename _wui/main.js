@@ -609,6 +609,7 @@ var awwan = (() => {
       if (isDir) {
         this.currentNode = node;
         window.location.hash = "#" + path;
+        this.comVfsInput.value = "";
         return res;
       }
       const resAllow = this.isEditAllowed(node);
