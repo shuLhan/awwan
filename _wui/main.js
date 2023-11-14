@@ -485,12 +485,15 @@ var awwan = (() => {
           <div>
             <div class="${CLASS_EDITOR_ACTION}">
               Execute
-              <input id="${ID_INP_LINE_RANGE}" />
+              <input id="${ID_INP_LINE_RANGE}" placeholder="Ex: 1,2-4,5-"/>
               on
               <button id="${ID_BTN_EXEC_LOCAL}" disabled="true">Local</button>
               or
               <button id="${ID_BTN_EXEC_REMOTE}" disabled="true">Remote</button>
-
+              &nbsp;
+              <a href="/doc/awwan.html#command__local__and__play_" target="_blank">
+                &#x2139;
+              </a>
             </div>
           </div>
           <div id="${ID_OUTPUT}"></div>
