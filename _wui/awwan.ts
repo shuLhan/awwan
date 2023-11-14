@@ -7,6 +7,7 @@ import { WuiResponseInterface } from "./wui/response.js";
 import { WuiVfs, WuiVfsOptions, WuiVfsNodeInterface } from "./wui/vfs/vfs.js";
 
 const CLASS_EDITOR_ACTION = "editor_action";
+const ID_BTN_DECRYPT = "com_btn_decrypt";
 const ID_BTN_ENCRYPT = "com_btn_encrypt";
 const ID_BTN_EXEC_LOCAL = "com_btn_local";
 const ID_BTN_EXEC_REMOTE = "com_btn_remote";
@@ -61,6 +62,7 @@ export function renderHtml() {
           <span id="${ID_VFS_PATH}">-</span>
           <button id="${ID_BTN_SAVE}" disabled="true">Save</button>
           <button id="${ID_BTN_ENCRYPT}" disabled="true">Encrypt</button>
+          <button id="${ID_BTN_DECRYPT}" disabled="true">Decrypt</button>
         </div>
         <div id="${ID_EDITOR}"></div>
         <div id="${ID_COM_RESIZE}">&#9868;</div>
@@ -166,6 +168,14 @@ export class Awwan {
       this.comBtnEncrypt = el as HTMLButtonElement;
       this.comBtnEncrypt.onclick = () => {
         this.onClickEncrypt();
+      };
+    }
+
+    el = document.getElementById(ID_BTN_DECRYPT);
+    if (el) {
+      this.comBtnDecrypt = el as HTMLButtonElement;
+      this.comBtnDecrypt.onclick = () => {
+        this.onClickDecrypt();
       };
     }
 
@@ -310,7 +320,16 @@ export class Awwan {
     this.comBtnLocal.disabled = false;
     this.comBtnRemote.disabled = false;
     this.comBtnSave.disabled = false;
-    this.comBtnEncrypt.disabled = false;
+
+    if (path.endsWith(".vault")) {
+      this.comBtnDecrypt.disabled = false;
+      this.comBtnEncrypt.disabled = true;
+      this.editor.setEditable(false);
+    } else {
+      this.comBtnDecrypt.disabled = true;
+      this.comBtnEncrypt.disabled = false;
+      this.editor.setEditable(true);
+    }
 
     return res;
   }
@@ -401,19 +420,40 @@ export class Awwan {
 
     this.notif.info(`File ${path} has been encrypted to ${encRes.path_vault}.`);
 
-    const nodeVault: WuiVfsNodeInterface = {
-      path: this.currentNode.path + "/" + this.currentFile.name,
-      name: this.currentFile.name + ".vault",
-      is_dir: false,
-      content_type: "",
-      mod_time: 0,
-      size: 0,
-      mode: "",
-      childs: [],
-      content: "",
+    this.open(this.currentNode.path, this.currentNode.is_dir);
+  }
+
+  async onClickDecrypt() {
+    if (this.request.script == "") {
+      this.notif.error("No file selected");
+      return false;
+    }
+
+    const pathVault = this.request.script;
+    const req: encryptResponse = {
+      path_vault: pathVault,
     };
-    this.currentNode.childs.push(nodeVault);
-    this.vfs.set(this.currentNode);
+
+    const httpRes = await fetch("/awwan/api/decrypt", {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(req),
+    });
+
+    const jsonRes = await httpRes.json();
+    if (jsonRes.code != 200) {
+      this.notif.error(`Failed to decrypt file ${path}: ${jsonRes.message}`);
+      return null;
+    }
+
+    const encRes = jsonRes.data as encryptResponse;
+
+    this.notif.info(`File ${pathVault} has been decrypted to ${encRes.path}.`);
+
+    this.open(this.currentNode.path, this.currentNode.is_dir);
   }
 
   onClickSave() {
@@ -453,10 +493,10 @@ export class Awwan {
     }
 
     this.notif.info(`File ${path} has been saved.`);
-    this.orgContent = content;
 
     const node = res.data as WuiVfsNodeInterface;
     this.editor.open(node);
+    this.orgContent = this.editor.getContent();
 
     return res;
   }

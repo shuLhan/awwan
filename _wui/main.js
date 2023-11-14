@@ -56,6 +56,14 @@ var awwan = (() => {
       this.content = this.content.replace("\r\n", "\n");
       this.render(this.content);
     }
+    setEditable(yes) {
+      this.isEditable = yes;
+      if (yes) {
+        this.elContent.setAttribute("contenteditable", "true");
+      } else {
+        this.elContent.setAttribute("contenteditable", "false");
+      }
+    }
     addNewLine() {
       this.totalLine++;
       const elLine = document.createElement("div");
@@ -256,8 +264,8 @@ var awwan = (() => {
         return;
       }
       this.el = el;
-      this.com_path = new WuiVfsPath((path) => {
-        this.openDir(path);
+      this.com_path = new WuiVfsPath((path2) => {
+        this.openDir(path2);
       });
       this.el.appendChild(this.com_path.el);
       this.com_list = new WuiVfsList((node) => {
@@ -280,8 +288,8 @@ var awwan = (() => {
     }
     // openDir is a handler that will be called when a path is clicked
     // inside the WuiVfsPath.
-    async openDir(path) {
-      const res2 = await this.opts.open(path, true);
+    async openDir(path2) {
+      const res2 = await this.opts.open(path2, true);
       if (res2.code != 200) {
         return;
       }
@@ -391,14 +399,14 @@ var awwan = (() => {
       } else {
         paths = node.path.split("/");
       }
-      paths.forEach((path, x) => {
+      paths.forEach((path2, x) => {
         let fullPath = "";
         let p = "";
         if (x == 0) {
           p = "/";
           fullPath = "/";
         } else {
-          p = path;
+          p = path2;
           fullPath = paths.slice(0, x + 1).join("/");
         }
         const crumb = document.createElement("span");
@@ -442,6 +450,7 @@ var awwan = (() => {
 
   // _wui/awwan.ts
   var CLASS_EDITOR_ACTION = "editor_action";
+  var ID_BTN_DECRYPT = "com_btn_decrypt";
   var ID_BTN_ENCRYPT = "com_btn_encrypt";
   var ID_BTN_EXEC_LOCAL = "com_btn_local";
   var ID_BTN_EXEC_REMOTE = "com_btn_remote";
@@ -477,6 +486,7 @@ var awwan = (() => {
           <span id="${ID_VFS_PATH}">-</span>
           <button id="${ID_BTN_SAVE}" disabled="true">Save</button>
           <button id="${ID_BTN_ENCRYPT}" disabled="true">Encrypt</button>
+          <button id="${ID_BTN_DECRYPT}" disabled="true">Decrypt</button>
         </div>
         <div id="${ID_EDITOR}"></div>
         <div id="${ID_COM_RESIZE}">&#9868;</div>
@@ -563,6 +573,13 @@ var awwan = (() => {
           this.onClickEncrypt();
         };
       }
+      el = document.getElementById(ID_BTN_DECRYPT);
+      if (el) {
+        this.comBtnDecrypt = el;
+        this.comBtnDecrypt.onclick = () => {
+          this.onClickDecrypt();
+        };
+      }
       el = document.getElementById(ID_INP_LINE_RANGE);
       if (!el) {
         console.error(`failed to get element by ID #${ID_INP_LINE_RANGE}`);
@@ -603,8 +620,8 @@ var awwan = (() => {
       this.notif = new WuiNotif();
       const vfsOpts = {
         id: ID_VFS,
-        open: (path, isDir) => {
-          return this.open(path, isDir);
+        open: (path2, isDir) => {
+          return this.open(path2, isDir);
         },
         openNode: (node) => {
           return this.openNode(node);
@@ -654,17 +671,17 @@ var awwan = (() => {
       return window.confirm("File has changes, continue without save?");
     }
     // open fetch the node content from remote server.
-    async open(path, isDir) {
-      const httpRes = await fetch("/awwan/api/fs?path=" + path);
+    async open(path2, isDir) {
+      const httpRes = await fetch("/awwan/api/fs?path=" + path2);
       const res2 = await httpRes.json();
       if (res2.code != 200) {
-        this.notif.error(`Failed to open ${path}: ${res2.message}`);
+        this.notif.error(`Failed to open ${path2}: ${res2.message}`);
         return res2;
       }
       const node = res2.data;
       if (isDir) {
         this.currentNode = node;
-        window.location.hash = "#" + path;
+        window.location.hash = "#" + path2;
         this.comVfsInput.value = "";
         return res2;
       }
@@ -673,15 +690,23 @@ var awwan = (() => {
         this.notif.error(resAllow.message);
         return resAllow;
       }
-      this.comFilePath.innerText = path;
-      this.request.script = path;
+      this.comFilePath.innerText = path2;
+      this.request.script = path2;
       this.editor.open(node);
       this.currentFile = node;
       this.orgContent = this.editor.getContent();
       this.comBtnLocal.disabled = false;
       this.comBtnRemote.disabled = false;
       this.comBtnSave.disabled = false;
-      this.comBtnEncrypt.disabled = false;
+      if (path2.endsWith(".vault")) {
+        this.comBtnDecrypt.disabled = false;
+        this.comBtnEncrypt.disabled = true;
+        this.editor.setEditable(false);
+      } else {
+        this.comBtnDecrypt.disabled = true;
+        this.comBtnEncrypt.disabled = false;
+        this.editor.setEditable(true);
+      }
       return res2;
     }
     // openNode is an handler that will called when user click on of the
@@ -730,9 +755,9 @@ var awwan = (() => {
       if (!ok) {
         return res;
       }
-      const path = this.request.script;
+      const path2 = this.request.script;
       const req = {
-        path
+        path: path2
       };
       const httpRes = await fetch("/awwan/api/encrypt", {
         method: "POST",
@@ -744,24 +769,38 @@ var awwan = (() => {
       });
       const jsonRes = await httpRes.json();
       if (jsonRes.code != 200) {
-        this.notif.error(`Failed to encrypt file ${path}: ${jsonRes.message}`);
+        this.notif.error(`Failed to encrypt file ${path2}: ${jsonRes.message}`);
         return null;
       }
       const encRes = jsonRes.data;
-      this.notif.info(`File ${path} has been encrypted to ${encRes.path_vault}.`);
-      const nodeVault = {
-        path: this.currentNode.path + "/" + this.currentFile.name,
-        name: this.currentFile.name + ".vault",
-        is_dir: false,
-        content_type: "",
-        mod_time: 0,
-        size: 0,
-        mode: "",
-        childs: [],
-        content: ""
+      this.notif.info(`File ${path2} has been encrypted to ${encRes.path_vault}.`);
+      this.open(this.currentNode.path, this.currentNode.is_dir);
+    }
+    async onClickDecrypt() {
+      if (this.request.script == "") {
+        this.notif.error("No file selected");
+        return false;
+      }
+      const pathVault = this.request.script;
+      const req = {
+        path_vault: pathVault
       };
-      this.currentNode.childs.push(nodeVault);
-      this.vfs.set(this.currentNode);
+      const httpRes = await fetch("/awwan/api/decrypt", {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(req)
+      });
+      const jsonRes = await httpRes.json();
+      if (jsonRes.code != 200) {
+        this.notif.error(`Failed to decrypt file ${path}: ${jsonRes.message}`);
+        return null;
+      }
+      const encRes = jsonRes.data;
+      this.notif.info(`File ${pathVault} has been decrypted to ${encRes.path}.`);
+      this.open(this.currentNode.path, this.currentNode.is_dir);
     }
     onClickSave() {
       if (this.request.script == "") {
@@ -778,9 +817,9 @@ var awwan = (() => {
     editorOnSave(content) {
       this.doSaveFile(this.request.script, content);
     }
-    async doSaveFile(path, content) {
+    async doSaveFile(path2, content) {
       const req = {
-        path,
+        path: path2,
         content: btoa(content)
       };
       const httpRes = await fetch("/awwan/api/fs", {
@@ -793,13 +832,13 @@ var awwan = (() => {
       });
       const res2 = await httpRes.json();
       if (res2.code != 200) {
-        this.notif.error(`Failed to save file ${path}: ${res2.message}`);
+        this.notif.error(`Failed to save file ${path2}: ${res2.message}`);
         return null;
       }
-      this.notif.info(`File ${path} has been saved.`);
-      this.orgContent = content;
+      this.notif.info(`File ${path2} has been saved.`);
       const node = res2.data;
       this.editor.open(node);
+      this.orgContent = this.editor.getContent();
       return res2;
     }
     // execLocal request to execute the selected script on local system.
