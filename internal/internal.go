@@ -7,7 +7,6 @@ package internal
 
 import (
 	"fmt"
-	"log"
 	"strings"
 	"time"
 
@@ -97,19 +96,19 @@ func Watch() {
 
 	err = ciigo.Convert(&DocConvertOpts)
 	if err != nil {
-		log.Fatalf(`%s: %s`, logp, err)
+		mlog.Fatalf(`%s: %s`, logp, err)
 	}
 
 	ciigoConv, err = ciigo.NewConverter(DocConvertOpts.HtmlTemplate)
 	if err != nil {
-		log.Fatalf(`%s: %s`, logp, err)
+		mlog.Fatalf(`%s: %s`, logp, err)
 	}
 
 	var esctx esapi.BuildContext
 
 	esctx, err = newEsbuild()
 	if err != nil {
-		log.Fatalf(`%s: %s`, logp, err)
+		mlog.Fatalf(`%s: %s`, logp, err)
 	}
 
 	defer esctx.Dispose()
@@ -117,7 +116,7 @@ func Watch() {
 	if MemfsWui == nil {
 		err = initMemfsWui()
 		if err != nil {
-			log.Fatalf(`%s: %s`, logp, err)
+			mlog.Fatalf(`%s: %s`, logp, err)
 		}
 	}
 
@@ -138,7 +137,7 @@ func Watch() {
 
 	err = dw.Start()
 	if err != nil {
-		log.Fatalf(`%s: %s`, logp, err)
+		mlog.Fatalf(`%s: %s`, logp, err)
 	}
 
 	defer dw.Stop()
@@ -156,33 +155,37 @@ func Watch() {
 	for {
 		select {
 		case ns = <-dw.C:
-			fmt.Printf("%s: update on Path=%q SysPath=%q\n", logp, ns.Node.Path, ns.Node.SysPath)
+			mlog.Outf(`%s: update on Path=%q SysPath=%q`, logp, ns.Node.Path, ns.Node.SysPath)
 
 			switch {
-			case strings.HasSuffix(ns.Node.SysPath, `.adoc`),
-				strings.HasSuffix(ns.Node.SysPath, `.md`):
+			case strings.HasSuffix(ns.Node.Path, `.adoc`),
+				strings.HasSuffix(ns.Node.Path, `.md`):
 
-				fmarkup, err = ciigo.NewFileMarkup(ns.Node.SysPath, nil)
+				fmarkup, err = ciigo.NewFileMarkup(ns.Node.Path, nil)
 				if err != nil {
-					mlog.Errf(`%s: %s: %s`, logp, ns.Node.SysPath, err)
+					mlog.Errf(`%s %q: %s`, logp, ns.Node.Path, err)
 					continue
 				}
 
 				err = ciigoConv.ToHtmlFile(fmarkup)
 				if err != nil {
-					mlog.Errf(`%s: %s: %s`, logp, ns.Node.SysPath, err)
+					mlog.Errf(`%s %q: %s`, logp, ns.Node.Path, err)
 					continue
 				}
 
 				embedCount++
 
-			case strings.HasSuffix(ns.Node.SysPath, `.ts`) || strings.HasSuffix(ns.Node.SysPath, `tsconfig.json`):
+			case strings.HasSuffix(ns.Node.Path, `.ts`),
+				strings.HasSuffix(ns.Node.Path, `tsconfig.json`):
+
 				tsCount++
 
-			case strings.HasSuffix(ns.Node.SysPath, `.js`) || strings.HasSuffix(ns.Node.SysPath, `.html`):
+			case strings.HasSuffix(ns.Node.Path, `.js`),
+				strings.HasSuffix(ns.Node.Path, `.html`):
+
 				node, err = MemfsWui.Get(ns.Node.Path)
 				if err != nil {
-					mlog.Errf(`%s %q: %s`, logp, ns.Node.SysPath, err)
+					mlog.Errf(`%s %q: %s`, logp, ns.Node.Path, err)
 					continue
 				}
 				node.Update(&ns.Node, 0)
@@ -246,7 +249,7 @@ func goEmbed() (err error) {
 
 	err = ciigo.GoEmbed(&docEmbedOpts)
 	if err != nil {
-		log.Fatalf(`%s: %s`, logp, err)
+		mlog.Fatalf(`%s: %s`, logp, err)
 	}
 
 	return nil
