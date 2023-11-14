@@ -1,0 +1,40 @@
+Testing HTTP API for Decrypt.
+
+>>> withValidRequest/body
+{"path_vault":"/plain.txt.vault"}
+
+<<< withValidRequest/Response/body
+{
+  "data": {
+    "path": "/plain.txt",
+    "path_vault": "/plain.txt.vault"
+  },
+  "code": 200
+}
+
+>>> withEmptyValue/body
+{"path_vault":""}
+
+<<< withEmptyValue/Response/body
+{
+  "message": "Decrypt: empty path_vault",
+  "code": 400
+}
+
+>>> withDirectory/body
+{"path_vault":"/.ssh"}
+
+<<< withDirectory/Response/body
+{
+  "message": "Decrypt: \"/.ssh\" is a directory",
+  "code": 400
+}
+
+>>> withFileNotExist/body
+{"path_vault":"/thisisnotexist"}
+
+<<< withFileNotExist/Response/body
+{
+  "message": "Decrypt \"/thisisnotexist\": file does not exist",
+  "code": 400
+}

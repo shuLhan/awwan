@@ -21,7 +21,9 @@ import (
 	"git.sr.ht/~shulhan/awwan/internal"
 )
 
+// List of available HTTP API.
 const (
+	pathAwwanApiDecrypt = `/awwan/api/decrypt`
 	pathAwwanApiEncrypt = `/awwan/api/encrypt`
 	pathAwwanApiExecute = `/awwan/api/execute`
 	pathAwwanApiFs      = `/awwan/api/fs`
@@ -136,16 +138,28 @@ func (httpd *httpServer) registerEndpoints() (err error) {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
 
-	var ep = libhttp.Endpoint{
+	var epDecrypt = libhttp.Endpoint{
+		Method:       libhttp.RequestMethodPost,
+		Path:         pathAwwanApiDecrypt,
+		RequestType:  libhttp.RequestTypeJSON,
+		ResponseType: libhttp.ResponseTypeJSON,
+		Call:         httpd.Decrypt,
+	}
+	err = httpd.RegisterEndpoint(&epDecrypt)
+	if err != nil {
+		return fmt.Errorf(`%s %q: %w`, logp, epDecrypt.Path, err)
+	}
+
+	var epEncrypt = libhttp.Endpoint{
 		Method:       libhttp.RequestMethodPost,
 		Path:         pathAwwanApiEncrypt,
 		RequestType:  libhttp.RequestTypeJSON,
 		ResponseType: libhttp.ResponseTypeJSON,
 		Call:         httpd.Encrypt,
 	}
-	err = httpd.RegisterEndpoint(&ep)
+	err = httpd.RegisterEndpoint(&epEncrypt)
 	if err != nil {
-		return fmt.Errorf(`%s %q: %w`, logp, ep.Path, err)
+		return fmt.Errorf(`%s %q: %w`, logp, epEncrypt.Path, err)
 	}
 
 	err = httpd.RegisterEndpoint(&libhttp.Endpoint{
@@ -167,6 +181,86 @@ func (httpd *httpServer) start() (err error) {
 	fmt.Printf("--- Starting HTTP server at http://%s\n", httpd.Server.Options.Address)
 
 	return httpd.Server.Start()
+}
+
+// Decrypt the file by path.
+//
+// Request format,
+//
+//	POST /awwan/api/decrypt
+//	Content-Type: application/json
+//
+//	{"path_vault":<string>}
+//
+// On success it will return the path to decrypted file.
+//
+//	Content-Type: application/json
+//
+//	{
+//		"code": 200,
+//		"data": {
+//			"path": <string>,
+//			"path_vault": <string>,
+//		}
+//	}
+func (httpd *httpServer) Decrypt(epr *libhttp.EndpointRequest) (resb []byte, err error) {
+	var (
+		logp    = `Decrypt`
+		httpRes = &libhttp.EndpointResponse{}
+
+		decRes encryptResponse
+	)
+
+	err = json.Unmarshal(epr.RequestBody, &decRes)
+	if err != nil {
+		return nil, fmt.Errorf(`%s: %w`, logp, err)
+	}
+
+	httpRes.Code = http.StatusBadRequest
+
+	decRes.PathVault = strings.TrimSpace(decRes.PathVault)
+	if len(decRes.PathVault) == 0 {
+		httpRes.Message = fmt.Sprintf(`%s: empty path_vault`, logp)
+		return nil, httpRes
+	}
+
+	var nodeVault *memfs.Node
+
+	nodeVault, err = httpd.memfsBase.Get(decRes.PathVault)
+	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			httpRes.Message = fmt.Sprintf(`%s %q: %s`, logp, decRes.PathVault, fs.ErrNotExist)
+		} else {
+			httpRes.Message = fmt.Sprintf(`%s: %s`, logp, err)
+		}
+		return nil, httpRes
+	}
+	if nodeVault.IsDir() {
+		httpRes.Message = fmt.Sprintf(`%s: %q is a directory`, logp, decRes.PathVault)
+		return nil, httpRes
+	}
+
+	httpRes.Code = http.StatusInternalServerError
+
+	decRes.Path, err = httpd.aww.Decrypt(nodeVault.SysPath)
+	if err != nil {
+		httpRes.Message = fmt.Sprintf(`%s: %s`, logp, err)
+		return nil, httpRes
+	}
+
+	nodeVault.Parent.Update(nil, 0)
+
+	decRes.Path, _ = strings.CutPrefix(decRes.Path, httpd.aww.BaseDir)
+
+	httpRes.Code = http.StatusOK
+	httpRes.Data = decRes
+
+	resb, err = json.Marshal(&httpRes)
+	if err != nil {
+		return nil, err
+	}
+
+	return resb, nil
 }
 
 // Encrypt the file by path.
