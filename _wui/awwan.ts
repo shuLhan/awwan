@@ -343,6 +343,7 @@ export class Awwan {
       node.content_type &&
       (node.content_type.indexOf("json") >= 0 ||
         node.content_type.indexOf("message") >= 0 ||
+        node.content_type.indexOf("octet-stream") >= 0 ||
         node.content_type.indexOf("script") >= 0 ||
         node.content_type.indexOf("text") >= 0 ||
         node.content_type.indexOf("xml") >= 0)
