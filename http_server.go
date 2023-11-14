@@ -234,7 +234,7 @@ func (httpd *httpServer) Encrypt(epr *libhttp.EndpointRequest) (resb []byte, err
 		return nil, httpRes
 	}
 
-	node.Parent.Update(nil, -1)
+	node.Parent.Update(nil, 0)
 
 	encRes.PathVault, _ = strings.CutPrefix(encRes.PathVault, httpd.aww.BaseDir)
 
