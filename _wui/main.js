@@ -330,6 +330,7 @@ var awwan = (() => {
         const el = document.createElement("div");
         el.style.padding = "1em";
         el.style.cursor = "pointer";
+        el.setAttribute("tabindex", "0");
         el.innerText = c.name;
         if (c.is_dir) {
           el.innerText += "/";
@@ -338,18 +339,38 @@ var awwan = (() => {
         el.onclick = () => {
           this.onClick(c);
         };
-        el.onmouseout = () => {
-          if (c.is_dir) {
-            el.style.backgroundColor = "cornsilk";
-          } else {
-            el.style.backgroundColor = "white";
+        el.onkeydown = (ev) => {
+          if (ev.key !== "Enter") {
+            return true;
           }
+          this.onClick(c);
+          this.el.focus();
+          return false;
+        };
+        el.onblur = () => {
+          this.onBlur(c, el);
+        };
+        el.onmouseout = () => {
+          this.onBlur(c, el);
+        };
+        el.onfocus = () => {
+          this.onFocus(el);
         };
         el.onmouseover = () => {
-          el.style.backgroundColor = "aliceblue";
+          this.onFocus(el);
         };
         this.el.appendChild(el);
       }
+    }
+    onBlur(c, el) {
+      if (c.is_dir) {
+        el.style.backgroundColor = "cornsilk";
+      } else {
+        el.style.backgroundColor = "white";
+      }
+    }
+    onFocus(el) {
+      el.style.backgroundColor = "aliceblue";
     }
   };
   var WuiVfsPath = class {
@@ -359,6 +380,8 @@ var awwan = (() => {
       this.el.style.borderWidth = "1px";
       this.el.style.borderStyle = "solid";
       this.el.style.borderColor = "silver";
+      this.el.style.overflow = "auto";
+      this.el.style.padding = "10px 10px 20px 0px";
       this.onClick = onClick;
     }
     open(node) {
@@ -380,21 +403,41 @@ var awwan = (() => {
           fullPath = paths.slice(0, x + 1).join("/");
         }
         const crumb = document.createElement("span");
-        crumb.style.display = "inline-block";
         crumb.style.padding = "1em";
         crumb.style.cursor = "pointer";
+        crumb.setAttribute("tabindex", "0");
         crumb.innerHTML = p;
         crumb.onclick = () => {
           this.onClick(fullPath);
         };
+        crumb.onkeydown = (ev) => {
+          if (ev.key !== "Enter") {
+            return true;
+          }
+          this.onClick(fullPath);
+          this.el.focus();
+          return false;
+        };
         crumb.onmouseout = () => {
-          crumb.style.backgroundColor = "white";
+          this.onBlur(crumb);
+        };
+        crumb.onblur = () => {
+          this.onBlur(crumb);
         };
         crumb.onmouseover = () => {
-          crumb.style.backgroundColor = "aliceblue";
+          this.onFocus(crumb);
+        };
+        crumb.onfocus = () => {
+          this.onFocus(crumb);
         };
         this.el.appendChild(crumb);
       });
+    }
+    onBlur(crumb) {
+      crumb.style.backgroundColor = "white";
+    }
+    onFocus(crumb) {
+      crumb.style.backgroundColor = "aliceblue";
     }
   };
 
@@ -662,7 +705,7 @@ var awwan = (() => {
         message: ""
       };
       let isTypeAllowed = false;
-      if (node.content_type && (node.content_type.indexOf("json") >= 0 || node.content_type.indexOf("message") >= 0 || node.content_type.indexOf("script") >= 0 || node.content_type.indexOf("text") >= 0 || node.content_type.indexOf("xml") >= 0)) {
+      if (node.content_type && (node.content_type.indexOf("json") >= 0 || node.content_type.indexOf("message") >= 0 || node.content_type.indexOf("octet-stream") >= 0 || node.content_type.indexOf("script") >= 0 || node.content_type.indexOf("text") >= 0 || node.content_type.indexOf("xml") >= 0)) {
         isTypeAllowed = true;
       }
       if (!isTypeAllowed) {
