@@ -1,0 +1,40 @@
+Testing HTTP API for Encrypt.
+
+>>> withValidRequest/body
+{"path":"/plain.txt"}
+
+<<< withValidRequest/Response/body
+{
+  "data": {
+    "path": "/plain.txt",
+    "path_vault": "/plain.txt.vault"
+  },
+  "code": 200
+}
+
+>>> withEmptyValue/body
+{"path":""}
+
+<<< withEmptyValue/Response/body
+{
+  "message": "Encrypt: empty path",
+  "code": 400
+}
+
+>>> withDirectory/body
+{"path":"/.ssh"}
+
+<<< withDirectory/Response/body
+{
+  "message": "Encrypt: \"/.ssh\" is a directory",
+  "code": 400
+}
+
+>>> withFileNotExist/body
+{"path":"/thisisnotexist"}
+
+<<< withFileNotExist/Response/body
+{
+  "message": "Encrypt \"/thisisnotexist\": file does not exist",
+  "code": 400
+}

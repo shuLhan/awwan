@@ -6,7 +6,9 @@ package awwan
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io/fs"
 	"net/http"
 	"os"
 	"path"
@@ -20,8 +22,9 @@ import (
 )
 
 const (
-	pathAwwanApiFs      = `/awwan/api/fs`
+	pathAwwanApiEncrypt = `/awwan/api/encrypt`
 	pathAwwanApiExecute = `/awwan/api/execute`
+	pathAwwanApiFs      = `/awwan/api/fs`
 )
 
 const paramNamePath = `path`
@@ -133,6 +136,18 @@ func (httpd *httpServer) registerEndpoints() (err error) {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
 
+	var ep = libhttp.Endpoint{
+		Method:       libhttp.RequestMethodPost,
+		Path:         pathAwwanApiEncrypt,
+		RequestType:  libhttp.RequestTypeJSON,
+		ResponseType: libhttp.ResponseTypeJSON,
+		Call:         httpd.Encrypt,
+	}
+	err = httpd.RegisterEndpoint(&ep)
+	if err != nil {
+		return fmt.Errorf(`%s %q: %w`, logp, ep.Path, err)
+	}
+
 	err = httpd.RegisterEndpoint(&libhttp.Endpoint{
 		Method:       libhttp.RequestMethodPost,
 		Path:         pathAwwanApiExecute,
@@ -152,6 +167,86 @@ func (httpd *httpServer) start() (err error) {
 	fmt.Printf("--- Starting HTTP server at http://%s\n", httpd.Server.Options.Address)
 
 	return httpd.Server.Start()
+}
+
+// Encrypt the file by path.
+//
+// Request format,
+//
+//	POST /awwan/api/encrypt
+//	Content-Type: application/json
+//
+//	{"path":<string>}
+//
+// On success it will return the path to encrypted file in "path_vault",
+//
+//	Content-Type: application/json
+//
+//	{
+//		"code": 200,
+//		"data": {
+//			"path": <string>,
+//			"path_vault": <string>
+//		}
+//	}
+func (httpd *httpServer) Encrypt(epr *libhttp.EndpointRequest) (resb []byte, err error) {
+	var (
+		logp    = `Encrypt`
+		httpRes = &libhttp.EndpointResponse{}
+
+		encRes encryptResponse
+	)
+
+	err = json.Unmarshal(epr.RequestBody, &encRes)
+	if err != nil {
+		return nil, fmt.Errorf(`%s: %w`, logp, err)
+	}
+
+	httpRes.Code = http.StatusBadRequest
+
+	encRes.Path = strings.TrimSpace(encRes.Path)
+	if len(encRes.Path) == 0 {
+		httpRes.Message = fmt.Sprintf(`%s: empty path`, logp)
+		return nil, httpRes
+	}
+
+	var node *memfs.Node
+
+	node, err = httpd.memfsBase.Get(encRes.Path)
+	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			httpRes.Message = fmt.Sprintf(`%s %q: %s`, logp, encRes.Path, fs.ErrNotExist)
+		} else {
+			httpRes.Message = fmt.Sprintf(`%s: %s`, logp, err)
+		}
+		return nil, httpRes
+	}
+	if node.IsDir() {
+		httpRes.Message = fmt.Sprintf(`%s: %q is a directory`, logp, encRes.Path)
+		return nil, httpRes
+	}
+
+	httpRes.Code = http.StatusInternalServerError
+
+	encRes.PathVault, err = httpd.aww.Encrypt(node.SysPath)
+	if err != nil {
+		httpRes.Message = fmt.Sprintf(`%s: %s`, logp, err)
+		return nil, httpRes
+	}
+
+	node.Parent.Update(nil, -1)
+
+	encRes.PathVault, _ = strings.CutPrefix(encRes.PathVault, httpd.aww.BaseDir)
+
+	httpRes.Code = http.StatusOK
+	httpRes.Data = encRes
+
+	resb, err = json.Marshal(&httpRes)
+	if err != nil {
+		return nil, err
+	}
+
+	return resb, nil
 }
 
 // awwanApiFsGet get the list of files or specific file using query
