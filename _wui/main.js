@@ -132,9 +132,6 @@ var awwan = (() => {
           ed.isKeyControl = true;
           break;
         case "Enter":
-          this.addNewLine();
-          break;
-        case "s":
           if (ed.isKeyControl) {
             ev.preventDefault();
             ev.stopPropagation();
@@ -143,8 +140,10 @@ var awwan = (() => {
               ed.opts.onSave(content);
               ed.render(content);
             }
+            return false;
           }
-          break;
+          this.addNewLine();
+          return false;
       }
       return true;
     }
