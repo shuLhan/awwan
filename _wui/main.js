@@ -389,6 +389,7 @@ var awwan = (() => {
       this.el.style.borderColor = "silver";
       this.el.style.overflow = "auto";
       this.el.style.padding = "10px 10px 20px 0px";
+      this.el.style.whiteSpace = "nowrap";
       this.onClick = onClick;
     }
     open(node) {
