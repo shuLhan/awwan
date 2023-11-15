@@ -732,14 +732,6 @@ var awwan = (() => {
         code: 412,
         message: ""
       };
-      let isTypeAllowed = false;
-      if (node.content_type && (node.content_type.indexOf("json") >= 0 || node.content_type.indexOf("message") >= 0 || node.content_type.indexOf("octet-stream") >= 0 || node.content_type.indexOf("script") >= 0 || node.content_type.indexOf("text") >= 0 || node.content_type.indexOf("xml") >= 0)) {
-        isTypeAllowed = true;
-      }
-      if (!isTypeAllowed) {
-        res2.message = `The file "${node.name}" with content type "${node.content_type}" is not allowed to be opened`;
-        return res2;
-      }
       if (node.size && node.size > MAX_FILE_SIZE) {
         res2.message = `The file "${node.name}" with size ${node.size / 1e6}MB is greater than maximum ${MAX_FILE_SIZE / 1e6}MB.`;
         return res2;

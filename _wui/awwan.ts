@@ -23,7 +23,7 @@ const ID_VFS = "com_vfs";
 const ID_VFS_PATH = "vfs_path";
 const ID_OUTPUT = "output";
 const ID_OUTPUT_WRAPPER = "output_wrapper";
-const MAX_FILE_SIZE = 3000000;
+const MAX_FILE_SIZE = 102400; // 100KB
 
 interface RequestInterface {
   mode: string;
@@ -360,26 +360,10 @@ export class Awwan {
       message: "",
     };
 
-    let isTypeAllowed = false;
-    if (
-      node.content_type &&
-      (node.content_type.indexOf("json") >= 0 ||
-        node.content_type.indexOf("message") >= 0 ||
-        node.content_type.indexOf("octet-stream") >= 0 ||
-        node.content_type.indexOf("script") >= 0 ||
-        node.content_type.indexOf("text") >= 0 ||
-        node.content_type.indexOf("xml") >= 0)
-    ) {
-      isTypeAllowed = true;
-    }
-    if (!isTypeAllowed) {
-      res.message = `The file "${node.name}" with content type "${node.content_type}" is not allowed to be opened`;
-      return res;
-    }
     if (node.size && node.size > MAX_FILE_SIZE) {
       res.message = `The file "${node.name}" with size ${
-        node.size / 1000000
-      }MB is greater than maximum ${MAX_FILE_SIZE / 1000000}MB.`;
+        node.size / 1024
+      }KB is greater than maximum ${MAX_FILE_SIZE / 1000}KB.`;
       return res;
     }
     res.code = 200;
