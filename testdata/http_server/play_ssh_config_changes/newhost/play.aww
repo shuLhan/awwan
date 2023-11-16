@@ -1,0 +1,5 @@
+## Should print working directory on remote server.
+pwd
+
+## Should print working directory on local.
+#local: pwd

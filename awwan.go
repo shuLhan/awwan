@@ -244,11 +244,12 @@ func (aww *Awwan) Play(req *Request) (err error) {
 		goto out
 	}
 
-	if aww.sshConfig == nil {
-		err = aww.loadSshConfig()
-		if err != nil {
-			goto out
-		}
+	// Always load the SSH config, in case we run on "serve" and
+	// .ssh/config changed by user.
+
+	err = aww.loadSshConfig()
+	if err != nil {
+		goto out
 	}
 
 	sshSection = aww.sshConfig.Get(ses.hostname)

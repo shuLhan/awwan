@@ -467,7 +467,7 @@ var awwan = (() => {
   var ID_VFS_PATH = "vfs_path";
   var ID_OUTPUT = "output";
   var ID_OUTPUT_WRAPPER = "output_wrapper";
-  var MAX_FILE_SIZE = 3e6;
+  var MAX_FILE_SIZE = 102400;
   function renderHtml() {
     const el = document.createElement("div");
     el.classList.add("awwan");
@@ -733,7 +733,7 @@ var awwan = (() => {
         message: ""
       };
       if (node.size && node.size > MAX_FILE_SIZE) {
-        res2.message = `The file "${node.name}" with size ${node.size / 1e6}MB is greater than maximum ${MAX_FILE_SIZE / 1e6}MB.`;
+        res2.message = `The file "${node.name}" with size ${node.size / 1024}KB is greater than maximum ${MAX_FILE_SIZE / 1e3}KB.`;
         return res2;
       }
       res2.code = 200;
