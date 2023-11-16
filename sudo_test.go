@@ -24,7 +24,7 @@ func TestExecLocal_sudo(t *testing.T) {
 	var (
 		mockin  = &mockStdin{}
 		mockout = &bytes.Buffer{}
-		req     = &Request{
+		req     = &ExecRequest{
 			stdin: mockin,
 		}
 		err error

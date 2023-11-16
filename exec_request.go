@@ -17,10 +17,10 @@ import (
 // This is set as variable to make it easy overwriting it in testing.
 var defLogTimeFormat = time.RFC3339
 
-// Request for executing local or remote script.
+// ExecRequest request for executing local or remote script.
 // Each request define the Mode of execution, Script file to be executed,
 // and the lineRange -- list of line numbers to be executed.
-type Request struct {
+type ExecRequest struct {
 	// Each request may set the Reader where the command read the input.
 	// The stdin will default to os.DevNull (default of [exec/Cmd]) if
 	// its nil.
@@ -43,10 +43,10 @@ type Request struct {
 	lineRange lineRange
 }
 
-// NewRequest create new Request and initialize stdout and stderr to os.Stdout
-// and os.Stderr.
-func NewRequest(mode, script, lineRange string) (req *Request, err error) {
-	req = &Request{
+// NewExecRequest create and initialize stdout and stderr to os.Stdout and
+// os.Stderr.
+func NewExecRequest(mode, script, lineRange string) (req *ExecRequest, err error) {
+	req = &ExecRequest{
 		Mode:      mode,
 		Script:    script,
 		LineRange: lineRange,
@@ -63,7 +63,7 @@ func NewRequest(mode, script, lineRange string) (req *Request, err error) {
 }
 
 // close flush and release all resources.
-func (req *Request) close() {
+func (req *ExecRequest) close() {
 	req.mlog.Flush()
 
 	var err = req.flog.Sync()
@@ -78,7 +78,7 @@ func (req *Request) close() {
 }
 
 // init initialize multi loggers to write all output.
-func (req *Request) init() (err error) {
+func (req *ExecRequest) init() (err error) {
 	if req.mlog == nil {
 		var (
 			namedStdout = mlog.NewNamedWriter(`stdout`, os.Stdout)
@@ -112,7 +112,7 @@ func (req *Request) init() (err error) {
 }
 
 // registerLogWriter register a writer w to mlog output and error.
-func (req *Request) registerLogWriter(name string, w io.Writer) {
+func (req *ExecRequest) registerLogWriter(name string, w io.Writer) {
 	var namedw = mlog.NewNamedWriter(name, w)
 	req.mlog.RegisterErrorWriter(namedw)
 	req.mlog.RegisterOutputWriter(namedw)

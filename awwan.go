@@ -163,7 +163,7 @@ func (aww *Awwan) Encrypt(file string) (fileVault string, err error) {
 }
 
 // Local execute the script in the local machine using shell.
-func (aww *Awwan) Local(req *Request) (err error) {
+func (aww *Awwan) Local(req *ExecRequest) (err error) {
 	var (
 		logp       = `Local`
 		sessionDir = filepath.Dir(req.scriptPath)
@@ -224,7 +224,7 @@ out:
 }
 
 // Play execute the script in the remote machine using SSH.
-func (aww *Awwan) Play(req *Request) (err error) {
+func (aww *Awwan) Play(req *ExecRequest) (err error) {
 	var (
 		logp       = `Play`
 		sessionDir = filepath.Dir(req.scriptPath)

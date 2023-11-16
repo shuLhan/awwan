@@ -123,7 +123,7 @@ func main() {
 	var (
 		cmdMode = strings.ToLower(flag.Arg(0))
 
-		req     *awwan.Request
+		req     *awwan.ExecRequest
 		baseDir string
 		file    string
 		err     error
@@ -154,7 +154,7 @@ func main() {
 		return
 
 	case awwan.CommandModeLocal, awwan.CommandModePlay:
-		req, err = awwan.NewRequest(cmdMode, flag.Arg(1), flag.Arg(2))
+		req, err = awwan.NewExecRequest(cmdMode, flag.Arg(1), flag.Arg(2))
 
 	case awwan.CommandModeServe:
 		if flag.NArg() <= 1 {

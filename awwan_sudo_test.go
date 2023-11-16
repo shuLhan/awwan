@@ -87,7 +87,7 @@ func TestAwwan_Local_SudoGet(t *testing.T) {
 		script = filepath.Join(baseDir, `get.aww`)
 		mockin = &mockStdin{}
 
-		req        *Request
+		req        *ExecRequest
 		c          testCase
 		gotContent []byte
 	)
@@ -95,7 +95,7 @@ func TestAwwan_Local_SudoGet(t *testing.T) {
 	for _, c = range cases {
 		t.Log(c.desc)
 
-		req, err = NewRequest(CommandModeLocal, script, c.lineRange)
+		req, err = NewExecRequest(CommandModeLocal, script, c.lineRange)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -184,7 +184,7 @@ func TestAwwan_Local_SudoPut(t *testing.T) {
 		mockTerm = mock.ReadWriter{}
 
 		aww        *Awwan
-		req        *Request
+		req        *ExecRequest
 		c          testCase
 		gotContent []byte
 	)
@@ -205,7 +205,7 @@ func TestAwwan_Local_SudoPut(t *testing.T) {
 			_ = os.Remove(c.fileDest)
 		}
 
-		req, err = NewRequest(CommandModeLocal, script, c.lineRange)
+		req, err = NewExecRequest(CommandModeLocal, script, c.lineRange)
 		if err != nil {
 			t.Fatal(err)
 		}

@@ -590,7 +590,7 @@ func (httpd *httpServer) awwanApiFsPut(epr *libhttp.EndpointRequest) (rawBody []
 func (httpd *httpServer) awwanApiExecute(epr *libhttp.EndpointRequest) (resb []byte, err error) {
 	var (
 		logp = "awwanApiExecute"
-		req  = &Request{}
+		req  = &ExecRequest{}
 		res  = &libhttp.EndpointResponse{}
 	)
 
@@ -613,7 +613,7 @@ func (httpd *httpServer) awwanApiExecute(epr *libhttp.EndpointRequest) (resb []b
 
 	var (
 		data = &HttpResponse{
-			Request: req,
+			ExecRequest: req,
 		}
 
 		logw bytes.Buffer

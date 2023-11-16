@@ -5,7 +5,7 @@ package awwan
 
 // HttpResponse contains the output of command execution.
 type HttpResponse struct {
-	*Request
+	*ExecRequest
 	Error  string `json:"error"`
 	Output []byte `json:"output"`
 }

@@ -43,11 +43,11 @@ func TestAwwanLocal(t *testing.T) {
 	aww.cryptoc.termrw = &mockrw
 
 	var (
-		req  *Request
+		req  *ExecRequest
 		logw bytes.Buffer
 	)
 
-	req, err = NewRequest(CommandModeLocal, scriptFile, `1-`)
+	req, err = NewExecRequest(CommandModeLocal, scriptFile, `1-`)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -132,9 +132,9 @@ func TestAwwanLocal_Get(t *testing.T) {
 
 		_ = os.Remove(c.fileDest)
 
-		var req *Request
+		var req *ExecRequest
 
-		req, err = NewRequest(CommandModeLocal, script, c.lineRange)
+		req, err = NewExecRequest(CommandModeLocal, script, c.lineRange)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -255,9 +255,9 @@ func TestAwwanLocal_Put(t *testing.T) {
 			_ = os.Remove(c.fileDest)
 		}
 
-		var req *Request
+		var req *ExecRequest
 
-		req, err = NewRequest(CommandModeLocal, script, c.lineRange)
+		req, err = NewExecRequest(CommandModeLocal, script, c.lineRange)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -353,13 +353,13 @@ func TestAwwanLocal_withEncryption(t *testing.T) {
 	var (
 		c    testCase
 		logw bytes.Buffer
-		req  *Request
+		req  *ExecRequest
 	)
 
 	for _, c = range cases {
 		t.Logf(c.desc)
 
-		req, err = NewRequest(CommandModeLocal, c.script, c.lineRange)
+		req, err = NewExecRequest(CommandModeLocal, c.script, c.lineRange)
 		if err != nil {
 			t.Fatal(err)
 		}

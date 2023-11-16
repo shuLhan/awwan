@@ -236,7 +236,7 @@ func (ses *Session) Put(stmt *Statement) (err error) {
 }
 
 // SudoCopy copy file in local system using sudo.
-func (ses *Session) SudoCopy(req *Request, stmt *Statement) (err error) {
+func (ses *Session) SudoCopy(req *ExecRequest, stmt *Statement) (err error) {
 	var (
 		logp = `SudoCopy`
 		src  = stmt.args[0]
@@ -307,7 +307,7 @@ func (ses *Session) SudoCopy(req *Request, stmt *Statement) (err error) {
 // SudoGet copy file from remote that can be accessed by root on remote, to
 // local.
 // If the owner and mode is set, it will also changes using sudo.
-func (ses *Session) SudoGet(req *Request, stmt *Statement) (err error) {
+func (ses *Session) SudoGet(req *ExecRequest, stmt *Statement) (err error) {
 	var (
 		logp = `SudoGet`
 		src  = stmt.args[0]
@@ -336,7 +336,7 @@ func (ses *Session) SudoGet(req *Request, stmt *Statement) (err error) {
 }
 
 // SudoPut copy file from local to remote using sudo.
-func (ses *Session) SudoPut(req *Request, stmt *Statement) (err error) {
+func (ses *Session) SudoPut(req *ExecRequest, stmt *Statement) (err error) {
 	var (
 		logp = `SudoPut`
 		src  = stmt.args[0]
@@ -385,7 +385,7 @@ func (ses *Session) SudoPut(req *Request, stmt *Statement) (err error) {
 //
 // The raw field must be used when generating Command to handle arguments
 // with quotes.
-func ExecLocal(req *Request, stmt *Statement) (err error) {
+func ExecLocal(req *ExecRequest, stmt *Statement) (err error) {
 	if stmt.cmd == `sudo` {
 		if req.stdin != nil {
 			var raw = make([]byte, 0, len(stmt.raw))
@@ -410,7 +410,7 @@ func ExecLocal(req *Request, stmt *Statement) (err error) {
 
 // executeRequires run the "#require:" statements from line 0 until
 // the start argument in the local system.
-func (ses *Session) executeRequires(req *Request, pos linePosition) (err error) {
+func (ses *Session) executeRequires(req *ExecRequest, pos linePosition) (err error) {
 	var (
 		stmt *Statement
 		x    int64
@@ -432,7 +432,7 @@ func (ses *Session) executeRequires(req *Request, pos linePosition) (err error) 
 	return nil
 }
 
-func (ses *Session) executeScriptOnLocal(req *Request, pos linePosition) (err error) {
+func (ses *Session) executeScriptOnLocal(req *ExecRequest, pos linePosition) (err error) {
 	var max = int64(len(req.script.stmts))
 	if pos.start > max {
 		return
@@ -478,7 +478,7 @@ func (ses *Session) executeScriptOnLocal(req *Request, pos linePosition) (err er
 	return nil
 }
 
-func (ses *Session) executeScriptOnRemote(req *Request, pos linePosition) (err error) {
+func (ses *Session) executeScriptOnRemote(req *ExecRequest, pos linePosition) (err error) {
 	var max = int64(len(req.script.stmts))
 	if pos.start > max {
 		return
@@ -610,7 +610,7 @@ func (ses *Session) generatePaths() (err error) {
 	return nil
 }
 
-func (ses *Session) initSSHClient(req *Request, sshSection *config.Section) (err error) {
+func (ses *Session) initSSHClient(req *ExecRequest, sshSection *config.Section) (err error) {
 	var (
 		logp          = "initSSHClient"
 		lastIdentFile string
@@ -752,7 +752,7 @@ func (ses *Session) loadRawEnv(content []byte) (err error) {
 
 // localSudoChmod change the file permission in local environment using
 // sudo.
-func (ses *Session) localSudoChmod(req *Request, file string, mode fs.FileMode) (err error) {
+func (ses *Session) localSudoChmod(req *ExecRequest, file string, mode fs.FileMode) (err error) {
 	var (
 		fsmode    = strconv.FormatUint(uint64(mode), 8)
 		sudoChmod = &Statement{
@@ -770,7 +770,7 @@ func (ses *Session) localSudoChmod(req *Request, file string, mode fs.FileMode) 
 }
 
 // localSudoChown change the file owner in local environment using sudo.
-func (ses *Session) localSudoChown(req *Request, file, owner string) (err error) {
+func (ses *Session) localSudoChown(req *ExecRequest, file, owner string) (err error) {
 	var sudoChown = &Statement{
 		kind: statementKindDefault,
 		cmd:  `sudo`,

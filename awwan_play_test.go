@@ -51,11 +51,11 @@ func TestAwwan_Play_withLocal(t *testing.T) {
 	}
 
 	var (
-		req  *Request
+		req  *ExecRequest
 		logw bytes.Buffer
 	)
 
-	req, err = NewRequest(CommandModePlay, scriptFile, `1-`)
+	req, err = NewExecRequest(CommandModePlay, scriptFile, `1-`)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -112,7 +112,7 @@ func TestAwwan_Play_Get(t *testing.T) {
 	}}
 
 	var (
-		req        *Request
+		req        *ExecRequest
 		c          testCaseGetPut
 		fi         os.FileInfo
 		gotContent []byte
@@ -125,7 +125,7 @@ func TestAwwan_Play_Get(t *testing.T) {
 			_ = os.Remove(c.fileDest)
 		}
 
-		req, err = NewRequest(CommandModePlay, scriptFile, c.lineRange)
+		req, err = NewExecRequest(CommandModePlay, scriptFile, c.lineRange)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -199,7 +199,7 @@ func TestAwwan_Play_Put(t *testing.T) {
 	}}
 
 	var (
-		req        *Request
+		req        *ExecRequest
 		c          testCaseGetPut
 		fi         os.FileInfo
 		gotContent []byte
@@ -212,7 +212,7 @@ func TestAwwan_Play_Put(t *testing.T) {
 			_ = os.Remove(c.fileDest)
 		}
 
-		req, err = NewRequest(CommandModePlay, scriptFile, c.lineRange)
+		req, err = NewExecRequest(CommandModePlay, scriptFile, c.lineRange)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -292,7 +292,7 @@ func TestAwwan_Play_SudoGet(t *testing.T) {
 	var (
 		mockin = &mockStdin{}
 
-		req        *Request
+		req        *ExecRequest
 		c          testCaseGetPut
 		fi         os.FileInfo
 		gotContent []byte
@@ -305,7 +305,7 @@ func TestAwwan_Play_SudoGet(t *testing.T) {
 			_ = os.Remove(c.fileDest)
 		}
 
-		req, err = NewRequest(CommandModePlay, scriptFile, c.lineRange)
+		req, err = NewExecRequest(CommandModePlay, scriptFile, c.lineRange)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -385,7 +385,7 @@ func TestAwwan_Play_SudoPut(t *testing.T) {
 	}}
 
 	var (
-		req        *Request
+		req        *ExecRequest
 		c          testCaseGetPut
 		fi         os.FileInfo
 		gotContent []byte
@@ -398,7 +398,7 @@ func TestAwwan_Play_SudoPut(t *testing.T) {
 			_ = os.Remove(c.fileDest)
 		}
 
-		req, err = NewRequest(CommandModePlay, scriptFile, c.lineRange)
+		req, err = NewExecRequest(CommandModePlay, scriptFile, c.lineRange)
 		if err != nil {
 			t.Fatal(err)
 		}
