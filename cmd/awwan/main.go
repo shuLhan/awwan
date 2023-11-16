@@ -49,6 +49,12 @@ command = "decrypt" / "encrypt" / "help" / "local" / "play" / "serve" / "version
 		REMINDER: the private key should not be committed into
 		VCS if its not protected with passphrase.
 
+	env-get <key> [dir]
+		Get the environment value based on key using
+		"section:sub:name" format.
+		The dir argument is optional, default to current directory.
+		If the key is not exist it will return an empty string.
+
 	env-set <env-file> <key> <value>
 		Set the key-value in environment file.
 
@@ -148,6 +154,11 @@ func main() {
 			file = flag.Arg(1)
 		}
 
+	case awwan.CommandModeEnvGet:
+		if flag.NArg() < 2 {
+			err = fmt.Errorf(`%s: missing key argument`, cmdMode)
+		}
+
 	case awwan.CommandModeEnvSet:
 		if flag.NArg() < 4 {
 			err = fmt.Errorf(`%s: missing arguments`, cmdMode)
@@ -204,6 +215,24 @@ func main() {
 		}
 		fmt.Printf(`Encrypted file output: %s`, fileVault)
 		return
+
+	case awwan.CommandModeEnvGet:
+		var (
+			key = flag.Arg(1)
+			dir = flag.Arg(2)
+			val string
+		)
+		if len(dir) == 0 {
+			dir, err = os.Getwd()
+			if err != nil {
+				log.Fatalf(`%s: %s: %s`, logp, cmdMode, err)
+			}
+		}
+		val, err = aww.EnvGet(dir, key)
+		if err != nil {
+			log.Fatalf(`%s: %s %q: %s`, logp, cmdMode, key, err)
+		}
+		fmt.Println(val)
 
 	case awwan.CommandModeEnvSet:
 		err = aww.EnvSet(flag.Arg(1), flag.Arg(2), flag.Arg(3))

@@ -22,6 +22,7 @@ var Version = `0.9.0`
 const (
 	CommandModeDecrypt = `decrypt`
 	CommandModeEncrypt = `encrypt`
+	CommandModeEnvGet  = `env-get`
 	CommandModeEnvSet  = `env-set`
 	CommandModeLocal   = `local`
 	CommandModePlay    = `play`
@@ -162,6 +163,44 @@ func (aww *Awwan) Encrypt(file string) (fileVault string, err error) {
 	}
 
 	return fileVault, nil
+}
+
+// EnvGet get the value of environment based on the key.
+// This method is similar to [Session.Val] when executed inside the script.
+//
+// The dir parameter is optional, its define the directory where environment
+// files will be loaded, recursively, from BaseDir to dir.
+// If its empty default to the current directory.
+//
+// The key parameter is using the "<section>:<sub>:<name>" format.
+//
+// If the key is not exist it will return an empty string.
+func (aww *Awwan) EnvGet(dir, key string) (val string, err error) {
+	var logp = `EnvGet`
+
+	dir = strings.TrimSpace(dir)
+	if len(dir) == 0 {
+		dir, err = os.Getwd()
+		if err != nil {
+			return ``, fmt.Errorf(`%s: empty key`, logp)
+		}
+	}
+
+	key = strings.TrimSpace(key)
+	if len(key) == 0 {
+		return ``, fmt.Errorf(`%s: empty key`, logp)
+	}
+
+	var ses *Session
+
+	ses, err = NewSession(aww, dir)
+	if err != nil {
+		return ``, fmt.Errorf(`%s: %w`, logp, err)
+	}
+
+	val = ses.vars.Val(key)
+
+	return val, nil
 }
 
 // EnvSet set key with value in the environment file.

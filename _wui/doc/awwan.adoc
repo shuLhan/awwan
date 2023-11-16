@@ -126,6 +126,31 @@ Encrypted file output: secret.txt.vault
 $
 ----
 
+=== Command env-get
+
+The env-get command get the value from environment files.
+Syntax,
+
+----
+<key> [dir]
+----
+
+The "key" argument define the key where value is stored in environment using
+"section:sub:name" format.
+
+The "dir" argument is optional, its define the directory where environment
+files will be loaded, recursively, from BaseDir to dir.
+If its empty default to the current directory.
+
+If the key is not exist it will return an empty string.
+
+For example, to get the value of "name" under section "host", run
+
+----
+$ awwan env-get host::name
+myhost
+----
+
 === Command env-set
 
 The env-set command set the value of environment file.
