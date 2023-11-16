@@ -161,9 +161,9 @@ func Watch() {
 			case strings.HasSuffix(ns.Node.Path, `.adoc`),
 				strings.HasSuffix(ns.Node.Path, `.md`):
 
-				fmarkup, err = ciigo.NewFileMarkup(ns.Node.Path, nil)
+				fmarkup, err = ciigo.NewFileMarkup(ns.Node.SysPath, nil)
 				if err != nil {
-					mlog.Errf(`%s %q: %s`, logp, ns.Node.Path, err)
+					mlog.Errf(`%s %q: %s`, logp, ns.Node.SysPath, err)
 					continue
 				}
 
