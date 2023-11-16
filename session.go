@@ -57,6 +57,8 @@ func NewSession(aww *Awwan, sessionDir string) (ses *Session, err error) {
 		randomString string
 	)
 
+	fmt.Printf("--- NewSession %q\n", relativePath(aww.BaseDir, sessionDir))
+
 	ses = &Session{
 		cryptoc: aww.cryptoc,
 
