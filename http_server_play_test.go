@@ -112,7 +112,7 @@ func testHttpExecute(t *testing.T, httpd *httpServer, tdata *test.Data, tag stri
 	test.Assert(t, tag, string(expResp), bbuf.String())
 
 	var (
-		execRes HttpResponse
+		execRes ExecResponse
 		epRes   libhttp.EndpointResponse
 		err     error
 	)

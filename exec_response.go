@@ -3,8 +3,9 @@
 
 package awwan
 
-// HttpResponse contains the output of command execution.
-type HttpResponse struct {
+// ExecResponse contains the request and output of command execution, from
+// ExecRequest.
+type ExecResponse struct {
 	*ExecRequest
 	Error  string `json:"error"`
 	Output []byte `json:"output"`

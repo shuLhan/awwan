@@ -612,7 +612,7 @@ func (httpd *httpServer) awwanApiExecute(epr *libhttp.EndpointRequest) (resb []b
 	}
 
 	var (
-		data = &HttpResponse{
+		data = &ExecResponse{
 			ExecRequest: req,
 		}
 
