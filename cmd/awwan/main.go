@@ -49,6 +49,9 @@ command = "decrypt" / "encrypt" / "help" / "local" / "play" / "serve" / "version
 		REMINDER: the private key should not be committed into
 		VCS if its not protected with passphrase.
 
+	env-set <env-file> <key> <value>
+		Set the key-value in environment file.
+
 	help
 		Display the command usage and its description.
 
@@ -145,6 +148,11 @@ func main() {
 			file = flag.Arg(1)
 		}
 
+	case awwan.CommandModeEnvSet:
+		if flag.NArg() < 4 {
+			err = fmt.Errorf(`%s: missing arguments`, cmdMode)
+		}
+
 	case cmdHelp:
 		usage()
 		os.Exit(0)
@@ -197,6 +205,8 @@ func main() {
 		fmt.Printf(`Encrypted file output: %s`, fileVault)
 		return
 
+	case awwan.CommandModeEnvSet:
+		err = aww.EnvSet(flag.Arg(1), flag.Arg(2), flag.Arg(3))
 	case awwan.CommandModeLocal:
 		err = aww.Local(req)
 	case awwan.CommandModePlay:

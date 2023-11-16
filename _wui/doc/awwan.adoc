@@ -24,6 +24,9 @@ command = "decrypt" / "encrypt" / "help" / "local" / "play" / "serve"
         Encrypt the file using RSA private key at
         "<workspace>/.ssh/awwan.key".
 
+    env-set <env-file> <key> <value>
+        Set the key-value in environment file.
+
     help
         Display the command usage and its description.
 
@@ -121,6 +124,42 @@ $ awwan encrypt secret.txt
 --- Loading private key file ".ssh/.awwan.key" (enter to skip passphrase) ...
 Encrypted file output: secret.txt.vault
 $
+----
+
+=== Command env-set
+
+The env-set command set the value of environment file.
+Syntax,
+
+----
+<file> <key> <value>
+----
+
+The "file" argument define path to environment file.
+The "key" argument define the key to be set using "section:sub:name" format.
+The "value" argument define the value key.
+
+For example, to set the value for "name" under section "host" to "myhost" in
+file "awwan.env" run
+
+----
+$ awwan env-set awwan.env host::name myhost
+$ cat awwan.env
+[host]
+name = myhost
+----
+
+To set the value for key "pass" under section "user" subsection "database"
+to value "s3cret" in file "awwan.env" run
+
+----
+$ awwan env-set awwan.env user:database:pass s3cret
+$ cat awwan.env
+[host]
+name = myhost
+
+[user "database"]
+pass = s3cret
 ----
 
 === Command "local" and "play"

@@ -1,0 +1,26 @@
+Test input and output for EnvSet.
+
+<<< withEmptyFile:error
+EnvSet: empty file argument
+
+<<< withEmptyKey:error
+EnvSet: empty key
+
+<<< withEmptyValue:error
+EnvSet: empty value
+
+<<< withMissingSection:error
+EnvSet: missing section in key
+
+<<< withMissingName:error
+EnvSet: missing name in key
+
+<<< withFileNotExist
+[host]
+name = awwan
+
+
+<<< withOverwriteValue
+[host]
+name = overwrite
+

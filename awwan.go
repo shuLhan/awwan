@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/shuLhan/share/lib/ini"
 	"github.com/shuLhan/share/lib/ssh/config"
 
 	"git.sr.ht/~shulhan/awwan/internal"
@@ -21,6 +22,7 @@ var Version = `0.9.0`
 const (
 	CommandModeDecrypt = `decrypt`
 	CommandModeEncrypt = `encrypt`
+	CommandModeEnvSet  = `env-set`
 	CommandModeLocal   = `local`
 	CommandModePlay    = `play`
 	CommandModeServe   = `serve`
@@ -160,6 +162,60 @@ func (aww *Awwan) Encrypt(file string) (fileVault string, err error) {
 	}
 
 	return fileVault, nil
+}
+
+// EnvSet set key with value in the environment file.
+//
+// The key is using the "<section>:<sub>:<name>" format.
+func (aww *Awwan) EnvSet(file, key, val string) (err error) {
+	var logp = `EnvSet`
+
+	file = strings.TrimSpace(file)
+	if len(file) == 0 {
+		return fmt.Errorf(`%s: empty file argument`, logp)
+	}
+
+	key = strings.TrimSpace(key)
+	if len(key) == 0 {
+		return fmt.Errorf(`%s: empty key`, logp)
+	}
+
+	val = strings.TrimSpace(val)
+	if len(val) == 0 {
+		return fmt.Errorf(`%s: empty value`, logp)
+	}
+
+	var env *ini.Ini
+
+	env, err = ini.Open(file)
+	if err != nil {
+		return fmt.Errorf(`%s: %w`, logp, err)
+	}
+
+	var tags []string
+
+	tags = ini.ParseTag(key)
+
+	if len(tags[0]) == 0 {
+		return fmt.Errorf(`%s: missing section in key`, logp)
+	}
+	if len(tags[2]) == 0 {
+		return fmt.Errorf(`%s: missing name in key`, logp)
+	}
+
+	var ok bool
+
+	ok = env.Set(tags[0], tags[1], tags[2], val)
+	if !ok {
+		return fmt.Errorf(`%s: failed to set environment`, logp)
+	}
+
+	err = env.Save(file)
+	if err != nil {
+		return fmt.Errorf(`%s: %w`, logp, err)
+	}
+
+	return nil
 }
 
 // Local execute the script in the local machine using shell.
