@@ -24,6 +24,9 @@ command = "decrypt" / "encrypt" / "help" / "local" / "play" / "serve"
         Encrypt the file using RSA private key at
         "<workspace>/.ssh/awwan.key".
 
+    env-get <key> [dir]
+        Get the value from environment based on the key.
+
     env-set <key> <value> [env-file]
         Set the value in environment file based on the key.
 
