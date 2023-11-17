@@ -1,8 +1,5 @@
 Test input and output for EnvSet.
 
-<<< withEmptyFile:error
-EnvSet: empty file argument
-
 <<< withEmptyKey:error
 EnvSet: empty key
 
@@ -20,7 +17,14 @@ EnvSet: missing name in key
 name = awwan
 
 
+<<< withEmptyFile
+[host]
+name = awwan
+ip_internal = 127.0.0.1
+
+
 <<< withOverwriteValue
 [host]
 name = overwrite
+ip_internal = 127.0.0.1
 

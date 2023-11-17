@@ -83,6 +83,7 @@ func TestAwwanEnvSet(t *testing.T) {
 	)
 
 	testInitWorkspace(baseDir, nil, nil)
+	mockOsGetwd(t, baseDir)
 
 	tdata, err = test.LoadData(`testdata/env_set_test.data`)
 	if err != nil {
@@ -107,9 +108,6 @@ func TestAwwanEnvSet(t *testing.T) {
 	var file = filepath.Join(baseDir, `awwan.env`)
 
 	var cases = []testCase{{
-		desc: `withEmptyFile`,
-		exp:  string(tdata.Output[`withEmptyFile:error`]),
-	}, {
 		desc: `withEmptyKey`,
 		file: file,
 		exp:  string(tdata.Output[`withEmptyKey:error`]),
@@ -137,6 +135,11 @@ func TestAwwanEnvSet(t *testing.T) {
 		val:  `awwan`,
 		exp:  string(tdata.Output[`withFileNotExist`]),
 	}, {
+		desc: `withEmptyFile`,
+		key:  `host::ip_internal`,
+		val:  `127.0.0.1`,
+		exp:  string(tdata.Output[`withEmptyFile`]),
+	}, {
 		desc: `withOverwriteValue`,
 		file: file,
 		key:  `host::name`,
@@ -151,13 +154,17 @@ func TestAwwanEnvSet(t *testing.T) {
 	)
 
 	for _, c = range cases {
-		err = aww.EnvSet(c.file, c.key, c.val)
+		err = aww.EnvSet(c.key, c.val, c.file)
 		if err != nil {
 			test.Assert(t, c.desc, c.exp, err.Error())
 			continue
 		}
 
-		gotContent, err = os.ReadFile(c.file)
+		if len(c.file) == 0 {
+			gotContent, err = os.ReadFile(file)
+		} else {
+			gotContent, err = os.ReadFile(c.file)
+		}
 		if err != nil {
 			t.Fatal(err)
 		}

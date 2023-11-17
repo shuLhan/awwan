@@ -24,8 +24,8 @@ command = "decrypt" / "encrypt" / "help" / "local" / "play" / "serve"
         Encrypt the file using RSA private key at
         "<workspace>/.ssh/awwan.key".
 
-    env-set <env-file> <key> <value>
-        Set the key-value in environment file.
+    env-set <key> <value> [env-file]
+        Set the value in environment file based on the key.
 
     help
         Display the command usage and its description.
@@ -157,32 +157,31 @@ The env-set command set the value of environment file.
 Syntax,
 
 ----
-<file> <key> <value>
+<key> <value> [env-file]
 ----
 
-The "file" argument define path to environment file.
 The "key" argument define the key to be set using "section:sub:name" format.
-The "value" argument define the value key.
+The "value" argument define the value of the key.
+
+The "file" argument is optional, its define path to environment file.
+If its empty it will be set to "awwan.env" in the current directory.
 
 For example, to set the value for "name" under section "host" to "myhost" in
 file "awwan.env" run
 
 ----
-$ awwan env-set awwan.env host::name myhost
+$ awwan env-set host::name myhost
 $ cat awwan.env
 [host]
 name = myhost
 ----
 
 To set the value for key "pass" under section "user" subsection "database"
-to value "s3cret" in file "awwan.env" run
+to value "s3cret" in file ".awwan.env" run
 
 ----
-$ awwan env-set awwan.env user:database:pass s3cret
-$ cat awwan.env
-[host]
-name = myhost
-
+$ awwan env-set user:database:pass s3cret .awwan.env
+$ cat .awwan.env
 [user "database"]
 pass = s3cret
 ----

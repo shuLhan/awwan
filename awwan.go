@@ -18,6 +18,12 @@ import (
 // Version current version of this module (library and program).
 var Version = `0.9.0`
 
+// osGetwd define the handler to get current working directory.
+//
+// This variable will be overriden in testing to test running awwan in sub
+// directory of workspace.
+var osGetwd = os.Getwd
+
 // List of command available for program awwan.
 const (
 	CommandModeDecrypt = `decrypt`
@@ -203,16 +209,14 @@ func (aww *Awwan) EnvGet(dir, key string) (val string, err error) {
 	return val, nil
 }
 
-// EnvSet set key with value in the environment file.
+// EnvSet set the value in the environment file based on the key.
 //
 // The key is using the "<section>:<sub>:<name>" format.
-func (aww *Awwan) EnvSet(file, key, val string) (err error) {
+//
+// The file is optional, if its empty default to "awwan.env" in the current
+// directory.
+func (aww *Awwan) EnvSet(key, val, file string) (err error) {
 	var logp = `EnvSet`
-
-	file = strings.TrimSpace(file)
-	if len(file) == 0 {
-		return fmt.Errorf(`%s: empty file argument`, logp)
-	}
 
 	key = strings.TrimSpace(key)
 	if len(key) == 0 {
@@ -222,6 +226,17 @@ func (aww *Awwan) EnvSet(file, key, val string) (err error) {
 	val = strings.TrimSpace(val)
 	if len(val) == 0 {
 		return fmt.Errorf(`%s: empty value`, logp)
+	}
+
+	file = strings.TrimSpace(file)
+	if len(file) == 0 {
+		var wd string
+		wd, err = osGetwd()
+		if err != nil {
+			return fmt.Errorf(`%s: %w`, logp, err)
+		}
+
+		file = filepath.Join(wd, defEnvFileName)
 	}
 
 	var env *ini.Ini

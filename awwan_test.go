@@ -46,3 +46,12 @@ func testInitWorkspace(dir string, awwanKey, awwanPass []byte) {
 		}
 	}
 }
+
+func mockOsGetwd(t *testing.T, dir string) {
+	t.Cleanup(func() {
+		osGetwd = os.Getwd
+	})
+	osGetwd = func() (string, error) {
+		return dir, nil
+	}
+}

@@ -55,8 +55,12 @@ command = "decrypt" / "encrypt" / "help" / "local" / "play" / "serve" / "version
 		The dir argument is optional, default to current directory.
 		If the key is not exist it will return an empty string.
 
-	env-set <env-file> <key> <value>
-		Set the key-value in environment file.
+	env-set <key> <value> [env-file]
+		Set the value in environment file based on the key.
+		The "file" argument is optional, its define path to
+		environment file.
+		If its empty it will be set to "awwan.env" in the current
+		directory.
 
 	help
 		Display the command usage and its description.
@@ -160,7 +164,7 @@ func main() {
 		}
 
 	case awwan.CommandModeEnvSet:
-		if flag.NArg() < 4 {
+		if flag.NArg() < 3 {
 			err = fmt.Errorf(`%s: missing arguments`, cmdMode)
 		}
 
