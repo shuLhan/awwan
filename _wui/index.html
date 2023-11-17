@@ -15,15 +15,25 @@
             margin: 0px 8px;
         }
 
+        .awwan {
+            height: calc(100vh - 4em);
+            display: flex;
+            flex-direction: row;
+        }
+
         .awwan_nav_left {
+            display: flex;
+            flex-direction: column;
             font-family: monospace;
-            position: fixed;
-            height: calc(100% - 54px);
             width: 300px;
         }
 
+        .awwan_vfs_form {
+            height: 6em;
+        }
+
         .wui_vfs_list {
-            height: calc(100% - 7em);
+            height: calc(100vh - 15em);
             overflow: auto;
         }
 
@@ -33,18 +43,11 @@
             height: 1.6em;
         }
 
-        #com_vfs {
-            height: calc(100% - 4em);
-            margin-top: 1em;
-        }
-
         .awwan_content {
-            height: calc(100% - 7em);
-            left: 310px;
-            margin: 0 10px;
-            padding: 0 10px;
-            position: fixed;
-            width: calc(100% - 356px);
+            height: calc(100vh - 4em);
+            flex: 1;
+            display: flex;
+            flex-direction: column;
         }
 
         #vfs_path {
@@ -52,8 +55,7 @@
         }
 
         #com_editor {
-            width: calc(100% - 2px);
-            height: 50%;
+            height: 50vh;
             border: 1px solid silver;
             resize: vertical;
         }
@@ -76,19 +78,27 @@
             width: 50px;
         }
 
-        #com_resize {
+        #com_resize_vfs,
+        #com_resize_editor {
             background-color: gainsboro;
             border: 1px;
-            cursor: row-resize;
             font-size: 8px;
             text-align: center;
-            width: 100%;
+        }
+
+        #com_resize_vfs {
+            cursor: col-resize;
+            margin: 0 2px;
+        }
+
+        #com_resize_editor {
+            cursor: row-resize;
         }
 
         .output {
-            position: relative;
-            bottom: 0px;
-            height: 40%;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
         }
 
         #output {

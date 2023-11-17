@@ -7,6 +7,7 @@ import { WuiResponseInterface } from "./wui/response.js";
 import { WuiVfs, WuiVfsOptions, WuiVfsNodeInterface } from "./wui/vfs/vfs.js";
 
 const CLASS_EDITOR_ACTION = "editor_action";
+const ID_AWWAN_NAV_LEFT = "awwan_nav_left";
 const ID_BTN_DECRYPT = "com_btn_decrypt";
 const ID_BTN_ENCRYPT = "com_btn_encrypt";
 const ID_BTN_EXEC_LOCAL = "com_btn_local";
@@ -15,7 +16,9 @@ const ID_BTN_NEW_DIR = "com_btn_new_dir";
 const ID_BTN_NEW_FILE = "com_btn_new_file";
 const ID_BTN_REMOVE = "com_btn_remove";
 const ID_BTN_SAVE = "com_btn_save";
-const ID_COM_RESIZE = "com_resize";
+const ID_COM_EDITOR_OUT = "com_editor_output";
+const ID_COM_RESIZE_EDITOR = "com_resize_editor";
+const ID_COM_RESIZE_VFS = "com_resize_vfs";
 const ID_EDITOR = "com_editor";
 const ID_INP_LINE_RANGE = "com_inp_line_range";
 const ID_VFS_INPUT = "com_vfs_input";
@@ -47,16 +50,19 @@ export function renderHtml() {
   const el = document.createElement("div");
   el.classList.add("awwan");
   el.innerHTML = `
-      <div class="awwan_nav_left">
-        <div class="${ID_VFS_INPUT}">
-          <input id="${ID_VFS_INPUT}" placeholder="Input text to filter (allow regexp)" />
+      <div id="${ID_AWWAN_NAV_LEFT}" class="awwan_nav_left">
+        <div class="awwan_vfs_form">
+          <div class="${ID_VFS_INPUT}">
+            <input id="${ID_VFS_INPUT}" placeholder="Input text to filter (allow regexp)" />
+          </div>
+          <button id="${ID_BTN_NEW_DIR}">New dir.</button>
+          <button id="${ID_BTN_NEW_FILE}">New file</button>
+          <button id="${ID_BTN_REMOVE}">Remove</button>
         </div>
-        <button id="${ID_BTN_NEW_DIR}">New dir.</button>
-        <button id="${ID_BTN_NEW_FILE}">New file</button>
-        <button id="${ID_BTN_REMOVE}">Remove</button>
         <div id="${ID_VFS}"></div>
       </div>
-      <div class="awwan_content">
+      <div id="${ID_COM_RESIZE_VFS}">&#9868;</div>
+      <div id="${ID_COM_EDITOR_OUT}" class="awwan_content">
         <div class="boxheader">
           <span class="tag">File</span>
           <span id="${ID_VFS_PATH}">-</span>
@@ -65,7 +71,7 @@ export function renderHtml() {
           <button id="${ID_BTN_DECRYPT}" disabled="true">Decrypt</button>
         </div>
         <div id="${ID_EDITOR}"></div>
-        <div id="${ID_COM_RESIZE}">&#9868;</div>
+        <div id="${ID_COM_RESIZE_EDITOR}">&#9868;</div>
         <div id="${ID_OUTPUT_WRAPPER}" class="output">
           <div>
             <div class="${CLASS_EDITOR_ACTION}">
@@ -89,6 +95,12 @@ export function renderHtml() {
 }
 
 export class Awwan {
+  // comNavLeft define a wrapper for left navigation, the left side.
+  private comNavLeft!: HTMLElement;
+
+  // comEditorOutput element that wrap editor and output, the right side.
+  private comEditorOutput!: HTMLElement;
+
   private comBtnEncrypt!: HTMLButtonElement;
   private comBtnLocal!: HTMLButtonElement;
   private comBtnNewDir!: HTMLButtonElement;
@@ -115,10 +127,37 @@ export class Awwan {
   private notif!: WuiNotif;
   private vfs!: WuiVfs;
   private orgContent: string = "";
+  private _posx: number = 0;
   private _posy: number = 0;
 
   constructor() {
-    let el = document.getElementById(ID_BTN_EXEC_LOCAL);
+    let el: HTMLElement | null;
+
+    el = document.getElementById(ID_AWWAN_NAV_LEFT);
+    if (el) {
+      this.comNavLeft = el;
+    }
+    el = document.getElementById(ID_COM_EDITOR_OUT);
+    if (el) {
+      this.comEditorOutput = el;
+    }
+
+    el = document.getElementById(ID_COM_RESIZE_VFS);
+    if (el) {
+      const doResizeVfs = (ev: MouseEvent) => this.doResizeVfs(ev);
+
+      el.addEventListener("mousedown", () => {
+        this._posx = 0;
+        document.addEventListener("mousemove", doResizeVfs);
+      });
+
+      document.addEventListener("mouseup", () => {
+        document.removeEventListener("mousemove", doResizeVfs);
+        this._posx = 0;
+      });
+    }
+
+    el = document.getElementById(ID_BTN_EXEC_LOCAL);
     if (el) {
       this.comBtnLocal = el as HTMLButtonElement;
       this.comBtnLocal.onclick = () => {
@@ -244,11 +283,11 @@ export class Awwan {
       this.onHashChange(url.hash);
     };
 
-    const elResize = document.getElementById(ID_COM_RESIZE);
-    if (elResize) {
-      const onMouseMove = (ev: MouseEvent) => this.doResize(ev);
+    const elResizeEditor = document.getElementById(ID_COM_RESIZE_EDITOR);
+    if (elResizeEditor) {
+      const onMouseMove = (ev: MouseEvent) => this.doResizeEditor(ev);
 
-      elResize.addEventListener("mousedown", () => {
+      elResizeEditor.addEventListener("mousedown", () => {
         this._posy = 0;
         document.addEventListener("mousemove", onMouseMove);
       });
@@ -636,18 +675,51 @@ export class Awwan {
     this.vfs.filter(val);
   }
 
-  doResize(ev: MouseEvent) {
+  doResizeVfs(ev: MouseEvent) {
+    ev.preventDefault();
+
+    if (this._posx == 0) {
+      this._posx = ev.clientX;
+      return false;
+    }
+    const diff = this._posx - ev.clientX;
+    if (diff > 0) {
+      this.resizeVfsLeft(diff);
+    } else {
+      this.resizeVfsRight(diff * -1);
+    }
+    this._posx = ev.clientX;
+    return false;
+  }
+
+  private resizeVfsLeft(diff: number) {
+    if (this.comNavLeft.clientWidth <= 300) {
+      return;
+    }
+    const width = this.comNavLeft.clientWidth - diff;
+    this.comNavLeft.style.width = `${width}px`;
+  }
+
+  private resizeVfsRight(diff: number) {
+    if (this.comEditorOutput.clientWidth <= 600) {
+      return;
+    }
+    const width = this.comNavLeft.clientWidth + diff;
+    this.comNavLeft.style.width = `${width}px`;
+  }
+
+  doResizeEditor(ev: MouseEvent) {
     if (this._posy == 0) {
-      this._posy = ev.screenY;
+      this._posy = ev.clientY;
       return true;
     }
-    const diff = this._posy - ev.screenY;
+    const diff = this._posy - ev.clientY;
     if (diff > 0) {
       this.resizeUp(diff);
     } else if (diff < 0) {
       this.resizeDown(diff * -1);
     }
-    this._posy = ev.screenY;
+    this._posy = ev.clientY;
     return true;
   }
 

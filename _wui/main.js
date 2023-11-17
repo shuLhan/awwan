@@ -451,6 +451,7 @@ var awwan = (() => {
 
   // _wui/awwan.ts
   var CLASS_EDITOR_ACTION = "editor_action";
+  var ID_AWWAN_NAV_LEFT = "awwan_nav_left";
   var ID_BTN_DECRYPT = "com_btn_decrypt";
   var ID_BTN_ENCRYPT = "com_btn_encrypt";
   var ID_BTN_EXEC_LOCAL = "com_btn_local";
@@ -459,7 +460,9 @@ var awwan = (() => {
   var ID_BTN_NEW_FILE = "com_btn_new_file";
   var ID_BTN_REMOVE = "com_btn_remove";
   var ID_BTN_SAVE = "com_btn_save";
-  var ID_COM_RESIZE = "com_resize";
+  var ID_COM_EDITOR_OUT = "com_editor_output";
+  var ID_COM_RESIZE_EDITOR = "com_resize_editor";
+  var ID_COM_RESIZE_VFS = "com_resize_vfs";
   var ID_EDITOR = "com_editor";
   var ID_INP_LINE_RANGE = "com_inp_line_range";
   var ID_VFS_INPUT = "com_vfs_input";
@@ -472,16 +475,19 @@ var awwan = (() => {
     const el = document.createElement("div");
     el.classList.add("awwan");
     el.innerHTML = `
-      <div class="awwan_nav_left">
-        <div class="${ID_VFS_INPUT}">
-          <input id="${ID_VFS_INPUT}" placeholder="Input text to filter (allow regexp)" />
+      <div id="${ID_AWWAN_NAV_LEFT}" class="awwan_nav_left">
+        <div class="awwan_vfs_form">
+          <div class="${ID_VFS_INPUT}">
+            <input id="${ID_VFS_INPUT}" placeholder="Input text to filter (allow regexp)" />
+          </div>
+          <button id="${ID_BTN_NEW_DIR}">New dir.</button>
+          <button id="${ID_BTN_NEW_FILE}">New file</button>
+          <button id="${ID_BTN_REMOVE}">Remove</button>
         </div>
-        <button id="${ID_BTN_NEW_DIR}">New dir.</button>
-        <button id="${ID_BTN_NEW_FILE}">New file</button>
-        <button id="${ID_BTN_REMOVE}">Remove</button>
         <div id="${ID_VFS}"></div>
       </div>
-      <div class="awwan_content">
+      <div id="${ID_COM_RESIZE_VFS}">&#9868;</div>
+      <div id="${ID_COM_EDITOR_OUT}" class="awwan_content">
         <div class="boxheader">
           <span class="tag">File</span>
           <span id="${ID_VFS_PATH}">-</span>
@@ -490,7 +496,7 @@ var awwan = (() => {
           <button id="${ID_BTN_DECRYPT}" disabled="true">Decrypt</button>
         </div>
         <div id="${ID_EDITOR}"></div>
-        <div id="${ID_COM_RESIZE}">&#9868;</div>
+        <div id="${ID_COM_RESIZE_EDITOR}">&#9868;</div>
         <div id="${ID_OUTPUT_WRAPPER}" class="output">
           <div>
             <div class="${CLASS_EDITOR_ACTION}">
@@ -524,8 +530,30 @@ var awwan = (() => {
         line_range: ""
       };
       this.orgContent = "";
+      this._posx = 0;
       this._posy = 0;
-      let el = document.getElementById(ID_BTN_EXEC_LOCAL);
+      let el;
+      el = document.getElementById(ID_AWWAN_NAV_LEFT);
+      if (el) {
+        this.comNavLeft = el;
+      }
+      el = document.getElementById(ID_COM_EDITOR_OUT);
+      if (el) {
+        this.comEditorOutput = el;
+      }
+      el = document.getElementById(ID_COM_RESIZE_VFS);
+      if (el) {
+        const doResizeVfs = (ev) => this.doResizeVfs(ev);
+        el.addEventListener("mousedown", () => {
+          this._posx = 0;
+          document.addEventListener("mousemove", doResizeVfs);
+        });
+        document.addEventListener("mouseup", () => {
+          document.removeEventListener("mousemove", doResizeVfs);
+          this._posx = 0;
+        });
+      }
+      el = document.getElementById(ID_BTN_EXEC_LOCAL);
       if (el) {
         this.comBtnLocal = el;
         this.comBtnLocal.onclick = () => {
@@ -635,10 +663,10 @@ var awwan = (() => {
         const url = new URL(hashchange.newURL);
         this.onHashChange(url.hash);
       };
-      const elResize = document.getElementById(ID_COM_RESIZE);
-      if (elResize) {
-        const onMouseMove = (ev) => this.doResize(ev);
-        elResize.addEventListener("mousedown", () => {
+      const elResizeEditor = document.getElementById(ID_COM_RESIZE_EDITOR);
+      if (elResizeEditor) {
+        const onMouseMove = (ev) => this.doResizeEditor(ev);
+        elResizeEditor.addEventListener("mousedown", () => {
           this._posy = 0;
           document.addEventListener("mousemove", onMouseMove);
         });
@@ -966,18 +994,47 @@ var awwan = (() => {
     onVfsInputFilter(val) {
       this.vfs.filter(val);
     }
-    doResize(ev) {
+    doResizeVfs(ev) {
+      ev.preventDefault();
+      if (this._posx == 0) {
+        this._posx = ev.clientX;
+        return false;
+      }
+      const diff = this._posx - ev.clientX;
+      if (diff > 0) {
+        this.resizeVfsLeft(diff);
+      } else {
+        this.resizeVfsRight(diff * -1);
+      }
+      this._posx = ev.clientX;
+      return false;
+    }
+    resizeVfsLeft(diff) {
+      if (this.comNavLeft.clientWidth <= 300) {
+        return;
+      }
+      const width = this.comNavLeft.clientWidth - diff;
+      this.comNavLeft.style.width = `${width}px`;
+    }
+    resizeVfsRight(diff) {
+      if (this.comEditorOutput.clientWidth <= 600) {
+        return;
+      }
+      const width = this.comNavLeft.clientWidth + diff;
+      this.comNavLeft.style.width = `${width}px`;
+    }
+    doResizeEditor(ev) {
       if (this._posy == 0) {
-        this._posy = ev.screenY;
+        this._posy = ev.clientY;
         return true;
       }
-      const diff = this._posy - ev.screenY;
+      const diff = this._posy - ev.clientY;
       if (diff > 0) {
         this.resizeUp(diff);
       } else if (diff < 0) {
         this.resizeDown(diff * -1);
       }
-      this._posy = ev.screenY;
+      this._posy = ev.clientY;
       return true;
     }
     resizeUp(diff) {
