@@ -23,7 +23,7 @@ const ID_VFS = "com_vfs";
 const ID_VFS_PATH = "vfs_path";
 const ID_OUTPUT = "output";
 const ID_OUTPUT_WRAPPER = "output_wrapper";
-const MAX_FILE_SIZE = 102400; // 100KB
+const MAX_FILE_SIZE = 1000000; // 1MiB
 
 interface RequestInterface {
   mode: string;

@@ -467,7 +467,7 @@ var awwan = (() => {
   var ID_VFS_PATH = "vfs_path";
   var ID_OUTPUT = "output";
   var ID_OUTPUT_WRAPPER = "output_wrapper";
-  var MAX_FILE_SIZE = 102400;
+  var MAX_FILE_SIZE = 1e6;
   function renderHtml() {
     const el = document.createElement("div");
     el.classList.add("awwan");
