@@ -99,7 +99,7 @@ func (httpd *httpServer) registerEndpoints() (err error) {
 		Path:         pathAwwanApiFs,
 		RequestType:  libhttp.RequestTypeQuery,
 		ResponseType: libhttp.ResponseTypeJSON,
-		Call:         httpd.awwanApiFsGet,
+		Call:         httpd.FSGet,
 	})
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
@@ -343,9 +343,19 @@ func (httpd *httpServer) Encrypt(epr *libhttp.EndpointRequest) (resb []byte, err
 	return resb, nil
 }
 
-// awwanApiFsGet get the list of files or specific file using query
-// parameter "path".
-func (httpd *httpServer) awwanApiFsGet(epr *libhttp.EndpointRequest) (resb []byte, err error) {
+// FSGet get the list of files in directory or content of file by
+// its path.
+//
+// Request format,
+//
+//	GET /awwan/api/fs?path=<string>
+//
+// Response format,
+//
+//	Content-Type: application/json
+//
+//	{"code":200,"data":<memfs.Node>}
+func (httpd *httpServer) FSGet(epr *libhttp.EndpointRequest) (resb []byte, err error) {
 	var (
 		res = &libhttp.EndpointResponse{}
 
@@ -359,9 +369,19 @@ func (httpd *httpServer) awwanApiFsGet(epr *libhttp.EndpointRequest) (resb []byt
 		res.Data = httpd.memfsBase
 		return json.Marshal(res)
 	}
+	if path == `/.ssh/awwan.key` || path == `/.ssh/awwan.pass` {
+		res.Code = http.StatusForbidden
+		res.Message = `Forbidden`
+		return nil, res
+	}
 
 	node, err = httpd.memfsBase.Get(path)
 	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			res.Code = http.StatusNotFound
+			res.Message = fmt.Sprintf(`%q not found`, path)
+			return nil, res
+		}
 		return nil, err
 	}
 

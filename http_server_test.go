@@ -190,3 +190,75 @@ func TestHttpServer_Encrypt(t *testing.T) {
 		test.Assert(t, c.desc, c.expResp, gotResp.String())
 	}
 }
+
+func TestHttpServer_FSGet(t *testing.T) {
+	var (
+		tdata *test.Data
+		err   error
+	)
+
+	tdata, err = test.LoadData(`testdata/http_server/fsget_test.data`)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var aww *Awwan
+
+	aww, err = New(`testdata/http_server/fsget`)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var httpd *httpServer
+
+	httpd, err = newHttpServer(aww, ``)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	type testCase struct {
+		desc string
+		path string
+		exp  string
+	}
+	var cases = []testCase{{
+		desc: `getSshAwwanKey`,
+		path: `/.ssh/awwan.key`,
+		exp:  string(tdata.Output[`getSshAwwanKey`]),
+	}, {
+		desc: `getSshAwwanPass`,
+		path: `/.ssh/awwan.pass`,
+		exp:  string(tdata.Output[`getSshAwwanPass`]),
+	}, {
+		desc: `getSshAwwanKeyIndirectly`,
+		path: `/myhost/../.ssh/awwan.key`,
+		exp:  string(tdata.Output[`getSshAwwanKeyIndirectly`]),
+	}}
+
+	var (
+		c          testCase
+		httpReq    *http.Request
+		httpRes    *http.Response
+		httpWriter *httptest.ResponseRecorder
+		body       []byte
+		jsonBody   bytes.Buffer
+	)
+
+	for _, c = range cases {
+		t.Log(c.desc)
+
+		httpReq = httptest.NewRequest(http.MethodGet, pathAwwanApiFs+`?path=`+c.path, nil)
+
+		httpWriter = httptest.NewRecorder()
+
+		httpd.ServeHTTP(httpWriter, httpReq)
+
+		httpRes = httpWriter.Result()
+
+		body, _ = io.ReadAll(httpRes.Body)
+
+		jsonBody.Reset()
+		json.Indent(&jsonBody, body, ``, `  `)
+		test.Assert(t, c.desc, c.exp, jsonBody.String())
+	}
+}

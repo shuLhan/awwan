@@ -1,0 +1,19 @@
+Test on FSGet method.
+
+<<< getSshAwwanKey
+{
+  "message": "Forbidden",
+  "code": 403
+}
+
+<<< getSshAwwanPass
+{
+  "message": "Forbidden",
+  "code": 403
+}
+
+<<< getSshAwwanKeyIndirectly
+{
+  "message": "\"/myhost/../.ssh/awwan.key\" not found",
+  "code": 404
+}
