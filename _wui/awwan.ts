@@ -697,15 +697,15 @@ export class Awwan {
       return;
     }
     const width = this.comNavLeft.clientWidth - diff;
-    this.comNavLeft.style.width = `${width}px`;
+    this.comNavLeft.style.flexBasis = `${width}px`;
   }
 
   private resizeVfsRight(diff: number) {
-    if (this.comEditorOutput.clientWidth <= 600) {
+    if (this.comEditorOutput.clientWidth <= 500) {
       return;
     }
     const width = this.comNavLeft.clientWidth + diff;
-    this.comNavLeft.style.width = `${width}px`;
+    this.comNavLeft.style.flexBasis = `${width}px`;
   }
 
   doResizeEditor(ev: MouseEvent) {
@@ -716,7 +716,7 @@ export class Awwan {
     const diff = this._posy - ev.clientY;
     if (diff > 0) {
       this.resizeUp(diff);
-    } else if (diff < 0) {
+    } else {
       this.resizeDown(diff * -1);
     }
     this._posy = ev.clientY;
@@ -727,19 +727,19 @@ export class Awwan {
     if (this.comEditor.clientHeight <= 126) {
       return;
     }
-    this.comEditor.style.height = `${this.comEditor.clientHeight - diff}px`;
-    this.comOutputWrapper.style.height = `${
-      this.comOutputWrapper.clientHeight + diff
-    }px`;
+    let height = this.comEditor.offsetHeight - diff;
+    this.comEditor.style.height = `${height}px`;
+    height += 110;
+    this.comOutputWrapper.style.height = `calc(100% - ${height}px)`;
   }
 
   resizeDown(diff: number) {
     if (this.comOutputWrapper.clientHeight <= 126) {
       return;
     }
-    this.comEditor.style.height = `${this.comEditor.clientHeight + diff}px`;
-    this.comOutputWrapper.style.height = `${
-      this.comOutputWrapper.clientHeight - diff
-    }px`;
+    let height = this.comEditor.offsetHeight + diff;
+    this.comEditor.style.height = `${height}px`;
+    height += 110;
+    this.comOutputWrapper.style.height = `calc(100% - ${height}px)`;
   }
 }
