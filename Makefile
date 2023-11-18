@@ -42,7 +42,7 @@ dev:
 
 .PHONY: lint-www
 lint-www:
-	cd _wui && eslint --fix .
+	-cd _wui && eslint --fix .
 
 #}}}
 #{{{ Testing with container using mkosi.
