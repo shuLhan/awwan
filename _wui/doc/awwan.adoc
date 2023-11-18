@@ -226,13 +226,11 @@ server known as "myserver",
 $ awwan play myserver/script.aww 6,12-
 ----
 
-=== Command "serve"
+=== Command serve
 
-The "serve" command run the web-user interface using "<workspace>" directory
-as base directory.
-
-The "serve" command have only single argument: a "workspace".
-A "workspace" is the awwan root directory, the one that contains the
+The "serve" command run the web-user interface (WUI) using "<workspace>"
+directory as base directory.
+A "<workspace>" is the awwan root directory, the one that contains the
 ".ssh" directory.
 
 Example of running the web-user interface using the "_example" directory in
@@ -242,6 +240,25 @@ this repository as workspace,
 $ awwan serve _example
 --- BaseDir: /home/ms/go/src/git.sr.ht/~shulhan/awwan/_example
 --- Starting HTTP server at http://127.0.0.1:17600
+----
+
+When executing "local" or "play" command with WUI, some statement may prompt
+for an input, for example a password for "sudo" or passphrase for private
+key.
+We can switch back to terminal window and input the password/passphrase,
+but this will break the flow.
+In order to minimize switching back-and-forth, or when awwan run without
+stdin (for example under systemd service), we can set environment
+variable SUDO_ASKPASS for sudo or SSH_ASKPASS for ssh.
+
+The following example use "/usr/lib/ssh/x11-ssh-askpass" for both
+environments before running "awwan serve" to handle password/passphrase
+prompt interactively,
+
+----
+$ export SUDO_ASKPASS=/usr/lib/ssh/x11-ssh-askpass
+$ export SSH_ASKPASS=/usr/lib/ssh/x11-ssh-askpass
+$ awwan serve _example
 ----
 
 
