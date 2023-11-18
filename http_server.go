@@ -59,7 +59,7 @@ func newHttpServer(aww *Awwan, address string) (httpd *httpServer, err error) {
 	var memfsBaseOpts = &memfs.Options{
 		Root: aww.BaseDir,
 		Excludes: []string{
-			`.*/\.git`,
+			`.*/\.git$`,
 			`node_modules`,
 			`vendor`,
 			`.*\.(bz|bz2|gz|iso|jar|tar|xz|zip)`,
