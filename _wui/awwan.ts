@@ -101,6 +101,7 @@ export class Awwan {
   // comEditorOutput element that wrap editor and output, the right side.
   private comEditorOutput!: HTMLElement;
 
+  private comBtnDecrypt!: HTMLButtonElement;
   private comBtnEncrypt!: HTMLButtonElement;
   private comBtnLocal!: HTMLButtonElement;
   private comBtnNewDir!: HTMLButtonElement;
@@ -115,8 +116,6 @@ export class Awwan {
   private comOutput!: HTMLElement;
   private comOutputWrapper!: HTMLElement;
   private currentNode: WuiVfsNodeInterface | null = null;
-  // currentFile store the selected file node opened in editor.
-  private currentFile: WuiVfsNodeInterface | null = null;
   private request: RequestInterface = {
     mode: "local",
     script: "",
@@ -354,7 +353,6 @@ export class Awwan {
     this.request.script = path;
 
     this.editor.open(node);
-    this.currentFile = node;
     this.orgContent = this.editor.getContent();
     this.comBtnLocal.disabled = false;
     this.comBtnRemote.disabled = false;
@@ -416,12 +414,13 @@ export class Awwan {
     }
     const ok = this.confirmWhenDirty();
     if (!ok) {
-      return res;
+      return false;
     }
 
     const path = this.request.script;
     const req: encryptResponse = {
       path: path,
+      path_vault: "",
     };
 
     const httpRes = await fetch("/awwan/api/encrypt", {
@@ -436,14 +435,17 @@ export class Awwan {
     const jsonRes = await httpRes.json();
     if (jsonRes.code != 200) {
       this.notif.error(`Failed to encrypt file ${path}: ${jsonRes.message}`);
-      return null;
+      return false;
     }
 
     const encRes = jsonRes.data as encryptResponse;
 
     this.notif.info(`File ${path} has been encrypted to ${encRes.path_vault}.`);
 
-    this.open(this.currentNode.path, this.currentNode.is_dir);
+    if (this.currentNode) {
+      this.open(this.currentNode.path, this.currentNode.is_dir);
+    }
+    return true;
   }
 
   async onClickDecrypt() {
@@ -454,6 +456,7 @@ export class Awwan {
 
     const pathVault = this.request.script;
     const req: encryptResponse = {
+      path: "",
       path_vault: pathVault,
     };
 
@@ -468,15 +471,20 @@ export class Awwan {
 
     const jsonRes = await httpRes.json();
     if (jsonRes.code != 200) {
-      this.notif.error(`Failed to decrypt file ${path}: ${jsonRes.message}`);
-      return null;
+      this.notif.error(
+        `Failed to decrypt file ${pathVault}: ${jsonRes.message}`,
+      );
+      return false;
     }
 
     const encRes = jsonRes.data as encryptResponse;
 
     this.notif.info(`File ${pathVault} has been decrypted to ${encRes.path}.`);
 
-    this.open(this.currentNode.path, this.currentNode.is_dir);
+    if (this.currentNode) {
+      this.open(this.currentNode.path, this.currentNode.is_dir);
+    }
+    return true;
   }
 
   onClickSave() {
