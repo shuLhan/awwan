@@ -492,7 +492,9 @@ var awwan = (() => {
           <span class="tag">File</span>
           <span id="${ID_VFS_PATH}">-</span>
           <button id="${ID_BTN_SAVE}" disabled="true">Save</button>
+          &nbsp;
           <button id="${ID_BTN_ENCRYPT}" disabled="true">Encrypt</button>
+          &nbsp;
           <button id="${ID_BTN_DECRYPT}" disabled="true">Decrypt</button>
         </div>
         <div id="${ID_EDITOR}"></div>
@@ -500,7 +502,7 @@ var awwan = (() => {
         <div id="${ID_OUTPUT_WRAPPER}" class="output">
           <div>
             <div class="${CLASS_EDITOR_ACTION}">
-              Execute
+              Execute line
               <input id="${ID_INP_LINE_RANGE}" placeholder="Ex: 1,2-4,5-"/>
               on
               <button id="${ID_BTN_EXEC_LOCAL}" disabled="true">Local</button>
