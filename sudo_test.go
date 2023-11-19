@@ -30,7 +30,7 @@ func TestExecLocal_sudo(t *testing.T) {
 		err error
 	)
 
-	req.init()
+	req.init(`.`)
 	req.registerLogWriter(`output`, mockout)
 
 	var cases = []testCase{{

@@ -17,11 +17,11 @@ Host oldhost
 {
   "data": {
     "mode": "play",
-    "script": "/home/awwan/src/testdata/http_server/play_ssh_config_changes/oldhost/play.aww",
+    "script": "/oldhost/play.aww",
     "line_range": "1-",
     "content": null,
     "error": "",
-    "output": "LSBwbGF5LmF3dyAtLS0gU1NIIGNvbm5lY3Rpb246IGF3d2Fuc3NoQDEyNy4wLjAuMToxMDAyMgotIHBsYXkuYXd3IC0tLSBTU0ggaWRlbnRpdHkgZmlsZTogWy9ob21lL2F3d2FuLy5zc2gvaWRfZWQyNTUxOV0KLSBwbGF5LmF3dyA9PT0gQkVHSU46IHBsYXkgL2hvbWUvYXd3YW4vc3JjL3Rlc3RkYXRhL2h0dHBfc2VydmVyL3BsYXlfc3NoX2NvbmZpZ19jaGFuZ2VzL29sZGhvc3QvcGxheS5hd3cgMS0KLSBwbGF5LmF3dyAtLT4gICAyOiBwd2QKL2hvbWUvYXd3YW5zc2gKLSBwbGF5LmF3dyAtLT4gICA1OiAjbG9jYWw6IHB3ZAovaG9tZS9hd3dhbi9zcmMKLSBwbGF5LmF3dyA9PT0gRU5ECg=="
+    "output": "LSBwbGF5LmF3dyAtLS0gU1NIIGNvbm5lY3Rpb246IGF3d2Fuc3NoQDEyNy4wLjAuMToxMDAyMgotIHBsYXkuYXd3IC0tLSBTU0ggaWRlbnRpdHkgZmlsZTogWy9ob21lL2F3d2FuLy5zc2gvaWRfZWQyNTUxOV0KLSBwbGF5LmF3dyA9PT0gQkVHSU46IHBsYXkgL29sZGhvc3QvcGxheS5hd3cgMS0KLSBwbGF5LmF3dyAtLT4gICAyOiBwd2QKL2hvbWUvYXd3YW5zc2gKLSBwbGF5LmF3dyAtLT4gICA1OiAjbG9jYWw6IHB3ZAovaG9tZS9hd3dhbi9zcmMKLSBwbGF5LmF3dyA9PT0gRU5ECg=="
   },
   "code": 200
 }
@@ -29,7 +29,7 @@ Host oldhost
 <<< play_on_oldhost:output
 - play.aww --- SSH connection: awwanssh@127.0.0.1:10022
 - play.aww --- SSH identity file: [/home/awwan/.ssh/id_ed25519]
-- play.aww === BEGIN: play /home/awwan/src/testdata/http_server/play_ssh_config_changes/oldhost/play.aww 1-
+- play.aww === BEGIN: play /oldhost/play.aww 1-
 - play.aww -->   2: pwd
 /home/awwanssh
 - play.aww -->   5: #local: pwd
@@ -60,11 +60,11 @@ Host newhost
 {
   "data": {
     "mode": "play",
-    "script": "/home/awwan/src/testdata/http_server/play_ssh_config_changes/newhost/play.aww",
+    "script": "/newhost/play.aww",
     "line_range": "1-",
     "content": null,
     "error": "",
-    "output": "LSBwbGF5LmF3dyAtLS0gU1NIIGNvbm5lY3Rpb246IGF3d2Fuc3NoQDEyNy4wLjAuMToxMDAyMgotIHBsYXkuYXd3IC0tLSBTU0ggaWRlbnRpdHkgZmlsZTogWy9ob21lL2F3d2FuLy5zc2gvaWRfZWQyNTUxOV0KLSBwbGF5LmF3dyA9PT0gQkVHSU46IHBsYXkgL2hvbWUvYXd3YW4vc3JjL3Rlc3RkYXRhL2h0dHBfc2VydmVyL3BsYXlfc3NoX2NvbmZpZ19jaGFuZ2VzL25ld2hvc3QvcGxheS5hd3cgMS0KLSBwbGF5LmF3dyAtLT4gICAyOiBwd2QKL2hvbWUvYXd3YW5zc2gKLSBwbGF5LmF3dyAtLT4gICA1OiAjbG9jYWw6IHB3ZAovaG9tZS9hd3dhbi9zcmMKLSBwbGF5LmF3dyA9PT0gRU5ECg=="
+    "output": "LSBwbGF5LmF3dyAtLS0gU1NIIGNvbm5lY3Rpb246IGF3d2Fuc3NoQDEyNy4wLjAuMToxMDAyMgotIHBsYXkuYXd3IC0tLSBTU0ggaWRlbnRpdHkgZmlsZTogWy9ob21lL2F3d2FuLy5zc2gvaWRfZWQyNTUxOV0KLSBwbGF5LmF3dyA9PT0gQkVHSU46IHBsYXkgL25ld2hvc3QvcGxheS5hd3cgMS0KLSBwbGF5LmF3dyAtLT4gICAyOiBwd2QKL2hvbWUvYXd3YW5zc2gKLSBwbGF5LmF3dyAtLT4gICA1OiAjbG9jYWw6IHB3ZAovaG9tZS9hd3dhbi9zcmMKLSBwbGF5LmF3dyA9PT0gRU5ECg=="
   },
   "code": 200
 }
@@ -72,7 +72,7 @@ Host newhost
 <<< play_on_newhost:output
 - play.aww --- SSH connection: awwanssh@127.0.0.1:10022
 - play.aww --- SSH identity file: [/home/awwan/.ssh/id_ed25519]
-- play.aww === BEGIN: play /home/awwan/src/testdata/http_server/play_ssh_config_changes/newhost/play.aww 1-
+- play.aww === BEGIN: play /newhost/play.aww 1-
 - play.aww -->   2: pwd
 /home/awwanssh
 - play.aww -->   5: #local: pwd

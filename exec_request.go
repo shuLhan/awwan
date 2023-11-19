@@ -54,7 +54,7 @@ func NewExecRequest(mode, script, lineRange string) (req *ExecRequest, err error
 
 	req.lineRange = parseLineRange(lineRange)
 
-	err = req.init()
+	err = req.init(`.`)
 	if err != nil {
 		return nil, fmt.Errorf(`NewRequest: %w`, err)
 	}
@@ -78,7 +78,7 @@ func (req *ExecRequest) close() {
 }
 
 // init initialize multi loggers to write all output.
-func (req *ExecRequest) init() (err error) {
+func (req *ExecRequest) init(workDir string) (err error) {
 	if req.mlog == nil {
 		var (
 			namedStdout = mlog.NewNamedWriter(`stdout`, os.Stdout)
@@ -91,11 +91,14 @@ func (req *ExecRequest) init() (err error) {
 		)
 	}
 
-	req.scriptPath = filepath.Clean(req.Script)
+	req.scriptPath = filepath.Join(workDir, req.Script)
+	req.scriptPath = filepath.Clean(req.scriptPath)
 	req.scriptPath, err = filepath.Abs(req.scriptPath)
 	if err != nil {
 		return err
 	}
+
+	req.lineRange = parseLineRange(req.LineRange)
 
 	// Create log file to record all input and output for audit in the
 	// future.
