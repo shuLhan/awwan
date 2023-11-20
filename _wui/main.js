@@ -450,26 +450,26 @@ var awwan = (() => {
   };
 
   // _wui/awwan.ts
-  var CLASS_EDITOR_ACTION = "editor_action";
   var ID_AWWAN_NAV_LEFT = "awwan_nav_left";
-  var ID_BTN_DECRYPT = "com_btn_decrypt";
-  var ID_BTN_ENCRYPT = "com_btn_encrypt";
-  var ID_BTN_EXEC_LOCAL = "com_btn_local";
-  var ID_BTN_EXEC_REMOTE = "com_btn_remote";
+  var ID_VFS_INPUT = "com_vfs_input";
   var ID_BTN_NEW_DIR = "com_btn_new_dir";
   var ID_BTN_NEW_FILE = "com_btn_new_file";
   var ID_BTN_REMOVE = "com_btn_remove";
-  var ID_BTN_SAVE = "com_btn_save";
-  var ID_COM_EDITOR_OUT = "com_editor_output";
-  var ID_COM_RESIZE_EDITOR = "com_resize_editor";
-  var ID_COM_RESIZE_VFS = "com_resize_vfs";
-  var ID_EDITOR = "com_editor";
-  var ID_INP_LINE_RANGE = "com_inp_line_range";
-  var ID_VFS_INPUT = "com_vfs_input";
   var ID_VFS = "com_vfs";
   var ID_VFS_PATH = "vfs_path";
-  var ID_OUTPUT = "output";
+  var ID_COM_RESIZE_VFS = "com_resize_vfs";
+  var ID_AWWAN_NAV_RIGHT = "awwan_nav_right";
+  var ID_BTN_SAVE = "com_btn_save";
+  var ID_BTN_DECRYPT = "com_btn_decrypt";
+  var ID_BTN_ENCRYPT = "com_btn_encrypt";
+  var ID_EDITOR = "com_editor";
+  var CLASS_AWWAN_EXECUTE = "awwan_execute";
+  var ID_INP_LINE_RANGE = "com_inp_line_range";
+  var ID_BTN_EXEC_LOCAL = "com_btn_local";
+  var ID_BTN_EXEC_REMOTE = "com_btn_remote";
+  var ID_COM_RESIZE_EDITOR = "com_resize_editor";
   var ID_OUTPUT_WRAPPER = "output_wrapper";
+  var ID_OUTPUT = "output";
   var MAX_FILE_SIZE = 1e6;
   function renderHtml() {
     const el = document.createElement("div");
@@ -486,22 +486,22 @@ var awwan = (() => {
         </div>
         <div id="${ID_VFS}"></div>
       </div>
-      <div id="${ID_COM_RESIZE_VFS}">&#9868;</div>
-      <div id="${ID_COM_EDITOR_OUT}" class="awwan_content">
-        <div class="boxheader">
+      <div id="${ID_COM_RESIZE_VFS}"></div>
+      <div id="${ID_AWWAN_NAV_RIGHT}">
+        <div class="awwan_file">
           <span class="tag">File</span>
-          <span id="${ID_VFS_PATH}">-</span>
-          <button id="${ID_BTN_SAVE}" disabled="true">Save</button>
-          &nbsp;
-          <button id="${ID_BTN_ENCRYPT}" disabled="true">Encrypt</button>
-          &nbsp;
-          <button id="${ID_BTN_DECRYPT}" disabled="true">Decrypt</button>
+          <span class="awwan_file_actions">
+            <span id="${ID_VFS_PATH}">-</span>
+            <button id="${ID_BTN_SAVE}" disabled="true">Save</button>
+            <button id="${ID_BTN_ENCRYPT}" disabled="true">Encrypt</button>
+            <button id="${ID_BTN_DECRYPT}" disabled="true">Decrypt</button>
+          </span>
         </div>
         <div id="${ID_EDITOR}"></div>
-        <div id="${ID_COM_RESIZE_EDITOR}">&#9868;</div>
+        <div id="${ID_COM_RESIZE_EDITOR}"></div>
         <div id="${ID_OUTPUT_WRAPPER}" class="output">
           <div>
-            <div class="${CLASS_EDITOR_ACTION}">
+            <div class="${CLASS_AWWAN_EXECUTE}">
               Execute line
               <input id="${ID_INP_LINE_RANGE}" placeholder="Ex: 1,2-4,5-"/>
               on
@@ -537,9 +537,9 @@ var awwan = (() => {
       if (el) {
         this.comNavLeft = el;
       }
-      el = document.getElementById(ID_COM_EDITOR_OUT);
+      el = document.getElementById(ID_AWWAN_NAV_RIGHT);
       if (el) {
-        this.comEditorOutput = el;
+        this.comNavRight = el;
       }
       el = document.getElementById(ID_COM_RESIZE_VFS);
       if (el) {
@@ -665,13 +665,13 @@ var awwan = (() => {
       };
       const elResizeEditor = document.getElementById(ID_COM_RESIZE_EDITOR);
       if (elResizeEditor) {
-        const onMouseMove = (ev) => this.doResizeEditor(ev);
+        const doResizeEditor = (ev) => this.doResizeEditor(ev);
         elResizeEditor.addEventListener("mousedown", () => {
           this._posy = 0;
-          document.addEventListener("mousemove", onMouseMove);
+          document.addEventListener("mousemove", doResizeEditor);
         });
         document.addEventListener("mouseup", () => {
-          document.removeEventListener("mousemove", onMouseMove);
+          document.removeEventListener("mousemove", doResizeEditor);
           this._posy = 0;
         });
       }
@@ -1020,22 +1020,30 @@ var awwan = (() => {
     }
     resizeVfsLeft(diff) {
       if (this.comNavLeft.clientWidth <= 300) {
-        return;
+        return false;
       }
-      const width = this.comNavLeft.clientWidth - diff;
-      this.comNavLeft.style.flexBasis = `${width}px`;
+      let width = this.comNavLeft.clientWidth - diff;
+      this.comNavLeft.style.width = `${width}px`;
+      width += 30;
+      this.comNavRight.style.width = `calc(100% - ${width}px)`;
+      return true;
     }
     resizeVfsRight(diff) {
-      if (this.comEditorOutput.clientWidth <= 500) {
-        return;
+      if (this.comNavRight.clientWidth <= 500) {
+        return false;
       }
-      const width = this.comNavLeft.clientWidth + diff;
-      this.comNavLeft.style.flexBasis = `${width}px`;
+      let width = this.comNavLeft.clientWidth + diff;
+      this.comNavLeft.style.width = `${width}px`;
+      width += 30;
+      this.comNavRight.style.width = `calc(100% - ${width}px)`;
+      return true;
     }
     doResizeEditor(ev) {
+      ev.preventDefault();
+      ev.stopPropagation();
       if (this._posy == 0) {
         this._posy = ev.clientY;
-        return true;
+        return false;
       }
       const diff = this._posy - ev.clientY;
       if (diff > 0) {
@@ -1050,18 +1058,18 @@ var awwan = (() => {
       if (this.comEditor.clientHeight <= 126) {
         return;
       }
-      let height = this.comEditor.offsetHeight - diff;
+      let height = this.comEditor.clientHeight - diff;
       this.comEditor.style.height = `${height}px`;
-      height += 110;
+      height += 100;
       this.comOutputWrapper.style.height = `calc(100% - ${height}px)`;
     }
     resizeDown(diff) {
       if (this.comOutputWrapper.clientHeight <= 126) {
         return;
       }
-      let height = this.comEditor.offsetHeight + diff;
+      let height = this.comEditor.clientHeight + diff;
       this.comEditor.style.height = `${height}px`;
-      height += 110;
+      height += 100;
       this.comOutputWrapper.style.height = `calc(100% - ${height}px)`;
     }
   };

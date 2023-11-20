@@ -6,26 +6,34 @@ import { WuiNotif } from "./wui/notif/notif.js";
 import { WuiResponseInterface } from "./wui/response.js";
 import { WuiVfs, WuiVfsOptions, WuiVfsNodeInterface } from "./wui/vfs/vfs.js";
 
-const CLASS_EDITOR_ACTION = "editor_action";
 const ID_AWWAN_NAV_LEFT = "awwan_nav_left";
-const ID_BTN_DECRYPT = "com_btn_decrypt";
-const ID_BTN_ENCRYPT = "com_btn_encrypt";
-const ID_BTN_EXEC_LOCAL = "com_btn_local";
-const ID_BTN_EXEC_REMOTE = "com_btn_remote";
+
+const ID_VFS_INPUT = "com_vfs_input";
 const ID_BTN_NEW_DIR = "com_btn_new_dir";
 const ID_BTN_NEW_FILE = "com_btn_new_file";
 const ID_BTN_REMOVE = "com_btn_remove";
-const ID_BTN_SAVE = "com_btn_save";
-const ID_COM_EDITOR_OUT = "com_editor_output";
-const ID_COM_RESIZE_EDITOR = "com_resize_editor";
-const ID_COM_RESIZE_VFS = "com_resize_vfs";
-const ID_EDITOR = "com_editor";
-const ID_INP_LINE_RANGE = "com_inp_line_range";
-const ID_VFS_INPUT = "com_vfs_input";
+
 const ID_VFS = "com_vfs";
 const ID_VFS_PATH = "vfs_path";
-const ID_OUTPUT = "output";
+
+const ID_COM_RESIZE_VFS = "com_resize_vfs";
+
+const ID_AWWAN_NAV_RIGHT = "awwan_nav_right";
+const ID_BTN_SAVE = "com_btn_save";
+const ID_BTN_DECRYPT = "com_btn_decrypt";
+const ID_BTN_ENCRYPT = "com_btn_encrypt";
+const ID_EDITOR = "com_editor";
+
+const CLASS_AWWAN_EXECUTE = "awwan_execute";
+const ID_INP_LINE_RANGE = "com_inp_line_range";
+const ID_BTN_EXEC_LOCAL = "com_btn_local";
+const ID_BTN_EXEC_REMOTE = "com_btn_remote";
+
+const ID_COM_RESIZE_EDITOR = "com_resize_editor";
+
 const ID_OUTPUT_WRAPPER = "output_wrapper";
+const ID_OUTPUT = "output";
+
 const MAX_FILE_SIZE = 1000000; // 1MiB
 
 interface RequestInterface {
@@ -61,22 +69,22 @@ export function renderHtml() {
         </div>
         <div id="${ID_VFS}"></div>
       </div>
-      <div id="${ID_COM_RESIZE_VFS}">&#9868;</div>
-      <div id="${ID_COM_EDITOR_OUT}" class="awwan_content">
-        <div class="boxheader">
+      <div id="${ID_COM_RESIZE_VFS}"></div>
+      <div id="${ID_AWWAN_NAV_RIGHT}">
+        <div class="awwan_file">
           <span class="tag">File</span>
-          <span id="${ID_VFS_PATH}">-</span>
-          <button id="${ID_BTN_SAVE}" disabled="true">Save</button>
-          &nbsp;
-          <button id="${ID_BTN_ENCRYPT}" disabled="true">Encrypt</button>
-          &nbsp;
-          <button id="${ID_BTN_DECRYPT}" disabled="true">Decrypt</button>
+          <span class="awwan_file_actions">
+            <span id="${ID_VFS_PATH}">-</span>
+            <button id="${ID_BTN_SAVE}" disabled="true">Save</button>
+            <button id="${ID_BTN_ENCRYPT}" disabled="true">Encrypt</button>
+            <button id="${ID_BTN_DECRYPT}" disabled="true">Decrypt</button>
+          </span>
         </div>
         <div id="${ID_EDITOR}"></div>
-        <div id="${ID_COM_RESIZE_EDITOR}">&#9868;</div>
+        <div id="${ID_COM_RESIZE_EDITOR}"></div>
         <div id="${ID_OUTPUT_WRAPPER}" class="output">
           <div>
-            <div class="${CLASS_EDITOR_ACTION}">
+            <div class="${CLASS_AWWAN_EXECUTE}">
               Execute line
               <input id="${ID_INP_LINE_RANGE}" placeholder="Ex: 1,2-4,5-"/>
               on
@@ -100,8 +108,8 @@ export class Awwan {
   // comNavLeft define a wrapper for left navigation, the left side.
   private comNavLeft!: HTMLElement;
 
-  // comEditorOutput element that wrap editor and output, the right side.
-  private comEditorOutput!: HTMLElement;
+  // comNavRight element that wrap editor and output, the right side.
+  private comNavRight!: HTMLElement;
 
   private comBtnDecrypt!: HTMLButtonElement;
   private comBtnEncrypt!: HTMLButtonElement;
@@ -138,9 +146,9 @@ export class Awwan {
     if (el) {
       this.comNavLeft = el;
     }
-    el = document.getElementById(ID_COM_EDITOR_OUT);
+    el = document.getElementById(ID_AWWAN_NAV_RIGHT);
     if (el) {
-      this.comEditorOutput = el;
+      this.comNavRight = el;
     }
 
     el = document.getElementById(ID_COM_RESIZE_VFS);
@@ -286,15 +294,15 @@ export class Awwan {
 
     const elResizeEditor = document.getElementById(ID_COM_RESIZE_EDITOR);
     if (elResizeEditor) {
-      const onMouseMove = (ev: MouseEvent) => this.doResizeEditor(ev);
+      const doResizeEditor = (ev: MouseEvent) => this.doResizeEditor(ev);
 
       elResizeEditor.addEventListener("mousedown", () => {
         this._posy = 0;
-        document.addEventListener("mousemove", onMouseMove);
+        document.addEventListener("mousemove", doResizeEditor);
       });
 
       document.addEventListener("mouseup", () => {
-        document.removeEventListener("mousemove", onMouseMove);
+        document.removeEventListener("mousemove", doResizeEditor);
         this._posy = 0;
       });
     }
@@ -704,24 +712,33 @@ export class Awwan {
 
   private resizeVfsLeft(diff: number) {
     if (this.comNavLeft.clientWidth <= 300) {
-      return;
+      return false;
     }
-    const width = this.comNavLeft.clientWidth - diff;
-    this.comNavLeft.style.flexBasis = `${width}px`;
+    let width = this.comNavLeft.clientWidth - diff;
+    this.comNavLeft.style.width = `${width}px`;
+    width += 30;
+    this.comNavRight.style.width = `calc(100% - ${width}px)`;
+    return true;
   }
 
   private resizeVfsRight(diff: number) {
-    if (this.comEditorOutput.clientWidth <= 500) {
-      return;
+    if (this.comNavRight.clientWidth <= 500) {
+      return false;
     }
-    const width = this.comNavLeft.clientWidth + diff;
-    this.comNavLeft.style.flexBasis = `${width}px`;
+    let width = this.comNavLeft.clientWidth + diff;
+    this.comNavLeft.style.width = `${width}px`;
+    width += 30;
+    this.comNavRight.style.width = `calc(100% - ${width}px)`;
+    return true;
   }
 
   doResizeEditor(ev: MouseEvent) {
+    ev.preventDefault();
+    ev.stopPropagation();
+
     if (this._posy == 0) {
       this._posy = ev.clientY;
-      return true;
+      return false;
     }
     const diff = this._posy - ev.clientY;
     if (diff > 0) {
@@ -737,9 +754,9 @@ export class Awwan {
     if (this.comEditor.clientHeight <= 126) {
       return;
     }
-    let height = this.comEditor.offsetHeight - diff;
+    let height = this.comEditor.clientHeight - diff;
     this.comEditor.style.height = `${height}px`;
-    height += 110;
+    height += 100;
     this.comOutputWrapper.style.height = `calc(100% - ${height}px)`;
   }
 
@@ -747,9 +764,9 @@ export class Awwan {
     if (this.comOutputWrapper.clientHeight <= 126) {
       return;
     }
-    let height = this.comEditor.offsetHeight + diff;
+    let height = this.comEditor.clientHeight + diff;
     this.comEditor.style.height = `${height}px`;
-    height += 110;
+    height += 100;
     this.comOutputWrapper.style.height = `calc(100% - ${height}px)`;
   }
 }

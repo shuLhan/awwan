@@ -5,8 +5,23 @@
     <meta charset="UTF-8" />
     <title>awwan</title>
     <style>
+        body {
+            font-family: monospace;
+            font-size: 1em;
+        }
+
+        button {
+            font-family: inherit;
+            font-size: 1em;
+        }
+
+        input {
+            font-family: inherit;
+            font-size: 1em;
+        }
+
         .header {
-            height: 24px;
+            height: 2em;
             margin-bottom: 1em;
         }
 
@@ -15,49 +30,25 @@
             margin: 0px 8px;
         }
 
+        /** Top container */
+
         .awwan {
-            height: calc(100vh - 4em);
-            display: flex;
-            flex-direction: row;
+            height: calc(100vh - 5em);
+            width: 100%;
+            overflow: hidden;
         }
 
+        /** Left layout */
+
         .awwan_nav_left {
-            display: flex;
-            flex-direction: column;
-            font-family: monospace;
-            flex-basis: 300px;
-            flex-grow: 1;
-            flex-shrink: 0;
+            width: 300px;
             overflow: hidden;
+            display: inline-block;
+            height: calc(100vh - 5em);
         }
 
         .awwan_vfs_form {
             height: 6em;
-        }
-
-        #com_vfs {
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            height: 100vh;
-        }
-
-        .wui_vfs_path {
-            display: flex;
-            flex-direction: row;
-            flex-wrap: wrap;
-            flex-grow: 1;
-
-            overflow: unset !important;
-            padding: unset !important;
-            white-space: unset !important;
-        }
-
-        .wui_vfs_list {
-            height: calc(100% - 4em);
-            flex-grow: 0;
-            flex-shrink: 1;
-            overflow: auto;
         }
 
         #com_vfs_input {
@@ -66,61 +57,86 @@
             height: 1.6em;
         }
 
-        .awwan_content {
-            height: calc(100vh - 4em);
-            flex-basis: calc(100% - 300px);
-            flex-grow: 0;
-            flex-shrink: 1;
+        #com_vfs {
             overflow: hidden;
+            height: calc(100vh - 11em);
         }
+
+        .wui_vfs_path {
+            height: 1.2em;
+        }
+
+        .wui_vfs_list {
+            height: calc(100vh - 15em);
+            overflow: auto;
+        }
+
+        #com_resize_vfs {
+            border: 1px solid gainsboro;
+            cursor: col-resize;
+            display: inline-block;
+            height: calc(100vh - 5em);
+            vertical-align: top;
+        }
+
+        /** Right layout */
+
+        #awwan_nav_right {
+            display: inline-block;
+            height: calc(100vh - 5em);
+            width: calc(100% - 330px);
+            overflow: hidden;
+            vertical-align: top;
+        }
+
+        /** Right-top layout */
 
         #vfs_path {
             margin-right: 10px;
-        }
-
-        #com_editor {
-            height: 50vh;
-            border: 1px solid silver;
-            resize: vertical;
-        }
-
-        .editor_action {
-            padding: 10px;
-        }
-
-        .boxheader {
-            border: 1px solid silver;
-        }
-
-        .boxheader>.tag {
+            border: 1px solid gainsboro;
+            padding: 7px;
             background-color: bisque;
+        }
+
+        .awwan_file {
+            border: 1px solid silver;
+        }
+
+        .awwan_file>.tag {
             border-right: 1px dashed brown;
             display: inline-block;
-            margin-right: 8px;
-            padding: 4px 2px 4px 0px;
+            padding: 4px 1px;
             text-align: center;
             width: 50px;
         }
 
-        #com_resize_vfs,
-        #com_resize_editor {
-            background-color: gainsboro;
-            border: 1px;
-            font-size: 8px;
-            text-align: center;
+        .awwan_file_actions button {
+            margin: 6px;
         }
 
-        #com_resize_vfs {
-            cursor: col-resize;
-            margin: 0 2px;
+        #com_editor {
+            height: calc(100vh - 40em);
+            border: 1px solid silver;
+            width: calc(100% - 2px);
         }
 
+        .wui_editor_content {
+            width: calc(100% - 2em) !important;
+        }
+
+        /** Right-bottom layout */
+
         #com_resize_editor {
+            border: 2px solid gainsboro;
             cursor: row-resize;
         }
 
+        .awwan_execute {
+            padding: 10px;
+        }
+
         #output_wrapper {
-            height: calc(100% - 62vh);
+            height: 27em;
         }
 
         #output {
@@ -134,35 +150,39 @@
         }
 
         @media (max-width: 700px) {
-            .awwan_nav_left {
-                position: unset;
-                width: calc(100% - 10px);
-                height: 40em;
+            body {
+                padding-bottom: 5em;
             }
 
-            .awwan_nav_left .wui_vfs_list {
-                height: 100%;
-            }
-
-            .awwan_content {
-                height: 40em;
-                margin: 20px 0 0 0;
+            .awwan {
                 overflow: unset;
-                padding: 0;
-                position: unset;
-                width: calc(100% - 10px);
+                height: unset;
             }
 
-            .editor_file {
-                margin: 10px 0;
+            #awwan_nav_left {
+                width: 100%;
+                max-height: 30vh;
+                overflow: unset;
             }
 
-            #editor {
-                height: 400px;
+            #com_vfs {
+                height: unset;
+                overflow: unset;
             }
 
-            #output {
-                white-space: pre;
+            .wui_vfs_list {
+                max-height: 30vh;
+            }
+
+            #com_resize_vfs {
+                display: none;
+            }
+
+            #awwan_nav_right {
+                margin-top: 1em;
+                overflow: unset;
+                vertical-align: unset;
+                width: 100%;
             }
         }
     </style>
