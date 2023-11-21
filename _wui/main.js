@@ -40,11 +40,8 @@ var awwan = (() => {
             line = node.nodeValue || "";
             break;
         }
-        if (line == "\n") {
-          content += line;
-        } else {
-          content += line + "\n";
-        }
+        line = line.trimEnd();
+        content += line + "\n";
       });
       content = content.trim();
       return content;
@@ -81,8 +78,20 @@ var awwan = (() => {
         this.elContent.addEventListener("paste", (ev) => {
           var _a;
           ev.preventDefault();
-          const text = (_a = ev.clipboardData) === null || _a === void 0 ? void 0 : _a.getData("text/plain");
-          document.execCommand("insertText", false, text);
+          let text = ((_a = ev.clipboardData) === null || _a === void 0 ? void 0 : _a.getData("text/plain")) || "";
+          if (!text) {
+            console.error(`on paste: text is ${text}`);
+            return;
+          }
+          const selection = window.getSelection();
+          if (!selection || !selection.rangeCount) {
+            console.error(`on paste: failed to get selection`);
+            return;
+          }
+          text = text.trimEnd();
+          selection.deleteFromDocument();
+          selection.getRangeAt(0).insertNode(document.createTextNode(text));
+          selection.collapseToEnd();
           this.renderLineNumber(this.getContent());
         });
         this.elContent.onkeydown = (ev) => {
@@ -114,9 +123,8 @@ var awwan = (() => {
         background-color: bisque;
         border-right: 1px dashed brown;
         color: dimgrey;
+        display: inline-block;
         font-family: monospace;
-        float: left;
-        left: 0px;
         margin-right: 8px;
         padding: 0px 8px;
         position: sticky;
@@ -124,11 +132,11 @@ var awwan = (() => {
         width: 3em;
       }
       .${WUI_EDITOR_CLASS_CONTENT} {
-        // Do not use "float: left" to fix line break.
         display: inline-block;
         padding: 0px 8px;
+        vertical-align: top;
         white-space: pre;
-        width: calc(100% - 6em);
+        width: calc(100% - 10em);
         word-wrap: normal;
       }
     `;
