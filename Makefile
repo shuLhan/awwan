@@ -114,7 +114,7 @@ build-all-amd64:
 	for os in "darwin" "dragonfly" "freebsd" "linux" "netbsd" "openbsd" "plan9" "solaris" "windows"; do \
 		echo ">>> Building for $$os/$(GOARCH)";\
 		GOOS=$$os go build \
-			-o _bin/awwan-$$os-$(GOARCH) \
+			-o _bin/dl/awwan-$$os-$(GOARCH) \
 			-trimpath \
 			-ldflags="$(LD_FLAGS)" \
 			./cmd/awwan/;\
@@ -127,7 +127,7 @@ build-all-arm64:
 	for os in "darwin" "freebsd" "linux" "netbsd" "openbsd" "windows"; do \
 		echo ">>> Building for $$os/$(GOARCH)";\
 		GOOS=$$os go build \
-			-o _bin/awwan-$$os-$(GOARCH) \
+			-o _bin/dl/awwan-$$os-$(GOARCH) \
 			-trimpath \
 			-ldflags="$(LD_FLAGS)" \
 			./cmd/awwan/;\
@@ -135,7 +135,7 @@ build-all-arm64:
 
 .PHONY: release-sync
 release-sync:
-	rclone sync --progress ./_bin info-kilabit:/pub/awwan
+	rsync -av --progress ./_bin/dl/ awwan.org:/srv/awwan/dl/
 
 .PHONY: release-tip
 release-tip: embed build-all-amd64 build-all-arm64 release-sync
