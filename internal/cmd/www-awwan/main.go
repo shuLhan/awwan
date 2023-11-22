@@ -19,6 +19,8 @@ import (
 	"github.com/shuLhan/share/lib/memfs"
 )
 
+const defAddress = `127.0.0.1:4358`
+
 // MemfsWww contains the embedded files under "_wui/doc" for website.
 var MemfsWww *memfs.MemFS
 
@@ -27,19 +29,33 @@ func main() {
 
 	flag.Parse()
 
-	var (
-		binName   = filepath.Base(os.Args[0])
-		optsServe = &ciigo.ServeOptions{
-			Mfs:            MemfsWww,
-			Address:        `127.0.0.1:4358`,
-			ConvertOptions: internal.DocConvertOpts,
-			IsDevelopment:  *flagDev,
-		}
+	// mfsPub serve static files to public.
+	// For example, program to be downloaded.
+	var pubOpts = &memfs.Options{
+		Root:        `/srv/awwan`,
+		MaxFileSize: -1,
+		TryDirect:   true,
+	}
+	if *flagDev {
+		pubOpts.Root = `_bin`
+	}
 
-		err error
+	var (
+		mfsPub *memfs.MemFS
+		err    error
 	)
 
-	var qsignal = make(chan os.Signal, 1)
+	mfsPub, err = memfs.New(pubOpts)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	MemfsWww.Merge(mfsPub)
+
+	var (
+		binName = filepath.Base(os.Args[0])
+		qsignal = make(chan os.Signal, 1)
+	)
 	signal.Notify(qsignal, syscall.SIGQUIT, syscall.SIGTERM)
 	go func() {
 		var sig = <-qsignal
@@ -47,8 +63,14 @@ func main() {
 		os.Exit(0)
 	}()
 
-	log.Printf(`--- Starting %s at http://%s with dev=%v`, binName,
-		optsServe.Address, *flagDev)
+	log.Printf(`--- Starting %s at http://%s with dev=%v`, binName, defAddress, *flagDev)
+
+	var optsServe = &ciigo.ServeOptions{
+		Mfs:            MemfsWww,
+		Address:        defAddress,
+		ConvertOptions: internal.DocConvertOpts,
+		IsDevelopment:  *flagDev,
+	}
 
 	err = ciigo.Serve(optsServe)
 	if err != nil {

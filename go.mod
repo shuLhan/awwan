@@ -8,7 +8,7 @@ go 1.20
 require (
 	git.sr.ht/~shulhan/ciigo v0.10.1
 	github.com/evanw/esbuild v0.19.5
-	github.com/shuLhan/share v0.50.2-0.20231121133538-f71065d11617
+	github.com/shuLhan/share v0.50.2-0.20231122060557-a23642f407b3
 )
 
 require (
