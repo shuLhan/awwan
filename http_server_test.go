@@ -191,6 +191,58 @@ func TestHttpServer_Encrypt(t *testing.T) {
 	}
 }
 
+func TestHttpServer_Execute(t *testing.T) {
+	var (
+		tdata *test.Data
+		err   error
+	)
+
+	tdata, err = test.LoadData(`testdata/http_server/execute/local_test.data`)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var aww *Awwan
+
+	aww, err = New(`testdata/http_server/execute`)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var httpd *httpServer
+
+	httpd, err = newHttpServer(aww, ``)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var buf bytes.Buffer
+
+	buf.Write(tdata.Input[`local:/local.aww:1-`])
+
+	var (
+		httpReq    = httptest.NewRequest(http.MethodPost, pathAwwanApiExecute, &buf)
+		httpWriter = httptest.NewRecorder()
+	)
+
+	httpd.ServeHTTP(httpWriter, httpReq)
+
+	var (
+		httpRes = httpWriter.Result()
+
+		resBody []byte
+	)
+
+	resBody, _ = io.ReadAll(httpRes.Body)
+
+	buf.Reset()
+	json.Indent(&buf, resBody, ``, `  `)
+
+	var expResp = string(tdata.Output[`local:/local.aww:1-`])
+
+	test.Assert(t, `First response`, expResp, buf.String())
+}
+
 func TestHttpServer_FSGet(t *testing.T) {
 	var (
 		tdata *test.Data

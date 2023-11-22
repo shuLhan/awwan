@@ -13,6 +13,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	libhttp "github.com/shuLhan/share/lib/http"
@@ -26,12 +27,13 @@ import (
 //
 // This will cause the awwan play failed with empty SSH host,
 //
-// - play.aww --- SSH connection: @:22
+//	--- SSH connection: @:22
 //
 // or an error,
 //
-// !!! initSSHClient: NewClientInteractive: dialWithSigners: ssh: handshake
-// failed: knownhosts: key is unknown from known_hosts files
+//	!!! initSSHClient: NewClientInteractive: dialWithSigners: ssh:
+//	  handshake failed: knownhosts: key is unknown from known_hosts
+//	  files
 func TestHttpServerPlaySshConfigChanges(t *testing.T) {
 	var (
 		baseDir   = `testdata/http_server/play_ssh_config_changes`
@@ -125,5 +127,5 @@ func testHttpExecute(t *testing.T, httpd *httpServer, tdata *test.Data, tag stri
 	}
 
 	expResp = tdata.Output[tag+`:output`]
-	test.Assert(t, tag+`:output`, string(expResp), string(execRes.Output))
+	test.Assert(t, tag+`:output`, string(expResp), strings.Join(execRes.Output, "\n"))
 }

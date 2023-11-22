@@ -1,0 +1,22 @@
+
+>>> local:/local.aww:1-
+{
+  "mode": "local",
+  "script": "/local.aww",
+  "line_range": "1-"
+}
+
+<<< local:/local.aww:1-
+{
+  "data": {
+    "mode": "local",
+    "script": "/local.aww",
+    "line_range": "1-",
+    "id": "local:/local.aww:1-:1701012060",
+    "begin_at": "2023-11-26T15:21:00Z",
+    "end_at": "",
+    "error": "",
+    "output": []
+  },
+  "code": 200
+}

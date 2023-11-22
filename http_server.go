@@ -4,7 +4,6 @@
 package awwan
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -39,6 +38,9 @@ const DefListenAddress = `127.0.0.1:17600`
 type httpServer struct {
 	*libhttp.Server
 
+	// idExecRes contains the execution ID and its response.
+	idExecRes map[string]*ExecResponse
+
 	aww       *Awwan
 	memfsBase *memfs.MemFS // The files caches.
 
@@ -53,6 +55,8 @@ func newHttpServer(aww *Awwan, address string) (httpd *httpServer, err error) {
 	)
 
 	httpd = &httpServer{
+		idExecRes: make(map[string]*ExecResponse),
+
 		aww:     aww,
 		baseDir: aww.BaseDir,
 	}
@@ -168,7 +172,7 @@ func (httpd *httpServer) registerEndpoints() (err error) {
 		Path:         pathAwwanApiExecute,
 		RequestType:  libhttp.RequestTypeJSON,
 		ResponseType: libhttp.ResponseTypeJSON,
-		Call:         httpd.awwanApiExecute,
+		Call:         httpd.Execute,
 	})
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
@@ -608,9 +612,33 @@ func (httpd *httpServer) awwanApiFsPut(epr *libhttp.EndpointRequest) (rawBody []
 	return json.Marshal(res)
 }
 
-func (httpd *httpServer) awwanApiExecute(epr *libhttp.EndpointRequest) (resb []byte, err error) {
+// Execute request to execute the script.
+//
+// Request format,
+//
+//	POST /awwan/api/execute
+//	Content-Type: application/json
+//
+//	{
+//		"mode": <string>,
+//		"script": <string>,
+//		"line_range": <string
+//	}
+//
+// On success it will return the state of execution,
+//
+//	Content-Type: application/json
+//
+//	{
+//		"code": 200,
+//		"data": <ExecResponse>
+//	}
+//
+// The ExecResponse contains ID that can be used to fetch the latest state
+// of execution or to stream output.
+func (httpd *httpServer) Execute(epr *libhttp.EndpointRequest) (resb []byte, err error) {
 	var (
-		logp = "awwanApiExecute"
+		logp = `Execute`
 		req  = &ExecRequest{}
 		res  = &libhttp.EndpointResponse{}
 	)
@@ -629,29 +657,29 @@ func (httpd *httpServer) awwanApiExecute(epr *libhttp.EndpointRequest) (resb []b
 		return nil, res
 	}
 
-	var (
-		data = &ExecResponse{
-			ExecRequest: req,
-		}
+	var execRes = newExecResponse(req)
 
-		logw bytes.Buffer
-	)
-
-	req.registerLogWriter(`output`, &logw)
-
-	if req.Mode == CommandModeLocal {
-		err = httpd.aww.Local(req)
-	} else {
-		err = httpd.aww.Play(req)
-	}
-	if err != nil {
-		data.Error = err.Error()
-	}
-
-	data.Output = logw.Bytes()
+	// Encode to JSON first to minimize data race.
 
 	res.Code = http.StatusOK
-	res.Data = data
+	res.Data = execRes
 
-	return json.Marshal(res)
+	resb, err = json.Marshal(res)
+	if err != nil {
+		res.Message = fmt.Sprintf(`%s: %s`, logp, err)
+		return nil, res
+	}
+
+	httpd.idExecRes[execRes.ID] = execRes
+
+	go func() {
+		if req.Mode == CommandModeLocal {
+			err = httpd.aww.Local(req)
+		} else {
+			err = httpd.aww.Play(req)
+		}
+		execRes.end(err)
+	}()
+
+	return resb, nil
 }

@@ -8,10 +8,15 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 )
 
 func TestMain(m *testing.M) {
 	defLogTimeFormat = `-`
+
+	timeNow = func() time.Time {
+		return time.Date(2023, time.November, 26, 15, 21, 00, 00, time.UTC)
+	}
 
 	os.Exit(m.Run())
 }

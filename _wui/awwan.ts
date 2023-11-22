@@ -36,11 +36,23 @@ const ID_OUTPUT = "output";
 
 const MAX_FILE_SIZE = 1000000; // 1MiB
 
-interface RequestInterface {
+interface ExecRequestInterface {
   mode: string;
   script: string;
   content: string;
   line_range: string;
+}
+
+interface ExecResponseInterface {
+  mode: string;
+  script: string;
+  line_range: string;
+
+  id: string;
+  begin_at: string;
+  end_at: string;
+  error: string;
+  output: string[];
 }
 
 interface encryptResponse {
@@ -126,7 +138,7 @@ export class Awwan {
   private comOutput!: HTMLElement;
   private comOutputWrapper!: HTMLElement;
   private currentNode: WuiVfsNodeInterface | null = null;
-  private request: RequestInterface = {
+  private request: ExecRequestInterface = {
     mode: "local",
     script: "",
     content: "",
@@ -592,17 +604,11 @@ export class Awwan {
       return;
     }
 
-    if (res.data.output) {
-      this.comOutput.innerText = atob(res.data.output);
-    }
+    const execRes = res.data as ExecResponseInterface;
 
-    if (res.data.error) {
-      this.notif.error(res.data.error);
-    } else {
-      this.notif.info(
-        `Successfully execute ${this.request.script} on ${mode}.`,
-      );
-    }
+    this.notif.info(
+      `Execute submitted ${execRes.script} on ${execRes.mode} with ID=${execRes.id}`,
+    );
   }
 
   private async newNode(isDir: boolean) {

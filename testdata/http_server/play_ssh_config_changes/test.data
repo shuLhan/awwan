@@ -19,22 +19,16 @@ Host oldhost
     "mode": "play",
     "script": "/oldhost/play.aww",
     "line_range": "1-",
-    "content": null,
+    "id": "play:/oldhost/play.aww:1-:1701012060",
+    "begin_at": "2023-11-26T15:21:00Z",
+    "end_at": "",
     "error": "",
-    "output": "LSBwbGF5LmF3dyAtLS0gU1NIIGNvbm5lY3Rpb246IGF3d2Fuc3NoQDEyNy4wLjAuMToxMDAyMgotIHBsYXkuYXd3IC0tLSBTU0ggaWRlbnRpdHkgZmlsZTogWy9ob21lL2F3d2FuLy5zc2gvaWRfZWQyNTUxOV0KLSBwbGF5LmF3dyA9PT0gQkVHSU46IHBsYXkgL29sZGhvc3QvcGxheS5hd3cgMS0KLSBwbGF5LmF3dyAtLT4gICAyOiBwd2QKL2hvbWUvYXd3YW5zc2gKLSBwbGF5LmF3dyAtLT4gICA1OiAjbG9jYWw6IHB3ZAovaG9tZS9hd3dhbi9zcmMKLSBwbGF5LmF3dyA9PT0gRU5ECg=="
+    "output": []
   },
   "code": 200
 }
 
 <<< play_on_oldhost:output
-- play.aww --- SSH connection: awwanssh@127.0.0.1:10022
-- play.aww --- SSH identity file: [/home/awwan/.ssh/id_ed25519]
-- play.aww === BEGIN: play /oldhost/play.aww 1-
-- play.aww -->   2: pwd
-/home/awwanssh
-- play.aww -->   5: #local: pwd
-/home/awwan/src
-- play.aww === END
 
 >>> .ssh/config:newhost
 Host oldhost
@@ -62,19 +56,13 @@ Host newhost
     "mode": "play",
     "script": "/newhost/play.aww",
     "line_range": "1-",
-    "content": null,
+    "id": "play:/newhost/play.aww:1-:1701012060",
+    "begin_at": "2023-11-26T15:21:00Z",
+    "end_at": "",
     "error": "",
-    "output": "LSBwbGF5LmF3dyAtLS0gU1NIIGNvbm5lY3Rpb246IGF3d2Fuc3NoQDEyNy4wLjAuMToxMDAyMgotIHBsYXkuYXd3IC0tLSBTU0ggaWRlbnRpdHkgZmlsZTogWy9ob21lL2F3d2FuLy5zc2gvaWRfZWQyNTUxOV0KLSBwbGF5LmF3dyA9PT0gQkVHSU46IHBsYXkgL25ld2hvc3QvcGxheS5hd3cgMS0KLSBwbGF5LmF3dyAtLT4gICAyOiBwd2QKL2hvbWUvYXd3YW5zc2gKLSBwbGF5LmF3dyAtLT4gICA1OiAjbG9jYWw6IHB3ZAovaG9tZS9hd3dhbi9zcmMKLSBwbGF5LmF3dyA9PT0gRU5ECg=="
+    "output": []
   },
   "code": 200
 }
 
 <<< play_on_newhost:output
-- play.aww --- SSH connection: awwanssh@127.0.0.1:10022
-- play.aww --- SSH identity file: [/home/awwan/.ssh/id_ed25519]
-- play.aww === BEGIN: play /newhost/play.aww 1-
-- play.aww -->   2: pwd
-/home/awwanssh
-- play.aww -->   5: #local: pwd
-/home/awwan/src
-- play.aww === END

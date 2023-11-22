@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/shuLhan/share/lib/ini"
 	"github.com/shuLhan/share/lib/ssh/config"
@@ -24,6 +25,11 @@ var Version = `0.9.0`
 // This variable will be overriden in testing to test running awwan in sub
 // directory of workspace.
 var osGetwd = os.Getwd
+
+// timeNow define a function that return the current time.
+//
+// This variable will be overriden in testing to mock time.
+var timeNow = time.Now
 
 // List of command available for program awwan.
 const (

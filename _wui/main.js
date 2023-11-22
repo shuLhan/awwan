@@ -923,16 +923,10 @@ var awwan = (() => {
         this.notif.error(`Execute failed: ${res.message}`);
         return;
       }
-      if (res.data.output) {
-        this.comOutput.innerText = atob(res.data.output);
-      }
-      if (res.data.error) {
-        this.notif.error(res.data.error);
-      } else {
-        this.notif.info(
-          `Successfully execute ${this.request.script} on ${mode}.`
-        );
-      }
+      const execRes = res.data;
+      this.notif.info(
+        `Execute submitted ${execRes.script} on ${execRes.mode} with ID=${execRes.id}`
+      );
     }
     async newNode(isDir) {
       if (!this.currentNode) {
