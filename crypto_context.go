@@ -14,6 +14,7 @@ import (
 	"hash"
 	"io"
 	"io/fs"
+	"log"
 	"os"
 	"path/filepath"
 
@@ -121,7 +122,7 @@ func (cryptoc *cryptoContext) loadPrivateKey() (err error) {
 		return err
 	}
 
-	fmt.Printf("--- Loading private key file %q (enter to skip passphrase) ...\n",
+	log.Printf(`--- Loading private key file %q (enter to skip passphrase) ...`,
 		relativePath(cryptoc.baseDir, fileKey))
 
 	if len(pass) == 0 {
@@ -165,8 +166,7 @@ func (cryptoc *cryptoContext) loadPassphrase() (pass []byte, err error) {
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
 
-	fmt.Printf("--- Loading passphrase file %q ...\n",
-		relativePath(cryptoc.baseDir, filePass))
+	log.Printf(`--- Loading passphrase file %q ...`, relativePath(cryptoc.baseDir, filePass))
 
 	pass, err = os.ReadFile(filePass)
 	if err != nil {

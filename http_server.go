@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"log"
 	"net/http"
 	"os"
 	"path"
@@ -178,7 +179,7 @@ func (httpd *httpServer) registerEndpoints() (err error) {
 
 // start the HTTP server.
 func (httpd *httpServer) start() (err error) {
-	fmt.Printf("--- Starting HTTP server at http://%s\n", httpd.Server.Options.Address)
+	log.Printf(`--- Starting HTTP server at http://%s`, httpd.Server.Options.Address)
 
 	return httpd.Server.Start()
 }

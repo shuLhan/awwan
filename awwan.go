@@ -5,6 +5,7 @@ package awwan
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -93,7 +94,7 @@ func (aww *Awwan) init(baseDir string) (err error) {
 		return err
 	}
 
-	fmt.Printf("--- BaseDir: %s\n", aww.BaseDir)
+	log.Printf(`--- BaseDir: %s`, aww.BaseDir)
 
 	aww.cryptoc = newCryptoContext(aww.BaseDir)
 
