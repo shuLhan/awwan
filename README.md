@@ -53,7 +53,7 @@ Go module documentation of awwan as library.
 
 ##  Development
 
-[Repository](https://git.sr.ht/~shulhan/awwan[Repository) --
+[Repository](https://git.sr.ht/~shulhan/awwan) --
 The repository of this software project.
 
 [Mailing list](https://lists.sr.ht/~shulhan/awwan) --
