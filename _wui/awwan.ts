@@ -609,6 +609,23 @@ export class Awwan {
     this.notif.info(
       `Execute submitted ${execRes.script} on ${execRes.mode} with ID=${execRes.id}`,
     );
+
+    this.comOutput.innerText = "";
+
+    // Stream the execution output using Serven-sent events.
+
+    const execTail = new EventSource(
+      `/awwan/api/execute/tail?id=${execRes.id}`,
+    );
+    execTail.onerror = (err) => {
+      this.comOutput.innerText += err + "\n";
+    };
+    execTail.onmessage = (ev) => {
+      this.comOutput.innerText += ev.data + "\n";
+    };
+    execTail.addEventListener("end", () => {
+      execTail.close();
+    });
   }
 
   private async newNode(isDir: boolean) {

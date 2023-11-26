@@ -20,3 +20,26 @@
   },
   "code": 200
 }
+
+<<< local:/local.aww:1-:tail
+event: open
+
+event: begin
+data: 2023-11-26T15:21:00Z
+
+event: message
+data: - local.aww === BEGIN: local /local.aww 1-
+
+event: message
+data: - local.aww -->   1: echo "test"
+
+event: message
+data: test
+
+event: message
+data: - local.aww === END
+
+event: end
+data: 2023-11-26T15:21:00Z
+
+

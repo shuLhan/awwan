@@ -6,12 +6,19 @@ package awwan
 import (
 	"bytes"
 	"fmt"
+	"strconv"
+	"sync"
 	"time"
+
+	"github.com/shuLhan/share/lib/http/sseclient"
 )
 
 // ExecResponse contains the request and output of command execution, from
 // ExecRequest.
 type ExecResponse struct {
+	// Queue that push the each line in Output as event.
+	eventq chan sseclient.Event
+
 	// Copy of request.
 
 	Mode      string `json:"mode"`
@@ -31,6 +38,9 @@ type ExecResponse struct {
 	Error string `json:"error"`
 
 	Output []string `json:"output"`
+
+	// mtxOutput protect read/write on Output.
+	mtxOutput sync.Mutex
 }
 
 func newExecResponse(req *ExecRequest) (execRes *ExecResponse) {
@@ -45,6 +55,7 @@ func newExecResponse(req *ExecRequest) (execRes *ExecResponse) {
 		BeginAt: now.Format(time.RFC3339),
 
 		Output: make([]string, 0, 8),
+		eventq: make(chan sseclient.Event, 512),
 	}
 
 	// Use the ExecResponse itself as handler for output.
@@ -55,31 +66,60 @@ func newExecResponse(req *ExecRequest) (execRes *ExecResponse) {
 
 // Write convert the raw output from execution into multiline string, and
 // push it to field Output.
-func (execres *ExecResponse) Write(out []byte) (n int, err error) {
+func (execRes *ExecResponse) Write(out []byte) (n int, err error) {
 	if len(out) == 0 {
 		return 0, nil
 	}
 
-	var outlen = len(out)
-	if out[outlen-1] == '\n' {
-		out = out[:outlen-1]
-		outlen--
-	}
-
 	var (
 		lines = bytes.Split(out, []byte{'\n'})
-		line  []byte
-	)
-	for _, line = range lines {
-		execres.Output = append(execres.Output, string(line))
-	}
 
-	return outlen, nil
+		line []byte
+		ev   sseclient.Event
+	)
+
+	execRes.mtxOutput.Lock()
+	for _, line = range lines {
+		ev = sseclient.Event{
+			Data: string(line),
+			ID:   strconv.FormatInt(int64(len(execRes.Output)), 10),
+		}
+
+		execRes.Output = append(execRes.Output, ev.Data)
+
+		select {
+		case execRes.eventq <- ev:
+		default:
+		}
+	}
+	execRes.mtxOutput.Unlock()
+
+	return len(out), nil
 }
 
-func (execres *ExecResponse) end(execErr error) {
+// end mark the execution completed, possibly with error.
+func (execRes *ExecResponse) end(execErr error) {
+	var ev sseclient.Event
+
 	if execErr != nil {
-		execres.Error = execErr.Error()
+		execRes.Error = execErr.Error()
+		ev.Data = execRes.Error
+
+		select {
+		case execRes.eventq <- ev:
+		default:
+		}
 	}
-	execres.EndAt = timeNow().UTC().Format(time.RFC3339)
+
+	execRes.EndAt = timeNow().UTC().Format(time.RFC3339)
+
+	ev.Type = `end`
+	ev.Data = execRes.EndAt
+
+	select {
+	case execRes.eventq <- ev:
+	default:
+	}
+
+	close(execRes.eventq)
 }

@@ -16,6 +16,7 @@ import (
 	"strings"
 
 	libhttp "github.com/shuLhan/share/lib/http"
+	"github.com/shuLhan/share/lib/http/sseclient"
 	"github.com/shuLhan/share/lib/memfs"
 
 	"git.sr.ht/~shulhan/awwan/internal"
@@ -23,13 +24,18 @@ import (
 
 // List of available HTTP API.
 const (
-	pathAwwanApiDecrypt = `/awwan/api/decrypt`
-	pathAwwanApiEncrypt = `/awwan/api/encrypt`
-	pathAwwanApiExecute = `/awwan/api/execute`
-	pathAwwanApiFs      = `/awwan/api/fs`
+	pathAwwanApiDecrypt     = `/awwan/api/decrypt`
+	pathAwwanApiEncrypt     = `/awwan/api/encrypt`
+	pathAwwanApiExecute     = `/awwan/api/execute`
+	pathAwwanApiExecuteTail = `/awwan/api/execute/tail`
+	pathAwwanApiFs          = `/awwan/api/fs`
 )
 
-const paramNamePath = `path`
+// List of known parameter in request.
+const (
+	paramNamePath = `path`
+	paramNameID   = `id`
+)
 
 // DefListenAddress default HTTP server address to serve WUI.
 const DefListenAddress = `127.0.0.1:17600`
@@ -176,6 +182,18 @@ func (httpd *httpServer) registerEndpoints() (err error) {
 	})
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
+	}
+
+	// Register Server-sent events to tail the execution state and
+	// output.
+
+	var epExecuteTail = &libhttp.SSEEndpoint{
+		Path: pathAwwanApiExecuteTail,
+		Call: httpd.ExecuteTail,
+	}
+	err = httpd.RegisterSSE(epExecuteTail)
+	if err != nil {
+		return fmt.Errorf(`%s: %w`, logp, err)
 	}
 
 	return nil
@@ -682,4 +700,92 @@ func (httpd *httpServer) Execute(epr *libhttp.EndpointRequest) (resb []byte, err
 	}()
 
 	return resb, nil
+}
+
+// ExecuteTail fetch the latest output of execution using Server-sent
+// events.
+//
+// Request format,
+//
+//	GET /awwan/api/execute/tail?id=string
+//	Accept: text/event-stream
+//
+// The "id" query string define the execution ID.
+//
+// Response format,
+//
+//	200 OK HTTP/1.1
+//	Content-Type: text/event-stream
+//
+//	event: begin
+//	data: <time.RFC3339>
+//
+//	data: ...
+//
+//	event: end
+//	data: <time.RFC3339>
+//
+// In case the ID is not found, the first event is "error" with the error
+// message in data field.
+//
+//	event: error
+//	data: invalid or empty ID ${id}
+func (httpd *httpServer) ExecuteTail(sseconn *libhttp.SSEConn) {
+	var (
+		execID  = sseconn.HttpRequest.Form.Get(paramNameID)
+		execRes = httpd.idExecRes[execID]
+	)
+	if execRes == nil {
+		sseconn.WriteEvent(``, `ERROR: invalid or empty ID `+execID, nil)
+		return
+	}
+
+	sseconn.WriteEvent(`begin`, execRes.BeginAt, nil)
+
+	// Send out the existing output first...
+
+	var (
+		idx int
+		out string
+	)
+	execRes.mtxOutput.Lock()
+	for idx, out = range execRes.Output {
+		sseconn.WriteEvent(``, out, nil)
+	}
+	if len(execRes.EndAt) != 0 {
+		// The execution has been completed.
+		sseconn.WriteEvent(`end`, execRes.EndAt, nil)
+		execRes.mtxOutput.Unlock()
+		return
+	}
+	execRes.mtxOutput.Unlock()
+
+	var lastID = int64(idx)
+
+	// And wait for the rest...
+
+	var (
+		ok = true
+
+		ev   sseclient.Event
+		evid int64
+	)
+	for {
+		ev, ok = <-execRes.eventq
+		if !ok {
+			// Channel has been closed.
+			break
+		}
+		if len(ev.ID) == 0 {
+			sseconn.WriteEvent(ev.Type, ev.Data, nil)
+			continue
+		}
+
+		// Skip event where ID is less than last ID from output.
+		evid = ev.IDInt()
+		if evid < lastID {
+			continue
+		}
+		sseconn.WriteEvent(ev.Type, ev.Data, nil)
+	}
 }

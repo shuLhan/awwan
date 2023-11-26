@@ -1,0 +1,9 @@
+echo "command #1"
+sleep 3
+echo "command #2"
+sleep 3
+echo "command #3"
+sleep 3
+echo "command #4"
+sleep 3
+echo "completed"
