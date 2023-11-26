@@ -1,5 +1,6 @@
 *.lck
 *.log
+/.cache
 /CHANGELOG.html
 /README.html
 /_AUR/*.tar.zst

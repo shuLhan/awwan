@@ -1,0 +1,9 @@
+[Unit]
+Description="Watch www-awwan"
+
+[Path]
+PathChanged={{.Val "awwan:www:bin"}}
+Unit=systemctl-restart@%p.service
+
+[Install]
+WantedBy=multi-user.target

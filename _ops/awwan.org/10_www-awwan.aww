@@ -1,0 +1,22 @@
+sudo mkdir -p /srv/awwan
+sudo chown ms:ms -R /srv/awwan
+sudo chmod +755 /srv/awwan
+
+#put!+0644 \
+  {{.ScriptDir}}/etc/systemd/system/systemctl-restart@.service \
+                /etc/systemd/system/systemctl-restart@.service
+
+sudo systemctl daemon-reload
+
+#put!+0644 \
+  {{.ScriptDir}}/etc/systemd/system/www-awwan.path \
+                /etc/systemd/system/www-awwan.path
+
+sudo systemctl enable --now www-awwan.path
+
+#put!+0644 \
+  {{.ScriptDir}}/etc/systemd/system/www-awwan.service \
+                /etc/systemd/system/www-awwan.service
+
+sudo systemctl enable --now www-awwan.service
+sudo systemctl status www-awwan.service

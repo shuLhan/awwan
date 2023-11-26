@@ -1,0 +1,12 @@
+[Unit]
+Description=www-awwan
+After=network-online.target
+
+[Service]
+Type=simple
+ExecStart={{.Val "awwan:www:bin"}}
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target
