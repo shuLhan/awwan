@@ -612,13 +612,25 @@ export class Awwan {
 
     this.comOutput.innerText = "";
 
-    // Stream the execution output using Serven-sent events.
+    // Stream the execution output using Server-sent events.
 
     const execTail = new EventSource(
       `/awwan/api/execute/tail?id=${execRes.id}`,
     );
     execTail.onerror = (err) => {
-      this.comOutput.innerText += err + "\n";
+      if (this.readyState === EventSource.CONNECTING) {
+        console.info(
+          `execTail: reconnecting with LastEventID=${execTail.lastEventID}`,
+        );
+        return;
+      }
+      if (this.readyState === EventSource.OPEN) {
+        // Connection still open but there is an error?
+        console.error(`execTail: onerror: ${err.data}`);
+        return;
+      }
+      console.error(`execTail: connection closed`);
+      execTail.close();
     };
     execTail.onmessage = (ev) => {
       this.comOutput.innerText += ev.data + "\n";

@@ -71,6 +71,11 @@ func (execRes *ExecResponse) Write(out []byte) (n int, err error) {
 		return 0, nil
 	}
 
+	var outlen = len(out)
+	if out[outlen-1] == '\n' {
+		out = out[:outlen-1]
+	}
+
 	var (
 		lines = bytes.Split(out, []byte{'\n'})
 

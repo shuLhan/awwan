@@ -29,17 +29,22 @@ data: 2023-11-26T15:21:00Z
 
 event: message
 data: - local.aww === BEGIN: local /local.aww 1-
+id: 0
 
 event: message
 data: - local.aww -->   1: echo "test"
+id: 1
 
 event: message
 data: test
+id: 2
 
 event: message
 data: - local.aww === END
+id: 3
 
 event: end
 data: 2023-11-26T15:21:00Z
+id: 3
 
 

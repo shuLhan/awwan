@@ -13,6 +13,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	libhttp "github.com/shuLhan/share/lib/http"
@@ -740,27 +741,40 @@ func (httpd *httpServer) ExecuteTail(sseconn *libhttp.SSEConn) {
 		return
 	}
 
-	sseconn.WriteEvent(`begin`, execRes.BeginAt, nil)
-
-	// Send out the existing output first...
-
 	var (
-		idx int
-		out string
+		lastEventIDStr = sseconn.HttpRequest.Header.Get(libhttp.HeaderLastEventID)
+		lastEventID    int64
 	)
-	execRes.mtxOutput.Lock()
-	for idx, out = range execRes.Output {
-		sseconn.WriteEvent(``, out, nil)
+
+	if len(lastEventIDStr) != 0 {
+		lastEventID, _ = strconv.ParseInt(lastEventIDStr, 10, 64)
 	}
-	if len(execRes.EndAt) != 0 {
-		// The execution has been completed.
-		sseconn.WriteEvent(`end`, execRes.EndAt, nil)
-		execRes.mtxOutput.Unlock()
-		return
+	if lastEventID == 0 {
+		sseconn.WriteEvent(`begin`, execRes.BeginAt, nil)
+	}
+
+	execRes.mtxOutput.Lock()
+	if lastEventID < int64(len(execRes.Output)) {
+		// Send out the existing output based on request
+		// Last-Event-ID ...
+		var (
+			idx   int
+			out   string
+			idstr string
+		)
+		for idx, out = range execRes.Output[int(lastEventID):] {
+			idstr = strconv.FormatInt(int64(idx), 10)
+			sseconn.WriteEvent(``, out, &idstr)
+		}
+		lastEventID = int64(idx)
 	}
 	execRes.mtxOutput.Unlock()
 
-	var lastID = int64(idx)
+	if len(execRes.EndAt) != 0 {
+		// The execution has been completed.
+		sseconn.WriteEvent(`end`, execRes.EndAt, nil)
+		return
+	}
 
 	// And wait for the rest...
 
@@ -783,9 +797,9 @@ func (httpd *httpServer) ExecuteTail(sseconn *libhttp.SSEConn) {
 
 		// Skip event where ID is less than last ID from output.
 		evid = ev.IDInt()
-		if evid < lastID {
+		if evid <= lastEventID {
 			continue
 		}
-		sseconn.WriteEvent(ev.Type, ev.Data, nil)
+		sseconn.WriteEvent(ev.Type, ev.Data, &ev.ID)
 	}
 }
