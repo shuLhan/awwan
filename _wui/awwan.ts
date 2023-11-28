@@ -102,7 +102,7 @@ export function renderHtml() {
               on
               <button id="${ID_BTN_EXEC_LOCAL}" disabled="true">Local</button>
               or
-              <button id="${ID_BTN_EXEC_REMOTE}" disabled="true">Remote</button>
+              <button id="${ID_BTN_EXEC_REMOTE}" disabled="true">Play</button>
               &nbsp;
               <a href="/doc/awwan.html#command__local__and__play_" target="_blank">
                 &#x2139;
@@ -128,7 +128,7 @@ export class Awwan {
   private comBtnLocal!: HTMLButtonElement;
   private comBtnNewDir!: HTMLButtonElement;
   private comBtnNewFile!: HTMLButtonElement;
-  private comBtnRemote!: HTMLButtonElement;
+  private comBtnPlay!: HTMLButtonElement;
   private comBtnRemove!: HTMLButtonElement;
   private comBtnSave!: HTMLButtonElement;
   private comEditor!: HTMLElement;
@@ -187,9 +187,9 @@ export class Awwan {
     }
     el = document.getElementById(ID_BTN_EXEC_REMOTE);
     if (el) {
-      this.comBtnRemote = el as HTMLButtonElement;
-      this.comBtnRemote.onclick = () => {
-        this.execRemote();
+      this.comBtnPlay = el as HTMLButtonElement;
+      this.comBtnPlay.onclick = () => {
+        this.execPlay();
       };
     }
 
@@ -377,7 +377,7 @@ export class Awwan {
     this.editor.open(node);
     this.orgContent = this.editor.getContent();
     this.comBtnLocal.disabled = false;
-    this.comBtnRemote.disabled = false;
+    this.comBtnPlay.disabled = false;
     this.comBtnSave.disabled = false;
 
     if (path.endsWith(".vault")) {
@@ -568,8 +568,8 @@ export class Awwan {
     this.httpApiExecute("local", lineRange);
   }
 
-  // execRemote request to execute the selected script on remote system.
-  execRemote() {
+  // execPlay request to execute the selected script on remote system.
+  execPlay() {
     if (this.request.script == "") {
       this.notif.error(`Execute on remote: no file selected`);
       return;

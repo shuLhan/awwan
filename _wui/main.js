@@ -515,7 +515,7 @@ var awwan = (() => {
               on
               <button id="${ID_BTN_EXEC_LOCAL}" disabled="true">Local</button>
               or
-              <button id="${ID_BTN_EXEC_REMOTE}" disabled="true">Remote</button>
+              <button id="${ID_BTN_EXEC_REMOTE}" disabled="true">Play</button>
               &nbsp;
               <a href="/doc/awwan.html#command__local__and__play_" target="_blank">
                 &#x2139;
@@ -570,9 +570,9 @@ var awwan = (() => {
       }
       el = document.getElementById(ID_BTN_EXEC_REMOTE);
       if (el) {
-        this.comBtnRemote = el;
-        this.comBtnRemote.onclick = () => {
-          this.execRemote();
+        this.comBtnPlay = el;
+        this.comBtnPlay.onclick = () => {
+          this.execPlay();
         };
       }
       el = document.getElementById(ID_BTN_NEW_DIR);
@@ -732,7 +732,7 @@ var awwan = (() => {
       this.editor.open(node);
       this.orgContent = this.editor.getContent();
       this.comBtnLocal.disabled = false;
-      this.comBtnRemote.disabled = false;
+      this.comBtnPlay.disabled = false;
       this.comBtnSave.disabled = false;
       if (path.endsWith(".vault")) {
         this.comBtnDecrypt.disabled = false;
@@ -892,8 +892,8 @@ var awwan = (() => {
       }
       this.httpApiExecute("local", lineRange);
     }
-    // execRemote request to execute the selected script on remote system.
-    execRemote() {
+    // execPlay request to execute the selected script on remote system.
+    execPlay() {
       if (this.request.script == "") {
         this.notif.error(`Execute on remote: no file selected`);
         return;
