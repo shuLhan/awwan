@@ -510,6 +510,7 @@ var awwan = (() => {
         <div id="${ID_OUTPUT_WRAPPER}" class="output">
           <div>
             <div class="${CLASS_AWWAN_EXECUTE}">
+              <span id="exec_icon">&#9898;</span>
               Execute line
               <input id="${ID_INP_LINE_RANGE}" placeholder="Ex: 1,2-4,5-"/>
               on
@@ -560,6 +561,10 @@ var awwan = (() => {
           document.removeEventListener("mousemove", doResizeVfs);
           this._posx = 0;
         });
+      }
+      el = document.getElementById("exec_icon");
+      if (el) {
+        this.elExecIcon = el;
       }
       el = document.getElementById(ID_BTN_EXEC_LOCAL);
       if (el) {
@@ -906,6 +911,7 @@ var awwan = (() => {
       this.httpApiExecute("remote", lineRange);
     }
     async httpApiExecute(mode, lineRange) {
+      this.preExecute();
       this.comOutput.innerText = "";
       this.request.mode = mode;
       this.request.content = btoa(this.editor.getContent());
@@ -921,6 +927,7 @@ var awwan = (() => {
       const res = await httpRes.json();
       if (res.code != 200) {
         this.notif.error(`Execute failed: ${res.message}`);
+        this.postExecute();
         return;
       }
       const execRes = res.data;
@@ -944,13 +951,32 @@ var awwan = (() => {
         }
         console.error(`execTail: connection closed`);
         execTail.close();
+        this.postExecute();
       };
       execTail.onmessage = (ev) => {
         this.comOutput.innerText += ev.data + "\n";
+        this.comOutput.scrollTo(0, this.comOutput.scrollHeight);
+      };
+      execTail.onopen = () => {
+        this.whileExecute();
       };
       execTail.addEventListener("end", () => {
         execTail.close();
+        this.postExecute();
       });
+    }
+    preExecute() {
+      this.comBtnLocal.disabled = true;
+      this.comBtnPlay.disabled = true;
+      this.elExecIcon.innerHTML = "&#128993;";
+    }
+    whileExecute() {
+      this.elExecIcon.innerHTML = "&#128994;";
+    }
+    postExecute() {
+      this.comBtnLocal.disabled = false;
+      this.comBtnPlay.disabled = false;
+      this.elExecIcon.innerHTML = "&#9898;";
     }
     async newNode(isDir) {
       if (!this.currentNode) {

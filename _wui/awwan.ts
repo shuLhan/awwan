@@ -97,6 +97,7 @@ export function renderHtml() {
         <div id="${ID_OUTPUT_WRAPPER}" class="output">
           <div>
             <div class="${CLASS_AWWAN_EXECUTE}">
+              <span id="exec_icon">&#9898;</span>
               Execute line
               <input id="${ID_INP_LINE_RANGE}" placeholder="Ex: 1,2-4,5-"/>
               on
@@ -138,6 +139,7 @@ export class Awwan {
   private comOutput!: HTMLElement;
   private comOutputWrapper!: HTMLElement;
   private currentNode: WuiVfsNodeInterface | null = null;
+  private elExecIcon!: HTMLElement;
   private request: ExecRequestInterface = {
     mode: "local",
     script: "",
@@ -176,6 +178,11 @@ export class Awwan {
         document.removeEventListener("mousemove", doResizeVfs);
         this._posx = 0;
       });
+    }
+
+    el = document.getElementById("exec_icon");
+    if (el) {
+      this.elExecIcon = el;
     }
 
     el = document.getElementById(ID_BTN_EXEC_LOCAL);
@@ -583,6 +590,8 @@ export class Awwan {
   }
 
   async httpApiExecute(mode: string, lineRange: string) {
+    this.preExecute();
+
     this.comOutput.innerText = "";
 
     this.request.mode = mode;
@@ -601,6 +610,7 @@ export class Awwan {
     const res = await httpRes.json();
     if (res.code != 200) {
       this.notif.error(`Execute failed: ${res.message}`);
+      this.postExecute();
       return;
     }
 
@@ -631,13 +641,35 @@ export class Awwan {
       }
       console.error(`execTail: connection closed`);
       execTail.close();
+      this.postExecute();
     };
     execTail.onmessage = (ev) => {
       this.comOutput.innerText += ev.data + "\n";
+      this.comOutput.scrollTo(0, this.comOutput.scrollHeight);
+    };
+    execTail.onopen = () => {
+      this.whileExecute();
     };
     execTail.addEventListener("end", () => {
       execTail.close();
+      this.postExecute();
     });
+  }
+
+  private preExecute() {
+    this.comBtnLocal.disabled = true;
+    this.comBtnPlay.disabled = true;
+    this.elExecIcon.innerHTML = "&#128993;";
+  }
+
+  private whileExecute() {
+    this.elExecIcon.innerHTML = "&#128994;";
+  }
+
+  private postExecute() {
+    this.comBtnLocal.disabled = false;
+    this.comBtnPlay.disabled = false;
+    this.elExecIcon.innerHTML = "&#9898;";
   }
 
   private async newNode(isDir: boolean) {
