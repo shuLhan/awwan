@@ -85,7 +85,7 @@ func (req *ExecRequest) init(workDir string) (err error) {
 			namedStderr = mlog.NewNamedWriter(`stderr`, os.Stderr)
 		)
 
-		req.mlog = mlog.NewMultiLogger(defLogTimeFormat, filepath.Base(req.Script),
+		req.mlog = mlog.NewMultiLogger(defLogTimeFormat, ``,
 			[]mlog.NamedWriter{namedStdout},
 			[]mlog.NamedWriter{namedStderr},
 		)

@@ -1,11 +1,11 @@
 Test on "play" command.
 
 <<< play_with_local:output
-- play.aww --- SSH connection: awwanssh@127.0.0.1:10022
-- play.aww --- SSH identity file: [/home/awwan/.ssh/id_ed25519]
-- play.aww === BEGIN: play testdata/play/awwanssh.test/play.aww 1-
-- play.aww -->   2: pwd
+- --- SSH connection: awwanssh@127.0.0.1:10022
+- --- SSH identity file: [/home/awwan/.ssh/id_ed25519]
+- === BEGIN: play testdata/play/awwanssh.test/play.aww 1-
+- -->   2: pwd
 /home/awwanssh
-- play.aww -->   5: #local: pwd
+- -->   5: #local: pwd
 /home/awwan/src
-- play.aww === END
+- === END
