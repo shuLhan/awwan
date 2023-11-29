@@ -1,0 +1,9 @@
+[Unit]
+Description="Watch /usr/local/bin/awwan"
+
+[Path]
+PathChanged=/usr/local/bin/awwan
+Unit=systemctl-restart@%p.service
+
+[Install]
+WantedBy=multi-user.target

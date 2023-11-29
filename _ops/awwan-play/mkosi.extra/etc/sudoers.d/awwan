@@ -1,0 +1,6 @@
+User_Alias ALLOWED_USER = awwan, awwanssh
+
+Cmnd_Alias ALLOWED_CMD = /usr/bin/cp, /usr/bin/chown, /usr/bin/chmod, \
+  /usr/bin/mv, /usr/bin/rm ^/tmp/[^[:space:]]*$
+
+ALLOWED_USER ALL = NOPASSWD: ALLOWED_CMD

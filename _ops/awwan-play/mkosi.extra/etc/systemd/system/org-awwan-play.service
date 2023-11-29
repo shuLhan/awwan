@@ -1,0 +1,14 @@
+[Unit]
+Description=org-awwan-play
+After=network-online.target
+
+[Service]
+User=awwan
+WorkingDirectory=/home/awwan/play
+ExecStart=/usr/local/bin/awwan -address=0.0.0.0:27600 \
+  serve /home/awwan/play
+Restart=always
+RestartSec=5s
+
+[Install]
+WantedBy=default.target

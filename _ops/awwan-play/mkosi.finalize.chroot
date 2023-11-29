@@ -1,0 +1,9 @@
+#!/bin/sh
+
+systemctl enable sshd.service
+systemctl enable org-awwan-play.path
+systemctl enable org-awwan-play.service
+
+chmod 0600 /etc/ssh/*_key
+chown -R awwan:awwan /home/awwan/
+chown -R awwanssh:awwanssh /home/awwanssh/

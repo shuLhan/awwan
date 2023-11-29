@@ -28,7 +28,7 @@ embed:
 
 .PHONY: build
 build: embed
-	go build ./cmd/awwan
+	go build -o _bin/awwan ./cmd/awwan
 
 .PHONY: install
 install: lint-www lint embed
@@ -157,5 +157,26 @@ release-sync-local:
 
 .PHONY: release-tip-local
 release-tip-local: embed build-all-amd64 build-all-arm64 release-sync-local
+
+#}}}
+#{{{ Tasks for play.awwan.org.
+
+## Build the play.awwan.org container in local.
+
+.PHONY: build-awwan-play
+build-awwan-play:
+	@echo ">>> Stopping container ..."
+	-sudo machinectl stop awwan-play
+
+	@echo ">>> Creating binding ..."
+	## We need to bind src/_bin and src/_play into container.
+	mkdir -p /data/awwan/
+	ln -sTf $$(pwd) /data/awwan/src
+
+	@echo ">>> Building container ..."
+	sudo mkosi --directory=_ops/awwan-play --force build
+
+	sudo machinectl --force import-tar /data/awwan/awwan-play.tar
+	sudo machinectl start awwan-play
 
 #}}}
