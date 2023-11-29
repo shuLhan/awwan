@@ -8,4 +8,4 @@ Test on "play" command.
 /home/awwanssh
 - -->   5: #local: pwd
 /home/awwan/src
-- === END
+- === END: play testdata/play/awwanssh.test/play.aww 1-

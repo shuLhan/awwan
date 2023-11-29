@@ -314,6 +314,7 @@ func (aww *Awwan) Local(req *ExecRequest) (err error) {
 		goto out
 	}
 
+	req.mlog.Outf(`=== BEGIN: %s %s %s`, req.Mode, req.Script, req.LineRange)
 	for _, pos = range req.lineRange.list {
 		err = ses.executeRequires(req, pos)
 		if err != nil {
@@ -325,6 +326,7 @@ func (aww *Awwan) Local(req *ExecRequest) (err error) {
 			goto out
 		}
 	}
+	req.mlog.Outf(`=== END: %s %s %s`, req.Mode, req.Script, req.LineRange)
 out:
 	if ses != nil {
 		var errRemove = os.RemoveAll(ses.dirTmp)
@@ -389,6 +391,7 @@ func (aww *Awwan) Play(req *ExecRequest) (err error) {
 		goto out
 	}
 
+	req.mlog.Outf(`=== BEGIN: %s %s %s`, req.Mode, req.Script, req.LineRange)
 	for _, pos = range req.lineRange.list {
 		err = ses.executeRequires(req, pos)
 		if err != nil {
@@ -400,6 +403,7 @@ func (aww *Awwan) Play(req *ExecRequest) (err error) {
 			goto out
 		}
 	}
+	req.mlog.Outf(`=== END: %s %s %s`, req.Mode, req.Script, req.LineRange)
 out:
 	if ses != nil && ses.sshc != nil {
 		var errRemove = ses.sshc.rmdirAll(ses.sshc.dirTmp)

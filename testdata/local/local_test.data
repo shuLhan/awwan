@@ -7,4 +7,4 @@ hello
 - -->   4: #local: echo "nothing"
 - -->   6: echo "local"
 local
-- === END
+- === END: local testdata/local/local.aww 1-

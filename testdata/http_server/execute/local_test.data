@@ -40,7 +40,7 @@ data: test
 id: 2
 
 event: message
-data: - === END
+data: - === END: local /local.aww 1-
 id: 3
 
 event: end

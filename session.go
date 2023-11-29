@@ -443,8 +443,6 @@ func (ses *Session) executeScriptOnLocal(req *ExecRequest, pos linePosition) (er
 		pos.end = max - 1
 	}
 
-	req.mlog.Outf(`=== BEGIN: %s %s %s`, req.Mode, req.Script, req.LineRange)
-
 	for x := pos.start; x <= pos.end; x++ {
 		stmt := req.script.stmts[x]
 		if stmt == nil {
@@ -476,7 +474,6 @@ func (ses *Session) executeScriptOnLocal(req *ExecRequest, pos linePosition) (er
 			return err
 		}
 	}
-	req.mlog.Outf(`=== END`)
 	return nil
 }
 
@@ -488,8 +485,6 @@ func (ses *Session) executeScriptOnRemote(req *ExecRequest, pos linePosition) (e
 	if pos.end == 0 {
 		pos.end = max - 1
 	}
-
-	req.mlog.Outf(`=== BEGIN: %s %s %s`, req.Mode, req.Script, req.LineRange)
 
 	for x := pos.start; x <= pos.end; x++ {
 		stmt := req.script.stmts[x]
@@ -523,7 +518,6 @@ func (ses *Session) executeScriptOnRemote(req *ExecRequest, pos linePosition) (e
 			return err
 		}
 	}
-	req.mlog.Outf(`=== END`)
 	return nil
 }
 

@@ -2,7 +2,7 @@
 - === BEGIN: local testdata/local/local_encrypted.aww 3
 - -->   3: echo this_is_a_secret
 this_is_a_secret
-- === END
+- === END: local testdata/local/local_encrypted.aww 3
 
 <<< echo_encrypted_no_pass
 Local: NewScript: ParseScript: template: local_encrypted.aww:3:7: executing "local_encrypted.aww" at <.Val>: error calling Val: "secret::pass" is empty
@@ -20,4 +20,4 @@ Local: NewSession: .awwan.env.vault: LoadPrivateKeyInteractive: x509: decryption
 - === BEGIN: local testdata/local/sub/local_encrypted.aww 1
 - -->   1: echo this_is_a_secret_in_sub
 this_is_a_secret_in_sub
-- === END
+- === END: local testdata/local/sub/local_encrypted.aww 1
