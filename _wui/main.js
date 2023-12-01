@@ -918,7 +918,7 @@ var awwan = (() => {
     }
     async httpApiExecute(mode, lineRange) {
       this.preExecute();
-      this.comOutput.innerText = "";
+      this.comOutput.innerText += "\n";
       this.request.mode = mode;
       this.request.content = btoa(this.editor.getContent());
       this.request.line_range = lineRange;
@@ -940,7 +940,6 @@ var awwan = (() => {
       this.notif.info(
         `Execute submitted ${execRes.script} on ${execRes.mode} with ID=${execRes.id}`
       );
-      this.comOutput.innerText = "";
       const execTail = new EventSource(
         `/awwan/api/execute/tail?id=${execRes.id}`
       );

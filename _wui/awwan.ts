@@ -602,7 +602,7 @@ export class Awwan {
   async httpApiExecute(mode: string, lineRange: string) {
     this.preExecute();
 
-    this.comOutput.innerText = "";
+    this.comOutput.innerText += "\n";
 
     this.request.mode = mode;
     this.request.content = btoa(this.editor.getContent());
@@ -629,8 +629,6 @@ export class Awwan {
     this.notif.info(
       `Execute submitted ${execRes.script} on ${execRes.mode} with ID=${execRes.id}`,
     );
-
-    this.comOutput.innerText = "";
 
     // Stream the execution output using Server-sent events.
 
