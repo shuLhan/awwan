@@ -479,6 +479,7 @@ var awwan = (() => {
   var ID_OUTPUT_WRAPPER = "output_wrapper";
   var ID_OUTPUT = "output";
   var MAX_FILE_SIZE = 1e6;
+  var STORAGE_KEY_VFS_WIDTH = "vfs_width";
   function renderHtml() {
     const el = document.createElement("div");
     el.classList.add("awwan");
@@ -541,6 +542,7 @@ var awwan = (() => {
       this.orgContent = "";
       this._posx = 0;
       this._posy = 0;
+      renderHtml();
       let el;
       el = document.getElementById(ID_AWWAN_NAV_LEFT);
       if (el) {
@@ -687,6 +689,10 @@ var awwan = (() => {
           document.removeEventListener("mousemove", doResizeEditor);
           this._posy = 0;
         });
+      }
+      const vfsWidth = localStorage.getItem(STORAGE_KEY_VFS_WIDTH);
+      if (vfsWidth) {
+        this.setVfsWidth(parseInt(vfsWidth, 10));
       }
     }
     onHashChange(hash) {
@@ -1074,20 +1080,23 @@ var awwan = (() => {
       if (this.comNavLeft.clientWidth <= 300) {
         return false;
       }
-      let width = this.comNavLeft.clientWidth - diff;
+      const width = this.comNavLeft.clientWidth - diff;
+      this.setVfsWidth(width);
+      localStorage.setItem(STORAGE_KEY_VFS_WIDTH, `${width}`);
+      return true;
+    }
+    setVfsWidth(width) {
       this.comNavLeft.style.width = `${width}px`;
       width += 30;
       this.comNavRight.style.width = `calc(100% - ${width}px)`;
-      return true;
     }
     resizeVfsRight(diff) {
       if (this.comNavRight.clientWidth <= 500) {
         return false;
       }
-      let width = this.comNavLeft.clientWidth + diff;
-      this.comNavLeft.style.width = `${width}px`;
-      width += 30;
-      this.comNavRight.style.width = `calc(100% - ${width}px)`;
+      const width = this.comNavLeft.clientWidth + diff;
+      this.setVfsWidth(width);
+      localStorage.setItem(STORAGE_KEY_VFS_WIDTH, `${width}`);
       return true;
     }
     doResizeEditor(ev) {
@@ -1127,7 +1136,6 @@ var awwan = (() => {
   };
 
   // _wui/main.ts
-  renderHtml();
   var awwan = new Awwan();
   awwan.onHashChange(window.location.hash);
 })();

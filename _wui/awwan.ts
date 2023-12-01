@@ -36,6 +36,8 @@ const ID_OUTPUT = "output";
 
 const MAX_FILE_SIZE = 1000000; // 1MiB
 
+const STORAGE_KEY_VFS_WIDTH = "vfs_width";
+
 interface ExecRequestInterface {
   mode: string;
   script: string;
@@ -154,6 +156,8 @@ export class Awwan {
   private _posy: number = 0;
 
   constructor() {
+    renderHtml();
+
     let el: HTMLElement | null;
 
     el = document.getElementById(ID_AWWAN_NAV_LEFT);
@@ -324,6 +328,12 @@ export class Awwan {
         document.removeEventListener("mousemove", doResizeEditor);
         this._posy = 0;
       });
+    }
+
+    // Restore state from local storage.
+    const vfsWidth = localStorage.getItem(STORAGE_KEY_VFS_WIDTH);
+    if (vfsWidth) {
+      this.setVfsWidth(parseInt(vfsWidth, 10));
     }
   }
 
@@ -781,21 +791,25 @@ export class Awwan {
     if (this.comNavLeft.clientWidth <= 300) {
       return false;
     }
-    let width = this.comNavLeft.clientWidth - diff;
+    const width = this.comNavLeft.clientWidth - diff;
+    this.setVfsWidth(width);
+    localStorage.setItem(STORAGE_KEY_VFS_WIDTH, `${width}`);
+    return true;
+  }
+
+  private setVfsWidth(width: number) {
     this.comNavLeft.style.width = `${width}px`;
     width += 30;
     this.comNavRight.style.width = `calc(100% - ${width}px)`;
-    return true;
   }
 
   private resizeVfsRight(diff: number) {
     if (this.comNavRight.clientWidth <= 500) {
       return false;
     }
-    let width = this.comNavLeft.clientWidth + diff;
-    this.comNavLeft.style.width = `${width}px`;
-    width += 30;
-    this.comNavRight.style.width = `calc(100% - ${width}px)`;
+    const width = this.comNavLeft.clientWidth + diff;
+    this.setVfsWidth(width);
+    localStorage.setItem(STORAGE_KEY_VFS_WIDTH, `${width}`);
     return true;
   }
 
