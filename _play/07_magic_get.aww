@@ -1,0 +1,21 @@
+The magic command "#get" copy file from source to target.
+
+When used with "local" command, it behave like "#put",
+but when used with "play" it copy file from remote server to local host.
+
+Similar to magic command "#put" it have two modes, get file as current
+user "#get:" or get file using sudo "#get!",
+
+  "#get:+mode <target> <source>"
+  "#get!owner+mode <target> <source>"
+
+Lets copy file that can be read by root only into this directory,
+
+  #get!awwan:awwan /etc/shadow {{.ScriptDir}}/get_shadow.txt
+  ls -l {{.ScriptDir}}/get_shadow.txt
+
+We should get the following output,
+
+  2023/12/04 18:08:26 -->  14: #get!awwan:awwan /etc/shadow /home/awwan/play/get_shadow.txt
+  2023/12/04 18:09:17 -->  15: ls -l /home/awwan/play/get_shadow.txt
+  -rw------- 1 awwan awwan 586 Dec  4 18:08 /home/awwan/play/get_shadow.txt

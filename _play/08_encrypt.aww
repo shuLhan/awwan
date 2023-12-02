@@ -1,0 +1,31 @@
+The "encrypt" command encrypt the file using RSA based private key.
+This command require private key file that is stored with name "awwan.key"
+under ".ssh" directory.
+
+The CLI syntax is,
+
+  awwan encrypt <file>
+
+In this workspace we provide the private key with passphrase, see the
+".ssh/awwan.key".
+The passphrase is stored in ".ssh/awwan.pass".
+
+This passphrase file is optional.
+If we remove the passphrase file, awwan will ask passphrase when its running.
+
+In the WUI you can encrypt the file by clicking the "Encrypt" button.
+
+Lets try the CLI command by encrypting the "secret" file in this workspace,
+
+  awwan encrypt secret.txt
+
+Run the above line, it will encrypt the file with name "secret.txt.vault",
+
+  2023/12/06 14:23:29 -->  20: awwan encrypt secret.txt
+  2023/12/06 14:23:29 --- BaseDir: /home/awwan/play
+  2023/12/06 14:23:29 --- Loading passphrase file ".ssh/awwan.pass" ...
+  2023/12/06 14:23:29 --- Loading private key file ".ssh/awwan.key" (enter to skip passphrase) ...
+  Encrypted file output: secret.txt.vault
+
+Refresh the list of file (or this page) by clicking on the directory "/", you will see
+new file "secret.txt.vault" created.

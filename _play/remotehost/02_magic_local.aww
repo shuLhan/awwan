@@ -1,0 +1,25 @@
+The magic line "#local" execute the command in local host
+when script is executed using "play".
+
+  #local: pwd
+  pwd
+
+Running the above two lines will output,
+
+  2023/12/06 16:30:41 -->   4: #local: pwd
+  /home/awwan/play
+  2023/12/06 16:30:41 -->   5: pwd
+  /home/awwanssh
+
+The first line print the working directory in local host,
+in this case the current directory.
+While the second line print the working directory of
+remote host, in this case the user home of "awwanssh".
+
+Using "#local" we can combine command that need to be executed
+in local host first and then continue to execute in remote,
+for example by creating directory in local to backup file from
+remote host,
+
+  #local: mkdir -p {{.ScriptDir]}/etc/
+  #get: /etc/hosts {{.ScriptDir}}/etc/hosts

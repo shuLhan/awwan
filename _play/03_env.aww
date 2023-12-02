@@ -1,0 +1,57 @@
+Before we play with other other commands, there is one fundamental things
+that we need to understand, the awwan environment.
+
+Awwan environment is stored in file "awwan.env".
+There is another environment file named ".awwan.env.vault" for storing
+encrypted values, but we will discuss it later.
+For now lets just focus on non-encypted environment.
+
+Awwan environment is a key-value storage, formatted using Git INI
+syntax,
+
+  [section "subsection"]
+  key = value
+
+The "subsection" is optional, so one can write
+
+  [section]
+  key = value
+
+The value can span multiple lines by ending it with backslash "\", for
+example
+
+  key_long = multiple \
+    line \
+    value
+
+In any script, we can get the value of key using the following syntax
+
+  {{.Val "section:subsection:key"}}
+
+Lets fill in the "awwan.env" file with the following content,
+
+  [host]
+  name = awwan
+
+  [user "awwan"]
+  name = ms
+
+To get the value of key "name" under section "host",
+
+  echo {{.Val "host::name"}}
+
+Try it, put the line number of above command in "Execute line" and click on
+"Local" button, it should print,
+
+  2023/12/02 13:54:37 -->  41: echo awwan
+  awwan
+
+To get the value of key "name" in section "user", subsection "awwan",
+
+  echo {{.Val "user:awwan:name"}}
+
+Try it, put the line number of above command in "Execute line" and click on
+"Local" button, it should print,
+
+  2023/12/02 13:55:42 -->  51: echo ms
+  ms

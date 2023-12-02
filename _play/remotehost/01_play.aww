@@ -1,0 +1,53 @@
+Now we enter the "play" command.
+
+The "play" command execute every line in the remote host
+using SSH.
+The CLI syntax is
+
+  awwan play <path/to/file> <line-range>
+
+Awwan derive the remote host name based on the directory
+names.
+In this script, the directory name is "remotehost".
+We have register the "remotehost" name in ".ssh/config" so
+awwan can know the user and private key file to be used
+to connect to remote host "remotehost",
+
+  Host remotehost
+    Hostname 127.0.0.1
+    Port 20022
+    User awwanssh
+    IdentityFile ~/.ssh/id_ed25519
+
+In this example, the "remotehost" is connected using user "awwanssh"
+with private key in "~/.ssh/id_ed25519".
+
+Lets try execute the following command in remotehost,
+
+  echo "Connect with {{.SSHUser}}@{{.SSHHost}}:{{.SSHPort}} using {{.SSHKey}}"
+
+Using local we got
+
+  2023/12/06 16:03:32 -->  27: echo "Connect with @: using "
+  Connect with @: using
+
+Because the variable {{.SSHUser}} and others are empty if not running
+under SSH session.
+
+Using CLI,
+
+  awwan play {{.ScriptDir}}/01_play.aww 27
+
+Using WUI, put "27" in "Execute line" and click button "Play".
+We got,
+
+  2023/12/06 15:45:55 --- SSH identity file: [/home/awwan/.ssh/id_ed25519]
+  2023/12/06 15:47:10 === BEGIN: remote /remotehost/01_play.aww 27
+  2023/12/06 15:47:10 -->  27: echo "Connect with awwanssh@127.0.0.1:20022 using /home/awwan/.ssh/id_ed25519"
+  Connect with awwanssh@127.0.0.1:20022 using /home/awwan/.ssh/id_ed25519
+  2023/12/06 15:47:10 === END: remote /remotehost/01_play.aww 27
+
+The behaviour of other magic lines like "#put" or "#get" are identical
+with local command.
+The magic line "#put" command copy file from local to remote,
+while magic line "#get" copy file from remote to local.

@@ -1,0 +1,41 @@
+The "env-set" is the command to set the value in environment file
+"awwan.env".
+
+The syntax is
+
+  <key> <value> <file>
+
+Let say we want to set "host::ip_internal" to "127.0.0.1", run it in the
+terminal as
+
+  awwan env-set host::ip_internal 127.0.0.1 awwan.env
+
+When using this web user interface, we need to prefix the file with variable
+".ScriptDir" or ".BaseDir" depends on where the environment file located.
+Lets try,
+
+  awwan env-set host::ip_internal 127.0.0.1 {{.ScriptDir}}/awwan.env
+
+Run the above line number, you will get
+
+  2023/12/02 14:21:54 -->  17: awwan env-set host::ip_internal 127.0.0.1 /home/awwan/play/awwan.env
+  2023/12/02 21:21:54 --- BaseDir: /home/awwan/play
+
+Open the "awwan.env" file, you should see the new key "ip_internal" is
+added under section "host" with value "127.0.0.1",
+
+  cat {{.ScriptDir}}/awwan.env
+
+Output,
+
+  2023/12/02 14:23:11 -->  27: cat /home/awwan/play/awwan.env
+  ## DO NOT remove this section.
+  [section "subsection"]
+  key = value
+
+  [host]
+  name = awwan
+  ip_internal = 127.0.0.1
+
+  [user "awwan"]
+  name = ms

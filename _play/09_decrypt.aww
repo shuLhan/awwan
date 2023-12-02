@@ -1,0 +1,22 @@
+The "decrypt" command decrypt ".vault" file that is encrypted using
+"encrypt" command.
+This command has the following syntax
+
+  awwan decrypt <file.vault>
+
+The file MUST have the ".vault" suffix, otherwise it will be ignored.
+
+Lets try decrypting the previous file that we encrypt,
+
+  awwan decrypt secret.txt.vault
+
+Execute the above line and tt will decrypt the file into "secret.txt",
+
+  2023/12/06 15:09:55 -->  11: awwan decrypt secret.txt.vault
+  2023/12/06 15:09:55 --- BaseDir: /home/awwan/play
+  2023/12/06 15:09:55 --- Loading passphrase file ".ssh/awwan.pass" ...
+  2023/12/06 15:09:55 --- Loading private key file ".ssh/awwan.key" (enter to skip passphrase) ...
+  Decrypted file output: secret.txt
+
+In the WUI, we can use the "Decrypt" button to decrypt the file directly.
+Select the file to be decrypted and then click "Decrypt" button.

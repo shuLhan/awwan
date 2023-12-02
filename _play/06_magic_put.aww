@@ -1,0 +1,50 @@
+The magic command "#put" is not a CLI command, it is used in the script to
+copy file from source to target.
+
+There are two modes of magic "#put" command, one to copy the file as current user,
+
+  "#put:[+mode] <source> <target>"
+
+and the other one is to copy with sudo,
+
+  "#put![owner][+mode] <source> <target>"
+
+The [owner] option set the target file owner, using "user:group" format.
+The [+mode] option set the target file mode, in octal format, for example +0644.
+
+Lets copy file "put_source.txt" into directory "remotehost",
+
+  #put: {{.BaseDir}}/put_source.txt {{.BaseDir}}/remotehost/put_target.txt
+  cat {{.BaseDir}}/remotehost/put_target.txt
+  ls -l {{.BaseDir}}/remotehost/put_target.txt
+
+It will print the following output,
+
+  2023/12/04 17:19:07 -->  17: #put: /home/awwan/play/put_source.txt /home/awwan/play/remotehost/put_target.txt
+  2023/12/04 17:19:07 -->  18: cat /home/awwan/play/remotehost/put_target.txt
+  The host name is awwan.
+  2023/12/04 17:19:07 -->  19: ls -l /home/awwan/play/remotehost/put_target.txt
+  -rw------- 1 awwan awwan 24 Dec  5 00:19 /home/awwan/play/remotehost/put_target.txt
+
+Take a look at the source "put_source.txt" file and the target
+"remotehost/put_target.txt" file.
+As you can see, the source file can contain variable, which will be replaced
+in the destination file.
+
+Lets copy it using "#put!" and set the owner to user "awwan" and
+group "awwanssh", with permission 0600.
+
+  #put!awwan:awwanssh+0600 \
+    {{.ScriptDir}}/put_source.txt \
+    {{.ScriptDir}}/remotehost/put_target.txt
+  cat {{.ScriptDir}}/remotehost/put_target.txt
+  ls -l {{.ScriptDir}}/remotehost/put_target.txt
+
+The file copied succesfully with user, group, and mode set based on the
+"#put" options,
+
+  2023/12/04 17:47:40 -->  34: #put!awwan:awwanssh+600 /home/awwan/play/put_source.txt /home/awwan/play/remotehost/put_target.txt
+  2023/12/04 17:48:55 -->  37: cat /home/awwan/play/remotehost/put_target.txt
+  The host name is awwan.
+  2023/12/04 17:48:55 -->  38: ls -l /home/awwan/play/remotehost/put_target.txt
+  -rw------- 1 awwan awwanssh 24 Dec  4 17:48 /home/awwan/play/remotehost/put_target.txt

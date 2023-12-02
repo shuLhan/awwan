@@ -1,0 +1,28 @@
+There are several global variables that is exported by awwan and accessible
+in the script.
+
+{{.ScriptDir}} - variable that contains the value of script directory.
+
+{{.BaseDir}} - variable that contains the value of base directory, the root
+of awwan workspace.
+
+Both of those variables are accessible in "local" and "play" command.
+
+There are another variables like {{.SSHKey}}, {{.SSHHost}}, {{.SSHPort}},
+and {{.SSHUser}} but only applicable on "play" command so we will discuss it
+later.
+
+Lets try the ScriptDir and BaseDir first.
+
+  echo "Base directory is {{.BaseDir}}"
+  echo "Script directory is {{.ScriptDir}}"
+
+Run both of those lines, you will get the following output,
+
+  2023/12/02 14:10:09 -->  17: echo "Base directory is /home/awwan/play"
+  2023/12/02 14:10:09 -->  18: echo "Script directory is /home/awwan/play"
+  Base directory is /home/awwan/play
+  Script directory is /home/awwan/play
+
+Since the script directory is under the workspace, both print the same
+value.

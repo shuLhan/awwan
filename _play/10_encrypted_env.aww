@@ -1,0 +1,16 @@
+Now that we know about environment variables and encryption, both of them
+can be combined into storing encrypted environment variables into file
+".awwan.env.vault".
+
+The ".awwan.env.vault" is created from file ".awwan.env" that then
+encrypted.
+
+In this workspace, we provide an example of ".awwan.env.vault".
+Lets get one of the value on it,
+
+  echo {{.Val "user:awwan:pass"}}
+
+If we run it, it will print the value of "user:awwan:pass",
+
+  2023/12/06 14:45:16 -->  11: echo s3cret
+  s3cret

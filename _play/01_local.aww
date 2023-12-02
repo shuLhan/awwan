@@ -1,0 +1,50 @@
+The "local" command execute the lines in the host using shell.
+
+In the CLI, the "local" command only have two arguments: the file and comma
+separated line or line range to be executed.
+
+In this web-user interface (WUI) we can run local command by inputting comma
+separated line or line range in the "Execute line" and then click on "Local"
+button.
+
+Let say we have the following lines of commands,
+
+echo "Hello #1"
+
+echo "Hello #2"
+
+echo "Hello #3"
+
+
+To execute line 12 only in the CLI, run
+
+  awwan local 00_local.aww 12
+
+You can try running it in by filling "Execute line" to "12" and clicking
+"Local" button.
+It would print the following output,
+
+  2023/11/29 17:58:58 -->  12: echo "Hello #1"
+  Hello #1
+
+To execute line 14 until 16,
+
+  awwan local 00_local.aww 14-16
+
+It will print the following output,
+
+  2023/11/29 18:00:26 -->  14: echo "Hello #2"
+  Hello #2
+  2023/11/29 18:00:26 -->  16: echo "Hello #3"
+  Hello #3
+
+To execute line 12 and 16 only,
+
+  awwan local 00_local.aww 12,16
+
+It will print the following output,
+
+  2023/11/29 18:07:10 -->  12: echo "Hello #1"
+  Hello #1
+  2023/11/29 18:07:10 -->  16: echo "Hello #3"
+  Hello #3

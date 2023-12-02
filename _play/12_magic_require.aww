@@ -1,0 +1,29 @@
+The magic line "#require" is line that will always executed
+when we executed line numbers below it.
+
+For example,
+
+  #require: echo "require #1"
+  echo "Hello after first require"
+  #require: echo "require #2"
+  echo "Hello after second require"
+
+If we execute line 7 only, we got
+
+  2023/12/06 15:36:10 --- require 6: #require:  echo "require #1"
+  require #1
+  2023/12/06 15:36:10 -->   7: echo "Hello after first require"
+  Hello after first require
+
+The second "#require" require will not get executed.
+
+But if we execute line number 9 only, we got,
+
+  2023/12/06 15:36:43 --- require 6: #require:  echo "require #1"
+  require #1
+  2023/12/06 15:36:43 --- require 8: #require:  echo "require #2"
+  require #2
+  2023/12/06 15:36:43 -->   9: echo "Hello after second require"
+  Hello after second require
+
+The first and second "#require" will always get executed, in order.

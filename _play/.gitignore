@@ -1,0 +1,7 @@
+/.cache
+/app.conf
+/get_shadow.txt
+/remotehost/app.conf
+/remotehost/put_secret.txt
+/remotehost/put_source.txt
+/secret.txt.vault

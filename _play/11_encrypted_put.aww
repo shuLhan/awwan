@@ -1,0 +1,37 @@
+The magic line "#put" can copy encrypted file or file that contains
+values from encrypted environment variables, ".awwan.env.vault".
+
+In this example we have "secret.txt" that read value
+"user:awwan:pass" which exist only in ".awwan.env.vault".
+
+Lets remove the "secret.txt.vault" first and then copy the file
+to "remotehost",
+
+  rm -f {{.ScriptDir}}/secret.txt.vault
+  #put: {{.ScriptDir}}/secret.txt {{.ScriptDir}}/remotehost/put_secret.txt
+  cat {{.ScriptDir}}/remotehost/put_secret.txt
+
+Run the above three lines, we got
+
+  2023/12/06 15:32:36 -->  10: rm -f /home/awwan/play/secret.txt.vault
+  2023/12/06 15:32:36 -->  11: #put: /home/awwan/play/secret.txt /home/awwan/play/remotehost/put_secret.txt
+  2023/12/06 15:32:36 -->  12: cat /home/awwan/play/remotehost/put_secret.txt
+  My password is s3cret.
+
+The magic line "#put" also can copy whole file that has been encrypted.
+When copying the encrypted file we did not need to add ".vault" suffix,
+awwan will take care of it.
+
+  rm -f {{.ScriptDir}}/app.conf ## Make sure we copy the .vault file.
+  #put: {{.ScriptDir}}/app.conf {{.ScriptDir}}/remotehost/app.conf
+  cat {{.ScriptDir}}/remotehost/app.conf
+
+Run the above two lines and we got,
+
+  2023/12/06 15:25:29 -->  25: rm -f /home/awwan/play/app.conf ## Make sure we copy the .vault file.
+  2023/12/06 15:25:29 -->  26: #put: /home/awwan/play/app.conf /home/awwan/play/remotehost/app.conf
+  2023/12/06 15:25:29 -->  27: cat /home/awwan/play/remotehost/app.conf
+  [database "app"]
+  host = 10.16.1.4
+  user = app
+  pass = pazzw0rd
