@@ -1,0 +1,7 @@
+#!/bin/sh
+
+systemctl enable sshd.service
+
+chmod 0600 /etc/ssh/*_key
+chown -R awwan:awwan /home/awwan/
+chown -R awwanssh:awwanssh /home/awwanssh/

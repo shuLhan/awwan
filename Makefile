@@ -45,46 +45,41 @@ lint-www:
 	-cd _wui && eslint --fix .
 
 #}}}
-#{{{ Testing with container using mkosi.
+#{{{ Unit and integration tests using container. Linux only.
 
-.PHONY: setup-mkosi
-setup-mkosi:
-	@echo ">>> Creating symlinks to simplify binding ..."
-	ln -sf $(shell go env GOCACHE) _mkosi/mkosi.cache/gocache
-	ln -sf $(shell go env GOMODCACHE) _mkosi/mkosi.cache/gomodcache
-	@echo ">>> Booting awwan-test container ..."
-	sudo mkosi --directory=_mkosi/ boot
+.PHONY: build-awwan-test
+build-awwan-test:
+	@echo ">>> Stopping container ..."
+	-sudo machinectl stop awwan-test
 
-.PHONY: test-with-mkosi
-test-with-mkosi:
-	go test -tags=integration -c .
-	machinectl shell awwan@awwan-test \
-		/bin/sh -c "cd src; ./awwan.test -test.v"
+	@echo ">>> Creating binding ..."
+	mkdir -p /data/awwan/
+	ln -sTf $$(pwd) /data/awwan/src
+	ln -sTf $(shell go env GOCACHE) /data/awwan/gocache
+	ln -sTf $(shell go env GOMODCACHE) /data/awwan/gomodcache
 
-.PHONY: test-all-mkosi
-test-all-mkosi:
-	rm -f _coverage/*
-	go test -cover ./... -test.gocoverdir=_coverage
-	machinectl shell awwan@awwan-test \
-		/bin/sh -c "cd src; \
-		go test -cover -tags=integration ./... -test.gocoverdir=_coverage"
-	go tool covdata textfmt -i=_coverage -o cover.txt
-	go tool cover -html=cover.txt -o cover.html
-	go tool covdata percent -i=_coverage
+	@echo ">>> Building container awwan-test ..."
+	sudo mkosi --directory=_mkosi/ --force build
 
-## The following tasks must be executed inside the container.
+	sudo machinectl --force import-tar /data/awwan/awwan-test.tar
+	sudo machinectl start awwan-test
+
+	## Once the container is imported, we can enable and run them any
+	## time without rebuilding again.
 
 .PHONY: test-integration
 test-integration:
-	go test -cover -tags=integration ./... -test.gocoverdir=_coverage
-	go tool covdata textfmt -i=_coverage -o cover.txt
-	go tool cover -html=cover.txt -o cover.html
+	go test -tags=integration -c .
+	machinectl shell awwan@awwan-test \
+		/bin/sh -c "cd src; ./awwan.test -test.v"
 
 .PHONY: test-all
 test-all:
 	rm -f _coverage/*
 	go test -cover ./... -test.gocoverdir=_coverage
-	go test -cover -tags=integration ./... -test.gocoverdir=_coverage
+	machinectl shell awwan@awwan-test \
+		/bin/sh -c "cd src; \
+		go test -cover -tags=integration ./... -test.gocoverdir=_coverage"
 	go tool covdata textfmt -i=_coverage -o cover.txt
 	go tool cover -html=cover.txt -o cover.html
 	go tool covdata percent -i=_coverage

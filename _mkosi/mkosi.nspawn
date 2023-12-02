@@ -1,4 +1,9 @@
 [Files]
-Bind=../:/home/awwan/src
-Bind=mkosi.cache/gocache:/home/awwan/.cache/go-build
-Bind=mkosi.cache/gomodcache:/home/awwan/go/pkg/mod
+Bind=/data/awwan/src:/home/awwan/src:idmap
+Bind=/data/awwan/gocache:/home/awwan/.cache/go-build:idmap
+Bind=/data/awwan/gomodcache:/home/awwan/go/pkg/mod:idmap
+
+[Network]
+Private = yes
+VirtualEthernet = yes
+Zone = awwan
