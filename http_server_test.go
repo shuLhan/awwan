@@ -305,7 +305,7 @@ func TestHttpServer_Execute(t *testing.T) {
 				fmt.Fprintf(&buf, "event: %s\n", ev.Type)
 			}
 			if len(ev.Data) != 0 {
-				fmt.Fprintf(&buf, "data: %s\n", ev.Data)
+				fmt.Fprintf(&buf, "data: %q\n", ev.Data)
 			}
 			if len(ev.ID) != 0 {
 				fmt.Fprintf(&buf, "id: %s\n", ev.ID)

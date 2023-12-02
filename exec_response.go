@@ -4,7 +4,6 @@
 package awwan
 
 import (
-	"bytes"
 	"fmt"
 	"strconv"
 	"sync"
@@ -71,31 +70,17 @@ func (execRes *ExecResponse) Write(out []byte) (n int, err error) {
 		return 0, nil
 	}
 
-	var outlen = len(out)
-	if out[outlen-1] == '\n' {
-		out = out[:outlen-1]
+	execRes.mtxOutput.Lock()
+	var ev = sseclient.Event{
+		Data: string(out),
+		ID:   strconv.FormatInt(int64(len(execRes.Output)), 10),
 	}
 
-	var (
-		lines = bytes.Split(out, []byte{'\n'})
+	execRes.Output = append(execRes.Output, ev.Data)
 
-		line []byte
-		ev   sseclient.Event
-	)
-
-	execRes.mtxOutput.Lock()
-	for _, line = range lines {
-		ev = sseclient.Event{
-			Data: string(line),
-			ID:   strconv.FormatInt(int64(len(execRes.Output)), 10),
-		}
-
-		execRes.Output = append(execRes.Output, ev.Data)
-
-		select {
-		case execRes.eventq <- ev:
-		default:
-		}
+	select {
+	case execRes.eventq <- ev:
+	default:
 	}
 	execRes.mtxOutput.Unlock()
 

@@ -25,26 +25,26 @@
 event: open
 
 event: begin
-data: 2023-11-26T15:21:00Z
+data: "2023-11-26T15:21:00Z"
 
 event: message
-data: - === BEGIN: local /local.aww 1-
+data: "- === BEGIN: local /local.aww 1-\n"
 id: 0
 
 event: message
-data: - -->   1: echo "test"
+data: "- -->   1: echo \"test\"\n"
 id: 1
 
 event: message
-data: test
+data: "test\n"
 id: 2
 
 event: message
-data: - === END: local /local.aww 1-
+data: "- === END: local /local.aww 1-\n"
 id: 3
 
 event: end
-data: 2023-11-26T15:21:00Z
+data: "2023-11-26T15:21:00Z"
 id: 3
 
 

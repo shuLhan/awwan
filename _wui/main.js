@@ -959,7 +959,7 @@ var awwan = (() => {
         this.postExecute();
       };
       execTail.onmessage = (ev) => {
-        this.comOutput.innerText += ev.data + "\n";
+        this.comOutput.innerText += ev.data;
         this.comOutput.scrollTo(0, this.comOutput.scrollHeight);
       };
       execTail.onopen = () => {
