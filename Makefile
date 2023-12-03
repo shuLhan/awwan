@@ -59,7 +59,7 @@ build-awwan-test:
 	ln -sTf $(shell go env GOMODCACHE) /data/awwan/gomodcache
 
 	@echo ">>> Building container awwan-test ..."
-	sudo mkosi --directory=_mkosi/ --force build
+	sudo mkosi --directory=_ops/awwan-test/ --force build
 
 	sudo machinectl --force import-tar /data/awwan/awwan-test.tar
 	sudo machinectl start awwan-test
