@@ -122,7 +122,7 @@ func (ses *Session) Vals(keyPath string) (list []string) {
 }
 
 // Copy file in local system.
-func (ses *Session) Copy(stmt *Statement) (err error) {
+func (ses *Session) Copy(req *ExecRequest, stmt *Statement) (err error) {
 	var (
 		logp = `Copy`
 		src  = stmt.args[0]
@@ -146,11 +146,11 @@ func (ses *Session) Copy(stmt *Statement) (err error) {
 		// Delete the decrypted file on exit.
 		var errRemove = os.Remove(src)
 		if errRemove != nil {
-			log.Printf(`%s: %s`, logp, errRemove)
+			req.mlog.Errf(`%s: %s`, logp, errRemove)
 		}
 	}
 	if err != nil {
-		return fmt.Errorf(`%s: %w`, logp, err)
+		return err
 	}
 
 	if stmt.mode != 0 {
@@ -198,7 +198,7 @@ func (ses *Session) Get(stmt *Statement) (err error) {
 }
 
 // Put copy file from local to remote system.
-func (ses *Session) Put(stmt *Statement) (err error) {
+func (ses *Session) Put(req *ExecRequest, stmt *Statement) (err error) {
 	var (
 		logp = `Put`
 		src  = stmt.args[0]
@@ -216,7 +216,7 @@ func (ses *Session) Put(stmt *Statement) (err error) {
 	if isVault {
 		var errRemove = os.Remove(src)
 		if errRemove != nil {
-			log.Printf(`%s: %s`, logp, errRemove)
+			req.mlog.Errf(`%s: %s`, logp, errRemove)
 		}
 	}
 	if err != nil {
@@ -268,7 +268,7 @@ func (ses *Session) SudoCopy(req *ExecRequest, stmt *Statement) (err error) {
 	if isVault {
 		var errRemove = os.Remove(src)
 		if errRemove != nil {
-			log.Printf(`%s: %s`, logp, errRemove)
+			req.mlog.Errf(`%s: %s`, logp, errRemove)
 		}
 	}
 	if err != nil {
@@ -461,16 +461,15 @@ func (ses *Session) executeScriptOnLocal(req *ExecRequest, pos linePosition) (er
 		case statementKindDefault:
 			err = ExecLocal(req, stmt)
 		case statementKindGet:
-			err = ses.Copy(stmt)
+			err = ses.Copy(req, stmt)
 		case statementKindPut:
-			err = ses.Copy(stmt)
+			err = ses.Copy(req, stmt)
 		case statementKindSudoGet:
 			err = ses.SudoCopy(req, stmt)
 		case statementKindSudoPut:
 			err = ses.SudoCopy(req, stmt)
 		}
 		if err != nil {
-			req.mlog.Errf(`!!! %s`, err)
 			return err
 		}
 	}
@@ -508,7 +507,7 @@ func (ses *Session) executeScriptOnRemote(req *ExecRequest, pos linePosition) (e
 		case statementKindLocal:
 			err = ExecLocal(req, stmt)
 		case statementKindPut:
-			err = ses.Put(stmt)
+			err = ses.Put(req, stmt)
 		case statementKindSudoGet:
 			err = ses.SudoGet(req, stmt)
 		case statementKindSudoPut:
