@@ -207,7 +207,7 @@ func main() {
 		if err != nil {
 			log.Fatalf(`%s: %s`, logp, err)
 		}
-		fmt.Printf(`Decrypted file output: %s`, filePlain)
+		fmt.Printf("Decrypted file output: %s\n", filePlain)
 		return
 
 	case awwan.CommandModeEncrypt:
@@ -217,7 +217,7 @@ func main() {
 		if err != nil {
 			log.Fatalf(`%s: %s`, logp, err)
 		}
-		fmt.Printf(`Encrypted file output: %s`, fileVault)
+		fmt.Printf("Encrypted file output: %s\n", fileVault)
 		return
 
 	case awwan.CommandModeEnvGet:
