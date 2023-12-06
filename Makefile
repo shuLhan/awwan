@@ -135,11 +135,27 @@ build-all-arm64:
 			./cmd/awwan/;\
 	done
 
+
+## Task to release binaries automatically using karajo at
+## build.kilabit.info.
+
 .PHONY: release-sync
 release-sync:
-	rsync -av --progress ./_bin/dl/ awwan.org:/srv/awwan/dl/
+	sudo chown -R ms:karajo /srv/awwan/
+	sudo chmod -R g+w /srv/awwan/
+	rsync -rtvO --progress ./_bin/dl/ /srv/awwan/dl/
 
 .PHONY: release-tip
 release-tip: embed build-all-amd64 build-all-arm64 release-sync
+
+
+## Task to release binaries manually from local.
+
+.PHONY: release-sync-local
+release-sync-local:
+	rsync -av --progress ./_bin/dl/ awwan.org:/srv/awwan/dl/
+
+.PHONY: release-tip-local
+release-tip-local: embed build-all-amd64 build-all-arm64 release-sync-local
 
 #}}}
