@@ -8,14 +8,13 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"time"
 
 	"github.com/shuLhan/share/lib/mlog"
 )
 
 // defLogTimeFormat define the default log time format.
 // This is set as variable to make it easy overwriting it in testing.
-var defLogTimeFormat = time.RFC3339
+var defLogTimeFormat = `2006/01/02 15:04:05`
 
 // ExecRequest request for executing local or remote script.
 // Each request define the Mode of execution, Script file to be executed,
@@ -56,7 +55,7 @@ func NewExecRequest(mode, script, lineRange string) (req *ExecRequest, err error
 
 	err = req.init(`.`)
 	if err != nil {
-		return nil, fmt.Errorf(`NewRequest: %w`, err)
+		return nil, fmt.Errorf(`NewExecRequest: %w`, err)
 	}
 
 	return req, nil
