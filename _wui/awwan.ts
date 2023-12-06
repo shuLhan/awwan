@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import { WuiEditor, WuiEditorOptions } from "./wui/editor/editor.js";
-import { WuiNotif } from "./wui/notif/notif.js";
 import { WuiResponseInterface } from "./wui/response.js";
 import { WuiVfs, WuiVfsOptions, WuiVfsNodeInterface } from "./wui/vfs/vfs.js";
 
@@ -149,7 +148,6 @@ export class Awwan {
     line_range: "",
   };
   private editor!: WuiEditor;
-  private notif!: WuiNotif;
   private vfs!: WuiVfs;
   private orgContent: string = "";
   private _posx: number = 0;
@@ -294,8 +292,6 @@ export class Awwan {
       this.comEditor = el;
     }
 
-    this.notif = new WuiNotif();
-
     const vfsOpts: WuiVfsOptions = {
       id: ID_VFS,
       open: (path: string, isDir: boolean): Promise<WuiResponseInterface> => {
@@ -369,7 +365,7 @@ export class Awwan {
     const httpRes = await fetch("/awwan/api/fs?path=" + path);
     const res = await httpRes.json();
     if (res.code != 200) {
-      this.notif.error(`Failed to open ${path}: ${res.message}`);
+      this.notifError(`Failed to open ${path}: ${res.message}`);
       return res;
     }
 
@@ -384,7 +380,7 @@ export class Awwan {
 
     const resAllow = this.isEditAllowed(node);
     if (resAllow.code != 200) {
-      this.notif.error(resAllow.message);
+      this.notifError(resAllow.message);
       return resAllow;
     }
 
@@ -415,7 +411,7 @@ export class Awwan {
   async openNode(node: WuiVfsNodeInterface): Promise<WuiResponseInterface> {
     let res = this.isEditAllowed(node);
     if (res.code != 200) {
-      this.notif.error(res.message);
+      this.notifError(res.message);
       return res;
     }
 
@@ -448,7 +444,7 @@ export class Awwan {
 
   async onClickEncrypt() {
     if (this.request.script == "") {
-      this.notif.error("No file selected");
+      this.notifError("No file selected");
       return;
     }
     const ok = this.confirmWhenDirty();
@@ -473,13 +469,13 @@ export class Awwan {
 
     const jsonRes = await httpRes.json();
     if (jsonRes.code != 200) {
-      this.notif.error(`Failed to encrypt file ${path}: ${jsonRes.message}`);
+      this.notifError(`Failed to encrypt file ${path}: ${jsonRes.message}`);
       return false;
     }
 
     const encRes = jsonRes.data as encryptResponse;
 
-    this.notif.info(`File ${path} has been encrypted to ${encRes.path_vault}.`);
+    this.notifInfo(`File ${path} has been encrypted to ${encRes.path_vault}.`);
 
     if (this.currentNode) {
       this.open(this.currentNode.path, this.currentNode.is_dir);
@@ -489,7 +485,7 @@ export class Awwan {
 
   async onClickDecrypt() {
     if (this.request.script == "") {
-      this.notif.error("No file selected");
+      this.notifError("No file selected");
       return false;
     }
 
@@ -510,7 +506,7 @@ export class Awwan {
 
     const jsonRes = await httpRes.json();
     if (jsonRes.code != 200) {
-      this.notif.error(
+      this.notifError(
         `Failed to decrypt file ${pathVault}: ${jsonRes.message}`,
       );
       return false;
@@ -518,7 +514,7 @@ export class Awwan {
 
     const encRes = jsonRes.data as encryptResponse;
 
-    this.notif.info(`File ${pathVault} has been decrypted to ${encRes.path}.`);
+    this.notifInfo(`File ${pathVault} has been decrypted to ${encRes.path}.`);
 
     if (this.currentNode) {
       this.open(this.currentNode.path, this.currentNode.is_dir);
@@ -558,11 +554,11 @@ export class Awwan {
     });
     const res = await httpRes.json();
     if (res.code != 200) {
-      this.notif.error(`Failed to save file ${path}: ${res.message}`);
+      this.notifError(`Failed to save file ${path}: ${res.message}`);
       return null;
     }
 
-    this.notif.info(`File ${path} has been saved.`);
+    this.notifInfo(`File ${path} has been saved.`);
 
     const node = res.data as WuiVfsNodeInterface;
     this.editor.open(node);
@@ -574,12 +570,12 @@ export class Awwan {
   // execLocal request to execute the selected script on local system.
   execLocal() {
     if (this.request.script == "") {
-      this.notif.error(`Execute on local: no file selected`);
+      this.notifError(`Execute on local: no file selected`);
       return;
     }
     const lineRange = this.comInputLineRange.value.trim();
     if (lineRange === "") {
-      this.notif.error(`Empty line range`);
+      this.notifError(`Empty line range`);
       return;
     }
     this.httpApiExecute("local", lineRange);
@@ -588,12 +584,12 @@ export class Awwan {
   // execPlay request to execute the selected script on remote system.
   execPlay() {
     if (this.request.script == "") {
-      this.notif.error(`Execute on remote: no file selected`);
+      this.notifError(`Execute on remote: no file selected`);
       return;
     }
     const lineRange = this.comInputLineRange.value.trim();
     if (lineRange === "") {
-      this.notif.error(`Empty line range`);
+      this.notifError(`Empty line range`);
       return;
     }
     this.httpApiExecute("remote", lineRange);
@@ -619,14 +615,14 @@ export class Awwan {
 
     const res = await httpRes.json();
     if (res.code != 200) {
-      this.notif.error(`Execute failed: ${res.message}`);
+      this.notifError(`Execute failed: ${res.message}`);
       this.postExecute();
       return;
     }
 
     const execRes = res.data as ExecResponseInterface;
 
-    this.notif.info(
+    this.notifInfo(
       `Execute submitted ${execRes.script} on ${execRes.mode} with ID=${execRes.id}`,
     );
 
@@ -682,13 +678,13 @@ export class Awwan {
 
   private async newNode(isDir: boolean) {
     if (!this.currentNode) {
-      this.notif.error("No active directory loaded or selected.");
+      this.notifError("No active directory loaded or selected.");
       return;
     }
 
     const name = this.comVfsInput.value;
     if (name === "") {
-      this.notif.error("Empty file name");
+      this.notifError("Empty file name");
       return;
     }
     const req: WuiVfsNodeInterface = {
@@ -714,7 +710,7 @@ export class Awwan {
 
     const res = await httpRes.json();
     if (res.code != 200) {
-      this.notif.error(`newNode: ${res.message}`);
+      this.notifError(`newNode: ${res.message}`);
       return;
     }
 
@@ -727,15 +723,14 @@ export class Awwan {
   }
 
   private async onClickRemove() {
-    console.log("onClickRemove: ", this.currentNode);
     if (!this.currentNode) {
-      this.notif.error("No file selected.");
+      this.notifError("No file selected.");
       return;
     }
 
     const name = this.comVfsInput.value;
     if (name === "") {
-      this.notif.error("Empty file name");
+      this.notifError("Empty file name");
       return;
     }
     const req: fsRequest = {
@@ -755,11 +750,11 @@ export class Awwan {
 
     const res = await httpRes.json();
     if (res.code != 200) {
-      this.notif.error(`remove: ${res.message}`);
+      this.notifError(`remove: ${res.message}`);
       return;
     }
 
-    this.notif.info(`${res.message}`);
+    this.notifInfo(`${res.message}`);
     this.vfs.openDir(this.currentNode.path);
   }
 
@@ -847,5 +842,15 @@ export class Awwan {
     this.comEditor.style.height = `${height}px`;
     height += 100;
     this.comOutputWrapper.style.height = `calc(100% - ${height}px)`;
+  }
+
+  private notifInfo(msg: string) {
+    this.comOutput.innerText += "[NOTIF] INFO: " + msg + "\n";
+    this.comOutput.scrollTo(0, this.comOutput.scrollHeight);
+  }
+
+  private notifError(msg: string) {
+    this.comOutput.innerText += "[NOTIF] ERROR: " + msg + "\n";
+    this.comOutput.scrollTo(0, this.comOutput.scrollHeight);
   }
 }

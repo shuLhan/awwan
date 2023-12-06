@@ -200,66 +200,6 @@ var awwan = (() => {
     }
   };
 
-  // _wui/wui/notif/notif.js
-  var WUI_NOTIF_ID = "wui_notif";
-  var WUI_NOTIF_CLASS_INFO = "wui_notif_info";
-  var WUI_NOTIF_CLASS_ERROR = "wui_notif_error";
-  var WuiNotif = class {
-    constructor() {
-      this.timeout = 5e3;
-      this.el = document.createElement("div");
-      this.el.id = WUI_NOTIF_ID;
-      document.body.appendChild(this.el);
-      this.initStyle();
-    }
-    // info show the msg as information.
-    info(msg) {
-      const item = document.createElement("div");
-      item.innerHTML = msg;
-      item.classList.add(WUI_NOTIF_CLASS_INFO);
-      this.el.appendChild(item);
-      setTimeout(() => {
-        this.el.removeChild(item);
-      }, this.timeout);
-    }
-    // error show the msg as an error.
-    error(msg) {
-      const item = document.createElement("div");
-      item.innerHTML = msg;
-      item.classList.add(WUI_NOTIF_CLASS_ERROR);
-      this.el.appendChild(item);
-      setTimeout(() => {
-        this.el.removeChild(item);
-      }, this.timeout);
-    }
-    initStyle() {
-      const style = document.createElement("style");
-      style.type = "text/css";
-      style.innerText = `
-			#${WUI_NOTIF_ID} {
-				left: 10%;
-				position: fixed;
-				top: 1em;
-				width: 80%;
-				z-index: 10000;
-			}
-			.${WUI_NOTIF_CLASS_INFO} {
-				border: 1px solid silver;
-				background-color: honeydew;
-				margin-bottom: 1em;
-				padding: 1em;
-			}
-			.${WUI_NOTIF_CLASS_ERROR} {
-				border: 1px solid salmon;
-				background-color: lightsalmon;
-				margin-bottom: 1em;
-				padding: 1em;
-			}
-		`;
-      document.head.appendChild(style);
-    }
-  };
-
   // _wui/wui/vfs/vfs.js
   var CLASS_VFS_PATH = "wui_vfs_path";
   var CLASS_VFS_LIST = "wui_vfs_list";
@@ -661,7 +601,6 @@ var awwan = (() => {
       if (el) {
         this.comEditor = el;
       }
-      this.notif = new WuiNotif();
       const vfsOpts = {
         id: ID_VFS,
         open: (path, isDir) => {
@@ -723,7 +662,7 @@ var awwan = (() => {
       const httpRes = await fetch("/awwan/api/fs?path=" + path);
       const res = await httpRes.json();
       if (res.code != 200) {
-        this.notif.error(`Failed to open ${path}: ${res.message}`);
+        this.notifError(`Failed to open ${path}: ${res.message}`);
         return res;
       }
       const node = res.data;
@@ -735,7 +674,7 @@ var awwan = (() => {
       }
       const resAllow = this.isEditAllowed(node);
       if (resAllow.code != 200) {
-        this.notif.error(resAllow.message);
+        this.notifError(resAllow.message);
         return resAllow;
       }
       this.comFilePath.innerText = path;
@@ -761,7 +700,7 @@ var awwan = (() => {
     async openNode(node) {
       let res = this.isEditAllowed(node);
       if (res.code != 200) {
-        this.notif.error(res.message);
+        this.notifError(res.message);
         return res;
       }
       if (!node.is_dir) {
@@ -787,7 +726,7 @@ var awwan = (() => {
     }
     async onClickEncrypt() {
       if (this.request.script == "") {
-        this.notif.error("No file selected");
+        this.notifError("No file selected");
         return;
       }
       const ok = this.confirmWhenDirty();
@@ -809,11 +748,11 @@ var awwan = (() => {
       });
       const jsonRes = await httpRes.json();
       if (jsonRes.code != 200) {
-        this.notif.error(`Failed to encrypt file ${path}: ${jsonRes.message}`);
+        this.notifError(`Failed to encrypt file ${path}: ${jsonRes.message}`);
         return false;
       }
       const encRes = jsonRes.data;
-      this.notif.info(`File ${path} has been encrypted to ${encRes.path_vault}.`);
+      this.notifInfo(`File ${path} has been encrypted to ${encRes.path_vault}.`);
       if (this.currentNode) {
         this.open(this.currentNode.path, this.currentNode.is_dir);
       }
@@ -821,7 +760,7 @@ var awwan = (() => {
     }
     async onClickDecrypt() {
       if (this.request.script == "") {
-        this.notif.error("No file selected");
+        this.notifError("No file selected");
         return false;
       }
       const pathVault = this.request.script;
@@ -839,13 +778,13 @@ var awwan = (() => {
       });
       const jsonRes = await httpRes.json();
       if (jsonRes.code != 200) {
-        this.notif.error(
+        this.notifError(
           `Failed to decrypt file ${pathVault}: ${jsonRes.message}`
         );
         return false;
       }
       const encRes = jsonRes.data;
-      this.notif.info(`File ${pathVault} has been decrypted to ${encRes.path}.`);
+      this.notifInfo(`File ${pathVault} has been decrypted to ${encRes.path}.`);
       if (this.currentNode) {
         this.open(this.currentNode.path, this.currentNode.is_dir);
       }
@@ -881,10 +820,10 @@ var awwan = (() => {
       });
       const res = await httpRes.json();
       if (res.code != 200) {
-        this.notif.error(`Failed to save file ${path}: ${res.message}`);
+        this.notifError(`Failed to save file ${path}: ${res.message}`);
         return null;
       }
-      this.notif.info(`File ${path} has been saved.`);
+      this.notifInfo(`File ${path} has been saved.`);
       const node = res.data;
       this.editor.open(node);
       this.orgContent = this.editor.getContent();
@@ -893,12 +832,12 @@ var awwan = (() => {
     // execLocal request to execute the selected script on local system.
     execLocal() {
       if (this.request.script == "") {
-        this.notif.error(`Execute on local: no file selected`);
+        this.notifError(`Execute on local: no file selected`);
         return;
       }
       const lineRange = this.comInputLineRange.value.trim();
       if (lineRange === "") {
-        this.notif.error(`Empty line range`);
+        this.notifError(`Empty line range`);
         return;
       }
       this.httpApiExecute("local", lineRange);
@@ -906,12 +845,12 @@ var awwan = (() => {
     // execPlay request to execute the selected script on remote system.
     execPlay() {
       if (this.request.script == "") {
-        this.notif.error(`Execute on remote: no file selected`);
+        this.notifError(`Execute on remote: no file selected`);
         return;
       }
       const lineRange = this.comInputLineRange.value.trim();
       if (lineRange === "") {
-        this.notif.error(`Empty line range`);
+        this.notifError(`Empty line range`);
         return;
       }
       this.httpApiExecute("remote", lineRange);
@@ -932,12 +871,12 @@ var awwan = (() => {
       });
       const res = await httpRes.json();
       if (res.code != 200) {
-        this.notif.error(`Execute failed: ${res.message}`);
+        this.notifError(`Execute failed: ${res.message}`);
         this.postExecute();
         return;
       }
       const execRes = res.data;
-      this.notif.info(
+      this.notifInfo(
         `Execute submitted ${execRes.script} on ${execRes.mode} with ID=${execRes.id}`
       );
       const execTail = new EventSource(
@@ -985,12 +924,12 @@ var awwan = (() => {
     }
     async newNode(isDir) {
       if (!this.currentNode) {
-        this.notif.error("No active directory loaded or selected.");
+        this.notifError("No active directory loaded or selected.");
         return;
       }
       const name = this.comVfsInput.value;
       if (name === "") {
-        this.notif.error("Empty file name");
+        this.notifError("Empty file name");
         return;
       }
       const req = {
@@ -1014,7 +953,7 @@ var awwan = (() => {
       });
       const res = await httpRes.json();
       if (res.code != 200) {
-        this.notif.error(`newNode: ${res.message}`);
+        this.notifError(`newNode: ${res.message}`);
         return;
       }
       const node = res.data;
@@ -1025,14 +964,13 @@ var awwan = (() => {
       this.vfs.set(this.currentNode);
     }
     async onClickRemove() {
-      console.log("onClickRemove: ", this.currentNode);
       if (!this.currentNode) {
-        this.notif.error("No file selected.");
+        this.notifError("No file selected.");
         return;
       }
       const name = this.comVfsInput.value;
       if (name === "") {
-        this.notif.error("Empty file name");
+        this.notifError("Empty file name");
         return;
       }
       const req = {
@@ -1050,10 +988,10 @@ var awwan = (() => {
       });
       const res = await httpRes.json();
       if (res.code != 200) {
-        this.notif.error(`remove: ${res.message}`);
+        this.notifError(`remove: ${res.message}`);
         return;
       }
-      this.notif.info(`${res.message}`);
+      this.notifInfo(`${res.message}`);
       this.vfs.openDir(this.currentNode.path);
     }
     // onVfsInputFilter filter the VFS list based on input val.
@@ -1131,6 +1069,14 @@ var awwan = (() => {
       this.comEditor.style.height = `${height}px`;
       height += 100;
       this.comOutputWrapper.style.height = `calc(100% - ${height}px)`;
+    }
+    notifInfo(msg) {
+      this.comOutput.innerText += "[NOTIF] INFO: " + msg + "\n";
+      this.comOutput.scrollTo(0, this.comOutput.scrollHeight);
+    }
+    notifError(msg) {
+      this.comOutput.innerText += "[NOTIF] ERROR: " + msg + "\n";
+      this.comOutput.scrollTo(0, this.comOutput.scrollHeight);
     }
   };
 
