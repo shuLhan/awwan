@@ -1,7 +1,10 @@
+[Exec]
+Ephemeral=yes
+LinkJournal=no
+
 [Files]
 Bind=/data/awwan/src/_play:/home/awwan/play:idmap
 Bind=/data/awwan/src/_bin:/usr/local/bin
-ReadOnly=yes
 
 [Network]
 Private = yes
