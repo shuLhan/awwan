@@ -1,4 +1,4 @@
-# awwan
+= awwan
 
 awwan is configuration management software, infrastructure as file and
 directory layout.
@@ -16,15 +16,15 @@ If yes, awwan is the right tools for you.
 
 Features,
 
-* Encryption. Awwan can read and copy encrypted files.
-* Encrypted variables. Awwan can read and executed script that contains
+- Encryption. Awwan can read and copy encrypted files.
+- Encrypted variables. Awwan can read and executed script that contains
   encrypted variables.
-* Dynamic script with variables. An awwan script is like shell script but
+- Dynamic script with variables. An awwan script is like shell script but
   can be executed in different remote servers with different values.
-* Dynamic script execution. Unlike shell script, awwan can select which
+- Dynamic script execution. Unlike shell script, awwan can select which
   lines to be executed, either by number or by range.
-* Provisioning in local environment using basic shell.
-* Provisioning in remote server using SSH and SFTP.
+- Provisioning in local environment using basic shell.
+- Provisioning in remote server using SSH and SFTP.
 
 From the CLI perspective, awwan is feature complete.
 
@@ -32,32 +32,28 @@ Most enhancements and bug fixes probably in the web user interface with
 clear use cases and issues.
 
 Feel free to open new feature or report a bug in our
-[issue tracker](https://todo.sr.ht/~shulhan/awwan).
+https://todo.sr.ht/~shulhan/awwan[issue tracker].
 
 
-##  Documentation
+==  Documentation
 
-[Project website](https://awwan.org).
-
-[Changelog](https://awwan.org/CHANGELOG.html) --
+link:CHANGELOG.html[CHANGELOG] --
 History of each awwan release.
 
-[Installation](https://awwan.org/install.html) --
+link:install.html[Installation] --
 Link to download and/or install awwan manually from source code.
 
-[Manual page](https://awwan.org/awwan.html) --
+link:awwan.html[Manual page] --
 The manual page describe how to setup and use awwan.
 
-[Go documentation](https://pkg.go.dev/git.sr.ht/~shulhan/awwan) --
-Go module documentation of awwan as library.
 
-##  Development
+==  Development
 
-[Repository](https://git.sr.ht/~shulhan/awwan) --
+https://git.sr.ht/~shulhan/awwan[Repository] --
 The repository of this software project.
 
-[Mailing list](https://lists.sr.ht/~shulhan/awwan) --
+https://lists.sr.ht/~shulhan/awwan[Mailing list] --
 Place for discussion and sending patches.
 
-[Issues](https://todo.sr.ht/~shulhan/awwan) --
+https://todo.sr.ht/~shulhan/awwan[Issues] --
 Place to open new issue or request for new feature.
