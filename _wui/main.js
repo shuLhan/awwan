@@ -100,6 +100,9 @@ var awwan = (() => {
         this.elContent.onkeyup = (ev) => {
           this.onKeyupDocument(this, ev);
         };
+        this.elContent.addEventListener("blur", () => {
+          this.isKeyControl = false;
+        });
       }
       this.elContent.classList.add(WUI_EDITOR_CLASS_CONTENT);
       this.el.appendChild(this.elContent);
@@ -125,15 +128,16 @@ var awwan = (() => {
         color: dimgrey;
         display: inline-block;
         font-family: monospace;
-        margin-right: 8px;
+        margin-right: 4px;
         padding: 0px 8px;
         position: sticky;
         text-align: right;
         width: 3em;
       }
       .${WUI_EDITOR_CLASS_CONTENT} {
+        caret-color: red;
         display: inline-block;
-        padding: 0px 8px;
+        padding: 0px 8px 0 0;
         vertical-align: top;
         white-space: pre;
         width: calc(100% - 10em);
