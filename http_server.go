@@ -4,6 +4,7 @@
 package awwan
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -407,6 +408,15 @@ func (httpd *httpServer) FSGet(epr *libhttp.EndpointRequest) (resb []byte, err e
 			return nil, res
 		}
 		return nil, err
+	}
+	if node.IsDir() {
+		var buf bytes.Buffer
+		fmt.Fprint(&buf, `{"code":200,"data":`)
+		resb, _ = node.JSON(0, false, false)
+		buf.Write(resb)
+		buf.WriteByte('}')
+		resb = buf.Bytes()
+		return resb, nil
 	}
 
 	res.Code = http.StatusOK
