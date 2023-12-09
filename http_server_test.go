@@ -49,14 +49,14 @@ func TestHttpServer_Decrypt(t *testing.T) {
 
 	var httpd *httpServer
 
-	httpd, err = newHttpServer(aww, ``)
+	httpd, err = newHTTPServer(aww, ``)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	var endpointDecrypt = &libhttp.Endpoint{
 		Method:       libhttp.RequestMethodPost,
-		Path:         pathAwwanApiDecrypt,
+		Path:         pathAwwanAPIDecrypt,
 		RequestType:  libhttp.RequestTypeJSON,
 		ResponseType: libhttp.ResponseTypeJSON,
 	}
@@ -137,14 +137,14 @@ func TestHttpServer_Encrypt(t *testing.T) {
 
 	var httpd *httpServer
 
-	httpd, err = newHttpServer(aww, ``)
+	httpd, err = newHTTPServer(aww, ``)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	var endpointEncrypt = &libhttp.Endpoint{
 		Method:       libhttp.RequestMethodPost,
-		Path:         pathAwwanApiEncrypt,
+		Path:         pathAwwanAPIEncrypt,
 		RequestType:  libhttp.RequestTypeJSON,
 		ResponseType: libhttp.ResponseTypeJSON,
 	}
@@ -239,7 +239,7 @@ func TestHttpServer_Execute(t *testing.T) {
 		clientOpts = libhttp.ClientOptions{
 			ServerUrl: fmt.Sprintf(`http://%s`, address),
 		}
-		reqJson = tdata.Input[`local:/local.aww:1-`]
+		reqJSON = tdata.Input[`local:/local.aww:1-`]
 
 		execRequest ExecRequest
 		cl          *libhttp.Client
@@ -247,7 +247,7 @@ func TestHttpServer_Execute(t *testing.T) {
 
 	cl = libhttp.NewClient(&clientOpts)
 
-	err = json.Unmarshal(reqJson, &execRequest)
+	err = json.Unmarshal(reqJSON, &execRequest)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -257,7 +257,7 @@ func TestHttpServer_Execute(t *testing.T) {
 		buf     bytes.Buffer
 	)
 
-	_, resBody, err = cl.PostJSON(pathAwwanApiExecute, nil, &execRequest)
+	_, resBody, err = cl.PostJSON(pathAwwanAPIExecute, nil, &execRequest)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -283,7 +283,7 @@ func TestHttpServer_Execute(t *testing.T) {
 	// Tail the execution output.
 
 	var ssec = sseclient.Client{
-		Endpoint: fmt.Sprintf(`http://%s%s?id=%s`, address, pathAwwanApiExecuteTail, execResp.ID),
+		Endpoint: fmt.Sprintf(`http://%s%s?id=%s`, address, pathAwwanAPIExecuteTail, execResp.ID),
 	}
 
 	err = ssec.Connect(nil)
@@ -344,7 +344,7 @@ func TestHttpServer_FSGet(t *testing.T) {
 
 	var httpd *httpServer
 
-	httpd, err = newHttpServer(aww, ``)
+	httpd, err = newHTTPServer(aww, ``)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -380,7 +380,7 @@ func TestHttpServer_FSGet(t *testing.T) {
 	for _, c = range cases {
 		t.Log(c.desc)
 
-		httpReq = httptest.NewRequest(http.MethodGet, pathAwwanApiFs+`?path=`+c.path, nil)
+		httpReq = httptest.NewRequest(http.MethodGet, pathAwwanAPIFs+`?path=`+c.path, nil)
 
 		httpWriter = httptest.NewRecorder()
 

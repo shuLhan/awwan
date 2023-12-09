@@ -30,12 +30,12 @@ type sshClient struct {
 	dirTmp string
 }
 
-// newSshClient create new clients using the SSH config section.
+// newSSHClient create new clients using the SSH config section.
 //
 // Once connection established, the client create new temporary directory on
 // server at dirTmp for sudoGet or sudoPut operations.
-func newSshClient(req *ExecRequest, section *config.Section, dirTmp string) (sshc *sshClient, err error) {
-	var logp = `newSshClient`
+func newSSHClient(req *ExecRequest, section *config.Section, dirTmp string) (sshc *sshClient, err error) {
+	var logp = `newSSHClient`
 
 	req.mlog.Outf(`--- SSH connection: %s@%s:%s`,
 		section.User(), section.Hostname(), section.Port())

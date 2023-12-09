@@ -26,11 +26,11 @@ import (
 
 // List of available HTTP API.
 const (
-	pathAwwanApiDecrypt     = `/awwan/api/decrypt`
-	pathAwwanApiEncrypt     = `/awwan/api/encrypt`
-	pathAwwanApiExecute     = `/awwan/api/execute`
-	pathAwwanApiExecuteTail = `/awwan/api/execute/tail`
-	pathAwwanApiFs          = `/awwan/api/fs`
+	pathAwwanAPIDecrypt     = `/awwan/api/decrypt`
+	pathAwwanAPIEncrypt     = `/awwan/api/encrypt`
+	pathAwwanAPIExecute     = `/awwan/api/execute`
+	pathAwwanAPIExecuteTail = `/awwan/api/execute/tail`
+	pathAwwanAPIFs          = `/awwan/api/fs`
 )
 
 // List of known parameter in request.
@@ -55,11 +55,11 @@ type httpServer struct {
 	baseDir string
 }
 
-// newHttpServer create and initialize HTTP server to serve awwan HTTP API
+// newHTTPServer create and initialize HTTP server to serve awwan HTTP API
 // and web user interface.
-func newHttpServer(aww *Awwan, address string) (httpd *httpServer, err error) {
+func newHTTPServer(aww *Awwan, address string) (httpd *httpServer, err error) {
 	var (
-		logp = `newHttpServer`
+		logp = `newHTTPServer`
 	)
 
 	httpd = &httpServer{
@@ -109,7 +109,7 @@ func (httpd *httpServer) registerEndpoints() (err error) {
 
 	err = httpd.RegisterEndpoint(&libhttp.Endpoint{
 		Method:       libhttp.RequestMethodGet,
-		Path:         pathAwwanApiFs,
+		Path:         pathAwwanAPIFs,
 		RequestType:  libhttp.RequestTypeQuery,
 		ResponseType: libhttp.ResponseTypeJSON,
 		Call:         httpd.FSGet,
@@ -120,10 +120,10 @@ func (httpd *httpServer) registerEndpoints() (err error) {
 
 	err = httpd.RegisterEndpoint(&libhttp.Endpoint{
 		Method:       libhttp.RequestMethodDelete,
-		Path:         pathAwwanApiFs,
+		Path:         pathAwwanAPIFs,
 		RequestType:  libhttp.RequestTypeJSON,
 		ResponseType: libhttp.ResponseTypeJSON,
-		Call:         httpd.awwanApiFsDelete,
+		Call:         httpd.awwanAPIFsDelete,
 	})
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
@@ -131,10 +131,10 @@ func (httpd *httpServer) registerEndpoints() (err error) {
 
 	err = httpd.RegisterEndpoint(&libhttp.Endpoint{
 		Method:       libhttp.RequestMethodPost,
-		Path:         pathAwwanApiFs,
+		Path:         pathAwwanAPIFs,
 		RequestType:  libhttp.RequestTypeJSON,
 		ResponseType: libhttp.ResponseTypeJSON,
-		Call:         httpd.awwanApiFsPost,
+		Call:         httpd.awwanAPIFsPost,
 	})
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
@@ -142,10 +142,10 @@ func (httpd *httpServer) registerEndpoints() (err error) {
 
 	err = httpd.RegisterEndpoint(&libhttp.Endpoint{
 		Method:       libhttp.RequestMethodPut,
-		Path:         pathAwwanApiFs,
+		Path:         pathAwwanAPIFs,
 		RequestType:  libhttp.RequestTypeJSON,
 		ResponseType: libhttp.ResponseTypeJSON,
-		Call:         httpd.awwanApiFsPut,
+		Call:         httpd.awwanAPIFsPut,
 	})
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
@@ -153,7 +153,7 @@ func (httpd *httpServer) registerEndpoints() (err error) {
 
 	var epDecrypt = libhttp.Endpoint{
 		Method:       libhttp.RequestMethodPost,
-		Path:         pathAwwanApiDecrypt,
+		Path:         pathAwwanAPIDecrypt,
 		RequestType:  libhttp.RequestTypeJSON,
 		ResponseType: libhttp.ResponseTypeJSON,
 		Call:         httpd.Decrypt,
@@ -165,7 +165,7 @@ func (httpd *httpServer) registerEndpoints() (err error) {
 
 	var epEncrypt = libhttp.Endpoint{
 		Method:       libhttp.RequestMethodPost,
-		Path:         pathAwwanApiEncrypt,
+		Path:         pathAwwanAPIEncrypt,
 		RequestType:  libhttp.RequestTypeJSON,
 		ResponseType: libhttp.ResponseTypeJSON,
 		Call:         httpd.Encrypt,
@@ -177,7 +177,7 @@ func (httpd *httpServer) registerEndpoints() (err error) {
 
 	err = httpd.RegisterEndpoint(&libhttp.Endpoint{
 		Method:       libhttp.RequestMethodPost,
-		Path:         pathAwwanApiExecute,
+		Path:         pathAwwanAPIExecute,
 		RequestType:  libhttp.RequestTypeJSON,
 		ResponseType: libhttp.ResponseTypeJSON,
 		Call:         httpd.Execute,
@@ -190,7 +190,7 @@ func (httpd *httpServer) registerEndpoints() (err error) {
 	// output.
 
 	var epExecuteTail = &libhttp.SSEEndpoint{
-		Path: pathAwwanApiExecuteTail,
+		Path: pathAwwanAPIExecuteTail,
 		Call: httpd.ExecuteTail,
 	}
 	err = httpd.RegisterSSE(epExecuteTail)
@@ -424,7 +424,7 @@ func (httpd *httpServer) FSGet(epr *libhttp.EndpointRequest) (resb []byte, err e
 	return json.Marshal(res)
 }
 
-// awwanApiFsDelete an HTTP API to delete a file.
+// awwanAPIFsDelete an HTTP API to delete a file.
 //
 // Request format,
 //
@@ -450,9 +450,9 @@ func (httpd *httpServer) FSGet(epr *libhttp.EndpointRequest) (resb []byte, err e
 //   - 400: Bad request.
 //   - 401: Unauthorized.
 //   - 404: File not found.
-func (httpd *httpServer) awwanApiFsDelete(epr *libhttp.EndpointRequest) (resb []byte, err error) {
+func (httpd *httpServer) awwanAPIFsDelete(epr *libhttp.EndpointRequest) (resb []byte, err error) {
 	var (
-		logp = `awwanApiFsDelete`
+		logp = `awwanAPIFsDelete`
 		res  = &libhttp.EndpointResponse{}
 		req  = &fsRequest{}
 
@@ -512,7 +512,7 @@ func (httpd *httpServer) awwanApiFsDelete(epr *libhttp.EndpointRequest) (resb []
 	return json.Marshal(res)
 }
 
-// awwanApiFsPost create new directory or file.
+// awwanAPIFsPost create new directory or file.
 //
 // # Request
 //
@@ -525,9 +525,9 @@ func (httpd *httpServer) awwanApiFsDelete(epr *libhttp.EndpointRequest) (resb []
 //		"path": <string>, the path to new directory or file.
 //		"is_dir": <boolean>, true if its directory.
 //	}
-func (httpd *httpServer) awwanApiFsPost(epr *libhttp.EndpointRequest) (rawBody []byte, err error) {
+func (httpd *httpServer) awwanAPIFsPost(epr *libhttp.EndpointRequest) (rawBody []byte, err error) {
 	var (
-		logp = `awwanApiFsPost`
+		logp = `awwanAPIFsPost`
 		res  = &libhttp.EndpointResponse{}
 		req  = &fsRequest{}
 
@@ -598,10 +598,10 @@ func (httpd *httpServer) awwanApiFsPost(epr *libhttp.EndpointRequest) (rawBody [
 	return json.Marshal(res)
 }
 
-// awwanApiFsPut save the content of file.
-func (httpd *httpServer) awwanApiFsPut(epr *libhttp.EndpointRequest) (rawBody []byte, err error) {
+// awwanAPIFsPut save the content of file.
+func (httpd *httpServer) awwanAPIFsPut(epr *libhttp.EndpointRequest) (rawBody []byte, err error) {
 	var (
-		logp = "awwanApiFsPut"
+		logp = `awwanAPIFsPut`
 		res  = &libhttp.EndpointResponse{}
 		req  = &fsRequest{}
 

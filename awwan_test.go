@@ -26,17 +26,17 @@ func TestMain(m *testing.M) {
 func testInitWorkspace(dir string, awwanKey, awwanPass []byte) {
 	var (
 		logp   = `testInitWorkspace`
-		dirSsh = filepath.Join(dir, defSshDir)
+		dirSSH = filepath.Join(dir, defSSHDir)
 	)
 
-	var err = os.Mkdir(dirSsh, 0700)
+	var err = os.Mkdir(dirSSH, 0700)
 	if err != nil {
 		log.Fatalf(`%s: %s`, logp, err)
 	}
 
 	var file string
 	if len(awwanKey) != 0 {
-		file = filepath.Join(dirSsh, defFilePrivateKey)
+		file = filepath.Join(dirSSH, defFilePrivateKey)
 		err = os.WriteFile(file, awwanKey, 0600)
 		if err != nil {
 			log.Fatalf(`%s: %s`, logp, err)
@@ -44,7 +44,7 @@ func testInitWorkspace(dir string, awwanKey, awwanPass []byte) {
 	}
 
 	if len(awwanPass) != 0 {
-		file = filepath.Join(dirSsh, defFilePassphrase)
+		file = filepath.Join(dirSSH, defFilePassphrase)
 		err = os.WriteFile(file, awwanPass, 0600)
 		if err != nil {
 			log.Fatalf(`%s: %s`, logp, err)

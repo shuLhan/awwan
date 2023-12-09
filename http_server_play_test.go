@@ -66,7 +66,7 @@ func TestHttpServerPlaySshConfigChanges(t *testing.T) {
 
 	var httpd *httpServer
 
-	httpd, err = newHttpServer(aww, ``)
+	httpd, err = newHTTPServer(aww, ``)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -92,7 +92,7 @@ func testHttpExecute(t *testing.T, httpd *httpServer, tdata *test.Data, tag stri
 
 	reqBody.Write(tdata.Input[tag])
 
-	var httpReq = httptest.NewRequest(http.MethodPost, pathAwwanApiExecute, &reqBody)
+	var httpReq = httptest.NewRequest(http.MethodPost, pathAwwanAPIExecute, &reqBody)
 	var httpWriter = httptest.NewRecorder()
 
 	httpd.ServeHTTP(httpWriter, httpReq)

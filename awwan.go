@@ -45,8 +45,8 @@ const (
 const (
 	defCacheDir    = `.cache`
 	defEnvFileName = `awwan.env` // The default awwan environment file name.
-	defSshConfig   = `config`    // The default SSH config file name.
-	defSshDir      = `.ssh`      // The default SSH config directory name.
+	defSSHConfig   = `config`    // The default SSH config file name.
+	defSSHDir      = `.ssh`      // The default SSH config directory name.
 	defTmpDir      = `/tmp`
 )
 
@@ -366,7 +366,7 @@ func (aww *Awwan) Play(req *ExecRequest) (err error) {
 	// Always load the SSH config, in case we run on "serve" and
 	// .ssh/config changed by user.
 
-	err = aww.loadSshConfig()
+	err = aww.loadSSHConfig()
 	if err != nil {
 		goto out
 	}
@@ -427,7 +427,7 @@ func (aww *Awwan) Serve(address string, isDev bool) (err error) {
 		go internal.Watch()
 	}
 
-	aww.httpd, err = newHttpServer(aww, address)
+	aww.httpd, err = newHTTPServer(aww, address)
 	if err != nil {
 		return fmt.Errorf(`%s: %w`, logp, err)
 	}
@@ -435,11 +435,11 @@ func (aww *Awwan) Serve(address string, isDev bool) (err error) {
 	return aww.httpd.start()
 }
 
-// loadSshConfig load all SSH config from user's home and the awwan base
+// loadSSHConfig load all SSH config from user's home and the awwan base
 // directory.
-func (aww *Awwan) loadSshConfig() (err error) {
+func (aww *Awwan) loadSSHConfig() (err error) {
 	var (
-		logp = "loadSshConfig"
+		logp = `loadSSHConfig`
 
 		baseDirConfig *config.Config
 		homeDir       string
@@ -451,13 +451,13 @@ func (aww *Awwan) loadSshConfig() (err error) {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
 
-	configFile = filepath.Join(homeDir, defSshDir, defSshConfig)
+	configFile = filepath.Join(homeDir, defSSHDir, defSSHConfig)
 	aww.sshConfig, err = config.Load(configFile)
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
 
-	configFile = filepath.Join(aww.BaseDir, defSshDir, defSshConfig)
+	configFile = filepath.Join(aww.BaseDir, defSSHDir, defSSHConfig)
 
 	baseDirConfig, err = config.Load(configFile)
 	if err != nil {
@@ -481,7 +481,7 @@ func lookupBaseDir(baseDir string) (dir string, err error) {
 	)
 
 	if len(baseDir) > 0 {
-		_, err = os.Stat(filepath.Join(baseDir, defSshDir))
+		_, err = os.Stat(filepath.Join(baseDir, defSSHDir))
 		if err != nil {
 			return "", fmt.Errorf("%s: cannot find .ssh directory on %s", logp, baseDir)
 		}
@@ -494,7 +494,7 @@ func lookupBaseDir(baseDir string) (dir string, err error) {
 	}
 
 	for dir != "/" {
-		_, err = os.Stat(filepath.Join(dir, defSshDir))
+		_, err = os.Stat(filepath.Join(dir, defSSHDir))
 		if err == nil {
 			found = true
 			break
