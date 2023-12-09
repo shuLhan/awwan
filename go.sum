@@ -2,8 +2,8 @@ git.sr.ht/~shulhan/asciidoctor-go v0.5.1-0.20231209194435-cb215a6d8138 h1:X5kngj
 git.sr.ht/~shulhan/asciidoctor-go v0.5.1-0.20231209194435-cb215a6d8138/go.mod h1:5audSCN6jDr2+/cMvx1MdZxkCurjl/k6A5OGYWRtB0o=
 git.sr.ht/~shulhan/ciigo v0.10.2-0.20231209200513-d4129bf1f9ea h1:6JoLuzzQyprz9BBAVQjGWC5LTF7c6L+oAupZZHRZkJo=
 git.sr.ht/~shulhan/ciigo v0.10.2-0.20231209200513-d4129bf1f9ea/go.mod h1:NZqKYVLtVvxVhBfBirVMD4QXOvxj+I1lbDKBjsvfF5w=
-github.com/evanw/esbuild v0.19.8 h1:IJ1CRsv3i4dkjPLo6NEGTMI0DDba7jOlPc6JFzIxtl4=
-github.com/evanw/esbuild v0.19.8/go.mod h1:D2vIQZqV/vIf/VRHtViaUtViZmG7o+kKmlBfVQuRi48=
+github.com/shuLhan/esbuild v0.19.9-0.20231209212032-2dc984ffc5f1 h1:U4DRlREmugTNkevukauQjjUsz82o3YRjtbxDILoN/Xs=
+github.com/shuLhan/esbuild v0.19.9-0.20231209212032-2dc984ffc5f1/go.mod h1:D2vIQZqV/vIf/VRHtViaUtViZmG7o+kKmlBfVQuRi48=
 github.com/shuLhan/share v0.51.1-0.20231208192030-ed9a59261448 h1:NYa3OAbJ5R0ZIMhHOfbln+DPyAwPBKFwWZwPA8IDhTg=
 github.com/shuLhan/share v0.51.1-0.20231208192030-ed9a59261448/go.mod h1:Zn0zwUdSuu7L2BKaYkVOXwbwxd5Kn6Y2bhohD9Tf0Sc=
 github.com/yuin/goldmark v1.6.0 h1:boZcn2GTjpsynOsC0iJHnBWa4Bi0qzfJjthwauItG68=

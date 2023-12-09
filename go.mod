@@ -22,6 +22,8 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
 
+replace github.com/evanw/esbuild => github.com/shuLhan/esbuild v0.19.9-0.20231209212032-2dc984ffc5f1
+
 //replace github.com/shuLhan/share => ../share
 
 //replace git.sr.ht/~shulhan/ciigo => ../ciigo
