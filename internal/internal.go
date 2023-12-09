@@ -24,7 +24,7 @@ var MemfsWui *memfs.MemFS
 // DocConvertOpts ciigo options for converting markup files.
 var DocConvertOpts = ciigo.ConvertOptions{
 	Root:         `_wui/doc`,
-	HtmlTemplate: `_wui/doc/template.gohtml`,
+	HTMLTemplate: `_wui/doc/template.gohtml`,
 }
 
 // docEmbedOpts options for embedding files in "_www/doc" into Go code.
@@ -99,7 +99,7 @@ func Watch() {
 		mlog.Fatalf(`%s: %s`, logp, err)
 	}
 
-	ciigoConv, err = ciigo.NewConverter(DocConvertOpts.HtmlTemplate)
+	ciigoConv, err = ciigo.NewConverter(DocConvertOpts.HTMLTemplate)
 	if err != nil {
 		mlog.Fatalf(`%s: %s`, logp, err)
 	}
@@ -167,7 +167,7 @@ func Watch() {
 					continue
 				}
 
-				err = ciigoConv.ToHtmlFile(fmarkup)
+				err = ciigoConv.ToHTMLFile(fmarkup)
 				if err != nil {
 					mlog.Errf(`%s %q: %s`, logp, ns.Node.Path, err)
 					continue
@@ -191,7 +191,7 @@ func Watch() {
 				node.Update(&ns.Node, 0)
 				embedCount++
 
-			case strings.HasSuffix(ns.Node.SysPath, DocConvertOpts.HtmlTemplate):
+			case strings.HasSuffix(ns.Node.SysPath, DocConvertOpts.HTMLTemplate):
 				err = ciigo.Convert(&DocConvertOpts)
 				if err != nil {
 					mlog.Errf(`%s: %s`, logp, err)

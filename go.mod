@@ -6,13 +6,13 @@ module git.sr.ht/~shulhan/awwan
 go 1.20
 
 require (
-	git.sr.ht/~shulhan/ciigo v0.10.1
+	git.sr.ht/~shulhan/ciigo v0.10.2-0.20231209200513-d4129bf1f9ea
 	github.com/evanw/esbuild v0.19.8
 	github.com/shuLhan/share v0.51.1-0.20231208192030-ed9a59261448
 )
 
 require (
-	git.sr.ht/~shulhan/asciidoctor-go v0.5.1-0.20231105052733-3d54e38bac45 // indirect
+	git.sr.ht/~shulhan/asciidoctor-go v0.5.1-0.20231209194435-cb215a6d8138 // indirect
 	github.com/yuin/goldmark v1.6.0 // indirect
 	github.com/yuin/goldmark-meta v1.1.0 // indirect
 	golang.org/x/crypto v0.16.0 // indirect
