@@ -1,6 +1,5 @@
 echo "hello"
 
-## Should do nothing.
 #local: echo "nothing"
 
 echo "local"

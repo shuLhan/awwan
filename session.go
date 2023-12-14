@@ -472,6 +472,8 @@ func (ses *Session) executeScriptOnLocal(req *ExecRequest, pos linePosition) (er
 			err = ExecLocal(req, stmt)
 		case statementKindGet:
 			err = ses.Copy(req, stmt)
+		case statementKindLocal:
+			err = ExecLocal(req, stmt)
 		case statementKindPut:
 			err = ses.Copy(req, stmt)
 		case statementKindSudoGet:

@@ -71,7 +71,7 @@ build-awwan-test:
 test-integration:
 	go test -tags=integration -c .
 	machinectl shell awwan@awwan-test \
-		/bin/sh -c "cd src; ./awwan.test -test.v"
+		/bin/sh -c "cd src; ./awwan.test"
 
 .PHONY: test-all
 test-all:

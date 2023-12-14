@@ -421,8 +421,8 @@ $ sudo chown root:bin remote/dst
 
 The magic word "#local" define the command to be executed in the local
 environment.
-This magic word only works if the script is executed using "play" command.
-If the script executed using "local" command it will do nothing.
+This magic word works when the script is executed using "play" or "local"
+command.
 
 For example, given the following script,
 
@@ -444,6 +444,7 @@ script will result in,
 If the script executed with "local" command it will result to,
 
 ----
+/home/client
 /home/client
 ----
 
