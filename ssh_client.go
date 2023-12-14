@@ -4,6 +4,7 @@
 package awwan
 
 import (
+	"errors"
 	"fmt"
 	"io/fs"
 	"path/filepath"
@@ -94,6 +95,30 @@ func (sshc *sshClient) chown(remoteFile, owner string) (err error) {
 		return err
 	}
 	return nil
+}
+
+// close the connections and release all resources.
+func (sshc *sshClient) close() (err error) {
+	err = sshc.rmdirAll(sshc.dirTmp)
+
+	var errClose error
+
+	if sshc.sftpc != nil {
+		errClose = sshc.sftpc.Close()
+		if errClose != nil {
+			err = errors.Join(err, errClose)
+		}
+		sshc.sftpc = nil
+	}
+
+	errClose = sshc.conn.Close()
+	if errClose != nil {
+		err = errors.Join(err, errClose)
+	}
+	sshc.conn = nil
+	sshc.section = nil
+
+	return err
 }
 
 // get the remote file and write it to local path.

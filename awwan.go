@@ -405,10 +405,10 @@ func (aww *Awwan) Play(req *ExecRequest) (err error) {
 	}
 	req.mlog.Outf(`=== END: %s %s %s`, req.Mode, req.Script, req.LineRange)
 out:
-	if ses != nil && ses.sshc != nil {
-		var errRemove = ses.sshc.rmdirAll(ses.sshc.dirTmp)
-		if errRemove != nil {
-			req.mlog.Errf(`!!! %s`, errRemove)
+	if ses != nil {
+		var errclose = ses.close()
+		if errclose != nil {
+			req.mlog.Errf(`!!! %s`, errclose)
 		}
 	}
 	if err != nil {

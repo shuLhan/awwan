@@ -410,6 +410,16 @@ func ExecLocal(req *ExecRequest, stmt *Statement) (err error) {
 	return nil
 }
 
+// close the session and release all resources.
+func (ses *Session) close() (err error) {
+	ses.cryptoc = nil
+	if ses.sshc != nil {
+		err = ses.sshc.close()
+		ses.sshc = nil
+	}
+	return err
+}
+
 // executeRequires run the "#require:" statements from line 0 until
 // the start argument in the local system.
 func (ses *Session) executeRequires(req *ExecRequest, pos linePosition) (err error) {
