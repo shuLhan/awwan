@@ -96,9 +96,8 @@ serve-www:
 	go run ./internal/cmd/www-awwan -dev
 
 .PHONY: install-www
-install-www: build-www
-	mkdir -p /data/app/bin/
-	rsync --progress ./www-awwan /data/app/bin/
+install-www: embed
+	go install ./internal/cmd/www-awwan
 
 .PHONY: deploy-www
 deploy-www: GOOS=linux GOARCH=amd64 CGO_ENABLED=0

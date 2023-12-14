@@ -25,6 +25,7 @@ const defAddress = `127.0.0.1:4358`
 var MemfsWww *memfs.MemFS
 
 func main() {
+	var flagAddress = flag.String(`address`, defAddress, `Address to listen for client`)
 	var flagDev = flag.Bool(`dev`, false, `Watch local changes`)
 
 	flag.Parse()
@@ -63,11 +64,11 @@ func main() {
 		os.Exit(0)
 	}()
 
-	log.Printf(`--- Starting %s at http://%s with dev=%v`, binName, defAddress, *flagDev)
+	log.Printf(`--- Starting %s at http://%s with dev=%v`, binName, *flagAddress, *flagDev)
 
 	var optsServe = &ciigo.ServeOptions{
 		Mfs:            MemfsWww,
-		Address:        defAddress,
+		Address:        *flagAddress,
 		ConvertOptions: internal.DocConvertOpts,
 		IsDevelopment:  *flagDev,
 	}
