@@ -1,6 +1,6 @@
 pkgbase = awwan-git
 	pkgdesc = Configuration management software, infrastructure as file and directory layout.
-	pkgver = 0.8.0.r35.ga31d846
+	pkgver = 0.10.0.r0.gf30f148
 	pkgrel = 1
 	url = https://git.sr.ht/~shulhan/awwan
 	arch = x86_64

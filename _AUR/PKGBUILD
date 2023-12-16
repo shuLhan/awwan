@@ -1,7 +1,7 @@
 # Maintainer: shulhan <ms@kilabit.info>
 
 pkgname=awwan-git
-pkgver=0.8.0.r35.ga31d846
+pkgver=0.10.0.r0.gf30f148
 pkgrel=1
 
 pkgdesc="Configuration management software, infrastructure as file and directory layout."
@@ -19,8 +19,6 @@ provides=('awwan')
 source=(
 	"$pkgname::git+https://git.sr.ht/~shulhan/awwan"
 	"wui::git+https://git.sr.ht/~shulhan/wui"
-	#"$pkgname::git+file:///home/ms/go/src/git.sr.ht/~shulhan/awwan"
-	#"wui::git+file:///home/ms/go/src/git.sr.ht/~shulhan/wui"
 )
 md5sums=(
 	'SKIP'
@@ -46,6 +44,6 @@ build() {
 
 package() {
 	cd "$pkgname"
-	install -Dm755 awwan $pkgdir/usr/bin/awwan
+	install -Dm755 _bin/awwan $pkgdir/usr/bin/awwan
 	install -Dm755 COPYING $pkgdir/usr/share/licenses/awwan/COPYING
 }
