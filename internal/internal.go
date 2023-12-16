@@ -180,7 +180,8 @@ func Watch() {
 
 				tsCount++
 
-			case strings.HasSuffix(ns.Node.Path, `.js`),
+			case strings.HasSuffix(ns.Node.Path, `.css`),
+				strings.HasSuffix(ns.Node.Path, `.js`),
 				strings.HasSuffix(ns.Node.Path, `.html`):
 
 				node, err = MemfsWui.Get(ns.Node.Path)

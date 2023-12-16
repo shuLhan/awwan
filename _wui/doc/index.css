@@ -169,6 +169,10 @@ blockquote {
   color: darkgreen;
 }
 
+dt {
+  font-weight: bold;
+}
+
 h1 {
   font-size: 28px;
   border-bottom: 1px solid grey;
