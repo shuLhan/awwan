@@ -541,19 +541,20 @@ func (ses *Session) executeScriptOnRemote(req *ExecRequest, pos linePosition) (e
 func (ses *Session) generateFileInput(in string) (out string, isVault bool, err error) {
 	// Check if the file is binary first, since binary file will not get
 	// encrypted.
-	if libos.IsBinary(in) {
+	if !strings.HasSuffix(in, defEncryptExt) && libos.IsBinary(in) {
 		return in, false, nil
 	}
 
 	var (
-		logp = `generateFileInput`
+		logp         = `generateFileInput`
+		relPathInput = relativePath(ses.BaseDir, in)
 
 		contentInput []byte
 	)
 
 	contentInput, isVault, err = ses.loadFileInput(in)
 	if err != nil {
-		return ``, false, err
+		return ``, false, fmt.Errorf(`%s %q: %w`, logp, relPathInput, err)
 	}
 
 	var contentOut []byte
@@ -704,43 +705,30 @@ func (ses *Session) loadFileEnv(awwanEnv string, isVault bool) (err error) {
 }
 
 // loadFileInput read the input file for Copy or Put operation.
-// If the original input file does not exist, try loading the encrypted file
-// with ".vault" extension.
+//
+// If the input path end with ".vault" suffix, the file will be decrypted
+// first.
 //
 // On success, it will return the content of file and true if the file is
 // from encrypted file .vault.
 func (ses *Session) loadFileInput(path string) (content []byte, isVault bool, err error) {
-	var (
-		logp    = `loadFileInput`
-		relPath = relativePath(ses.BaseDir, path)
-	)
-
-	content, err = os.ReadFile(path)
-	if err == nil {
-		return content, false, nil
-	}
-	if !errors.Is(err, fs.ErrNotExist) {
-		return nil, false, err
-	}
-	log.Printf(`??? %s %q: not exist`, logp, relPath)
-
-	path = path + defEncryptExt
-	relPath += defEncryptExt
-
-	content, err = os.ReadFile(path)
-	if err != nil {
-		if errors.Is(err, fs.ErrNotExist) {
-			return nil, false, fmt.Errorf(`%s %q: %w`, logp, relPath, fs.ErrNotExist)
+	if strings.HasSuffix(path, defEncryptExt) {
+		content, err = os.ReadFile(path)
+		if err != nil {
+			return nil, true, err
 		}
+		content, err = ses.cryptoc.decrypt(content)
+		if err != nil {
+			return nil, true, err
+		}
+		return content, true, nil
+	}
+
+	content, err = os.ReadFile(path)
+	if err != nil {
 		return nil, false, err
 	}
-
-	content, err = ses.cryptoc.decrypt(content)
-	if err != nil {
-		return nil, false, fmt.Errorf(`%s %q: %s`, logp, relPath, err)
-	}
-
-	return content, true, nil
+	return content, false, nil
 }
 
 func (ses *Session) loadRawEnv(content []byte) (err error) {
