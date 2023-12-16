@@ -4,6 +4,258 @@
 
 This page document changes on each release.
 
+
+[#v0_10_0]
+== awwan v0.10.0 (2023-12-16)
+
+In this release we add two new commands to awwan CLI: "env-set" and
+"env-get", the command to set and get value from awwan environment.
+
+We command "serve" now have optional parameter "-address".
+
+
+[#v0_10_0__new_features]
+===  New features
+
+internal/cmd: add flag "address" for command www-awwan::
++
+This is to allow using different address when running on local, without
+conflict with "serve-www" task in Makefile.
+
+all: implement command "env-get" to get value from environment files::
++
+--
+The env-get command get the value from environment files.
+Syntax,
+
+    <key> [dir]
+
+The "key" argument define the key where value is stored in environment
+using "section:sub:name" format.
+The "dir" argument is optional, its define the directory where environment
+files will be loaded, recursively, from BaseDir to dir.
+If its empty default to the current directory.
+--
+
+all: implement command to set environment value with "env-set"::
++
+--
+The env-set command set the value of environment file. Syntax,
+
+	<key> <value> <file>
+
+The "key" argument define the key to be set using "section:sub:name"
+format.
+The "value" argument define the value key.
+The "file" argument define path to environment file.
+
+For example, to set the value for "name" under section "host" to
+"myhost" in file "awwan.env" run
+
+----
+$ awwan env-set host::name myhost awwan.env
+----
+
+To set the value for key "pass" under section "user" subsection "database"
+to value "s3cret" in file "awwan.env" run
+
+----
+$ awwan env-set user:database:pass s3cret awwan.env
+----
+--
+
+_wui: implement Encrypt::
++
+--
+In the right side of Save button we now have a button Encrypt that
+allow user to Encrypt opened file.
+
+This require the workspace has been setup with private key
+(.ssh/awwan.key) and pass file (.ssh/awwan.pass).
+--
+
+_wui: implement Decrypt::
++
+--
+In the right side of Save button we now have a button Decrypt that
+allow user to Decrypt file with ".vault" extension only.
+
+This require the workspace has been setup with private key
+(.ssh/awwan.key) and pass file (.ssh/awwan.pass).
+--
+
+[#v0_10_0__breaking_changes]
+=== Breaking changes
+
+all: make the magic line "#local" works on "local" command too::
++
+--
+In case we have a script that manage local host and remote server,
+calling "play" on "#local" lines only always open the connection to remote
+server.
+
+To minimize opening unused connections, let the "#local" command works
+on both commands.  Its up to user which part of lines that they want
+to execute on remote or local.
+--
+
+_wui: use CTRL+Enter to trigger save instead of CTRL+s on editor::
++
+Using CTRL+s sometimes cause pressing s only trigger the save, due to
+fast typing (or keyboard error?).
+
+
+[#v0_10_0__bug_fixes]
+=== Bug fixes
+
+all: close the SSH connection once Play finished::
++
+--
+Previously, we used to run awwan as CLI so each connection is open and
+closed once the command completed.
+Since we now use awwan WUI frequently, any command that execute Play
+does not close the session immediately once finished.
+This cause many connections open in remote server.
+
+This changes close the SSH connections immediately once the Play command
+finished.
+--
+
+all: fix memfs excludes regex::
++
+Previously, the regex does not contains "^" and "$" which makes
+file like "multi-user.target.wants" considered as ".tar" file and being
+excluded.
+
+_wui: update editor component::
++
+--
+Changes,
+
+* fix paste that always end with newline
+* fix editor content that got wrapped due to width
+* update layout without using float
+* replace execCommand with Selection
+--
+
+all: fix excludes on HTTP server related to .git::
++
+The HTTP server should excludes ".git" directory only, not the other
+files, like ".gitignore" or ".gitconfig".
+
+all: always load SSH config when running Play::
++
+--
+In case awwan run with "serve" and we modify the ".ssh/config", the
+changes does not detected by awwan because we only read ".ssh/config"
+once we Awwan instance created.
+
+This changes fix this issue by always loading SSH config every time
+the Play method executed so the user CLI and WUI has the same experiences.
+--
+
+[#v0_10_0__enhancements]
+=== Enhancements
+
+all: reduce the response on HTTP endpoint on GET fs::
++
+--
+Previously, the HTTP endpoint for "GET /awwan/api/fs" return the content
+of files when the requested node is a directory.
+This is cause unnecessary load because when requesting directory we
+only need list of file names not the content.
+
+This changes reduce the response by returning only list of node child
+without its content, which require update on share module on [Node.JSON].
+--
+
+_wui: use the output for displaying notification::
++
+--
+Previously, we use a quick "pop-up" to display notification for each
+information or error from WUI.
+Sometimes this is annoying, it overlap the buttons, make it hard to
+Save and Encrypt at the same time.
+
+In this changes we move the nofication message to be displayed in
+the output, same with output of execution.
+--
+
+all: use the same date format between log and mlog package::
++
+In this way, the date-time output from log.Xxx and mlog.Xxx are
+consistent.
+
+all: remove duplicate errors logged on Copy, Put, and SudoCopy::
++
+While at it, replace all call of [log.Printf] with [Request.mlog] so
+error both written to stderr and to [Request.Output].
+
+_wui: do not clear output when executing another command::
++
+This allow user to see the output of previous command without opening
+the log file.
+
+_wui: store and load the vfs width in local storage::
++
+This is allow user to resize vfs width in one window and when new window
+is opened the vfs width is restored with the same size.
+
+_wui: disable button "Local" and "Play" when clicked::
++
+Once the execution completed, both buttons will be enabled again.
+While at it, add an icon to show the execution status.
+
+_wui: rename "Remote" to "Play"::
++
+This is to make command between the CLI and WUI consistent.
+
+all: refactoring HTTP endpoint for Execute::
++
+--
+Previously, the Execute endpoint wait for command execution to finish.
+In case the command takes longer than proxy or server write timeout, it
+will return with a timeout error to client.
+
+In this changes, we generate an execution ID for each request and return
+it immediately.
+
+The new API "GET /awwan/api/execute/tail" implement Server-sent
+events, accept the execution ID from "/awwan/api/execute".
+
+Once called with valid ID, it will streaming the command output
+to client.
+
+By using this new API, the WUI can receive the output of command
+immediately without waiting for all commands to be completed.
+--
+
+_wui: add vertical resizer, to resize between VFS and editor::
+
+_wui: allow all content type but decrease max file size to 1 MB::
++
+Previously, only file with type json, message, octet-stream, script,
+text, or XML that can be opened by editor.
+In this changes we allow all files as long as the size is less than 1 MB.
+
+_wui: update vfs component::
++
+This changes allow user browse the crumb in path and item in the list
+using tab key.
+While at it, fix the layout to make VFS and editor aligned.
+
+_wui: implement file filter::
++
+--
+This changes move the text input for creating new file above the list.
+
+Filling the text field will filter the list based on the node name using
+regular expression.
+
+Another changes is for node with type directory now suffixed with "/".
+--
+
+
 [#v0_9_0]
 == awwan v0.9.0 (2023-11-11)
 
