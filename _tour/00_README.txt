@@ -1,6 +1,6 @@
 = Welcome to awwan
 
-This is an example of awwan workspace.
+This is a tour of awwan.
 
 The awwan workspace is indicated by ".ssh" directory, as you can see in the
 list of file in the left.
@@ -31,40 +31,66 @@ Click on the file "output" to see its content or execute the line below
 
 cat {{.ScriptDir}}/output
 
+Which will output,
 
-We provides an example files to follow along, that explain each command and
+  2023/12/17 11:44:55 -->  32: cat /home/awwan/tour/output
+  Hello world
+
+We provides an tutorial files to follow along, that explain each command and
 feature in the awwan.
 
-01_local.aww - Tutorial on "local" command, to execute command in local
-machine using shell.
+01_local.aww
 
-02_script_variables.aww - Quick tutorial on global variables that can be
-used in script.
+  Tutorial on "local" command, to execute command in local machine using shell.
 
-03_env.aww - Tutorial on how to write and use environment file.
+02_script_variables.aww
 
-04_env-set.aww - Tutorial on "env-set" command, or how to set value into
-environment file.
+  Tutorial on global variables that can be used in script.
 
-05_env-get.aww - Tutorial on "env-get" command, or how to get value from
-environment file.
+03_env.aww
 
-06_magic_put.aww - Tutorial on magic line "#put".
+  Tutorial on how to write and use environment file.
 
-07_magic_get.aww - Tutorial on magic line "#get".
+04_env-set.aww
 
-08_encrypt.aww - Tutorial on how to encrypt file and use it to copy file.
+  Tutorial on "env-set" command, or how to set value into environment file.
 
-09_decrypt.aww - Tutorial on how to decrypt file.
+05_env-get.aww
 
-10_encrypted_env.aww - Tutorial on how to use encrypted environment.
+  Tutorial on "env-get" command, or how to get value from environment file.
 
-11_encrypted_put.aww - Tutorial on how to use magic line "#put" with encrypted
-environment or encrypted file.
+06_magic_put.aww
 
-12_magic_require.aww - Tutorial on how to use magic line "#require".
+  Tutorial on magic line "#put".
 
-remotehost/01_play.aww - Tutorial on how to use "play" command using SSH in
-the server named "remotehost".
+07_magic_get.aww
 
-remotehost/02_magic_local.aww - Tutorial on magic line "#local".
+  Tutorial on magic line "#get".
+
+08_encrypt.aww
+
+  Tutorial on how to encrypt file and use it to copy file.
+
+09_decrypt.aww
+  Tutorial on how to decrypt file.
+
+10_encrypted_env.aww
+
+  Tutorial on how to use encrypted environment.
+
+11_encrypted_put.aww
+
+  Tutorial on how to use magic line "#put" with encrypted environment or
+  encrypted file.
+
+12_magic_require.aww
+
+  Tutorial on how to use magic line "#require".
+
+remotehost/01_play.aww
+
+  Tutorial on how to use "play" command using SSH in the server named "remotehost".
+
+remotehost/02_magic_local.aww
+
+  Tutorial on magic line "#local".
