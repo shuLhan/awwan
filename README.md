@@ -39,6 +39,8 @@ Feel free to open new feature or report a bug in our
 
 [Project website](https://awwan.org).
 
+[Tour of awwan](https://tour.awwan.org).
+
 [Changelog](https://awwan.org/CHANGELOG.html) --
 History of each awwan release.
 

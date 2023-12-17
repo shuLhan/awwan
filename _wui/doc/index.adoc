@@ -14,6 +14,8 @@ your own server, while you need is a handful knowledge of shell script?
 
 If yes, awwan is the right tools for you.
 
+https://tour.awwan.org/[Take a tour of awwan]
+
 Features,
 
 - Encryption. Awwan can read and copy encrypted files.

@@ -1,0 +1,9 @@
+sudo pacman -Sy --noconfirm mkosi
+
+make -C /data/awwan/src build-tour
+
+sudo machinectl --force import-tar /data/awwan/awwan-tour.tar
+sudo cp /data/awwan/awwan-tour.nspawn /etc/systemd/nspawn/awwan-tour.nspawn
+sudo machinectl start awwan-tour
+
+sudo machinectl -l

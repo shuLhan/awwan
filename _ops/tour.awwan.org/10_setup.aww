@@ -1,0 +1,13 @@
+sudo mkdir -p /data/awwan/src
+sudo chown -R {{.SSHUser}} /data/awwan
+
+git -C /data/awwan/src clone https://git.sr.ht/~shulhan/awwan . \
+|| git -C /data/awwan/src fetch --all --tags --prune
+
+git -C /data/awwan/src submodule update --init
+
+## Currently we use the dev branch for quick fixes.
+
+git -C /data/awwan/src checkout -B dev
+git -C /data/awwan/src reset --hard origin/dev
+CGO_ENABLED=0 make -C /data/awwan/src build
