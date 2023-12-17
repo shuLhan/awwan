@@ -16,6 +16,7 @@
 /_mkosi/image.raw
 /_mkosi/mkosi.builddir/
 /_mkosi/mkosi.cache/
+/_tour/output
 /_wui/doc/*.html
 /awwan
 /awwan.test

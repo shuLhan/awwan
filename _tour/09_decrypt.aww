@@ -10,7 +10,7 @@ Lets try decrypting the previous file that we encrypt,
 
   awwan decrypt secret.txt.vault
 
-Execute the above line and tt will decrypt the file into "secret.txt",
+Execute the above line and it will decrypt the file into "secret.txt",
 
   2023/12/06 15:09:55 -->  11: awwan decrypt secret.txt.vault
   2023/12/06 15:09:55 --- BaseDir: /home/awwan/play

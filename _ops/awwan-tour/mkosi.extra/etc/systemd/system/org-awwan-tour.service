@@ -1,12 +1,12 @@
 [Unit]
-Description=org-awwan-play
+Description=org-awwan-tour
 After=network-online.target
 
 [Service]
 User=awwan
-WorkingDirectory=/home/awwan/play
+WorkingDirectory=/home/awwan/tour
 ExecStart=/usr/local/bin/awwan -address=0.0.0.0:27600 \
-  serve /home/awwan/play
+  serve /home/awwan/tour
 Restart=always
 RestartSec=5s
 

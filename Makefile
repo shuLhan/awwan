@@ -158,24 +158,26 @@ release-sync-local:
 release-tip-local: embed build-all-amd64 build-all-arm64 release-sync-local
 
 #}}}
-#{{{ Tasks for play.awwan.org.
+#{{{ Tasks for tour.awwan.org.
 
-## Build the play.awwan.org container in local.
+## Build the tour.awwan.org container in local.
 
-.PHONY: build-awwan-play
-build-awwan-play:
+.PHONY: build-tour
+build-tour:
+	@echo ">>> Building container ..."
+	sudo mkosi --directory=_ops/awwan-tour --force build
+
+.PHONY: build-tour-local
+build-tour-local: build-tour
 	@echo ">>> Stopping container ..."
-	-sudo machinectl stop awwan-play
+	-sudo machinectl stop awwan-tour
 
+	## We need to bind src/_bin and src/_tour into container.
 	@echo ">>> Creating binding ..."
-	## We need to bind src/_bin and src/_play into container.
 	mkdir -p /data/awwan/
 	ln -sTf $$(pwd) /data/awwan/src
 
-	@echo ">>> Building container ..."
-	sudo mkosi --directory=_ops/awwan-play --force build
-
-	sudo machinectl --force import-tar /data/awwan/awwan-play.tar
-	sudo machinectl start awwan-play
+	sudo machinectl --force import-tar /data/awwan/awwan-tour.tar
+	sudo machinectl start awwan-tour
 
 #}}}

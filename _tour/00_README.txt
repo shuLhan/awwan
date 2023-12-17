@@ -1,34 +1,36 @@
 = Welcome to awwan
 
 This is an example of awwan workspace.
+
 The awwan workspace is indicated by ".ssh" directory, as you can see in the
 list of file in the left.
 
 In awwan, every file is a script, including this file.
-As long as the line is a valid shell command it can execute it.
+As long as the line is a valid shell command, awwan can execute it.
 
 Lets try.
 
 echo "Hello world" > {{.ScriptDir}}/output
 
-In the input "Execute line" below, set its value to "12" and click on the
+In the input "Execute line" below, set its value to "13" and click on the
 "Local" button.
 You should see output like these,
 
-  2023/11/29 15:45:08 -->  12: echo "Hello world" > /home/awwan/workspace/output
+  2023/11/29 15:45:08 -->  13: echo "Hello world" > /home/awwan/tour/output
 
 The same line can be executed in terminal using awwan CLI with following
 command,
 
-awwan local README.txt 12
+awwan local {{.ScriptDir}}/00_README.txt 13
 
 Click on the directory path "/" on the left top (above ".ssh"), to refresh
 the content of directory.
-You should see a new file "output" (and "README.txt.log") in the list after
+You should see a new file "output" and "00_README.txt.log" in the list after
 executing above line.
-You ca click on the file "output" to see its content.
+Click on the file "output" to see its content or execute the line below
 
-That's it!
+cat {{.ScriptDir}}/output
+
 
 We provides an example files to follow along, that explain each command and
 feature in the awwan.
