@@ -16,15 +16,11 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/shuLhan/share/lib/ascii"
 	"github.com/shuLhan/share/lib/ini"
 	libos "github.com/shuLhan/share/lib/os"
 	libexec "github.com/shuLhan/share/lib/os/exec"
 	"github.com/shuLhan/share/lib/ssh/config"
 )
-
-// defDirTmpPrefix default prefix for temporary directory.
-const defDirTmpPrefix = `awwan.`
 
 // Session manage and cache SSH client and list of scripts.
 // One session have one SSH client, but may contains more than one script.
@@ -51,11 +47,7 @@ type Session struct {
 // NewSession create and initialize the new session based on Awwan base
 // directory and the session directory.
 func NewSession(aww *Awwan, sessionDir string) (ses *Session, err error) {
-	var (
-		logp = `NewSession`
-
-		randomString string
-	)
+	var logp = `NewSession`
 
 	log.Printf(`--- NewSession %q`, relativePath(aww.BaseDir, sessionDir))
 
@@ -65,6 +57,7 @@ func NewSession(aww *Awwan, sessionDir string) (ses *Session, err error) {
 		BaseDir:   aww.BaseDir,
 		ScriptDir: sessionDir,
 		hostname:  filepath.Base(sessionDir),
+		dirTmp:    defTmpDirLocal,
 	}
 
 	err = ses.generatePaths()
@@ -76,9 +69,6 @@ func NewSession(aww *Awwan, sessionDir string) (ses *Session, err error) {
 	if err != nil {
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
-
-	randomString = string(ascii.Random([]byte(ascii.LettersNumber), 16))
-	ses.dirTmp = filepath.Join(defTmpDir, defDirTmpPrefix+randomString)
 
 	return ses, nil
 }
@@ -306,9 +296,10 @@ func (ses *Session) SudoCopy(req *ExecRequest, stmt *Statement) (err error) {
 	return nil
 }
 
-// SudoGet copy file from remote that can be accessed by root on remote, to
-// local.
-// If the owner and mode is set, it will also changes using sudo.
+// SudoGet copy file from remote, that may not readable by remote user, to
+// local using sudo.
+// If the owner and/or mode is set, it will also applied using sudo on local
+// host, after the file has been retrieved.
 func (ses *Session) SudoGet(req *ExecRequest, stmt *Statement) (err error) {
 	var (
 		logp = `SudoGet`
@@ -628,7 +619,7 @@ func (ses *Session) initSSHClient(req *ExecRequest, sshSection *config.Section) 
 		lastIdentFile = sshSection.IdentityFile[len(sshSection.IdentityFile)-1]
 	}
 
-	ses.sshc, err = newSSHClient(req, sshSection, ses.dirTmp)
+	ses.sshc, err = newSSHClient(req, sshSection)
 	if err != nil {
 		return fmt.Errorf(`%s: %w`, logp, err)
 	}

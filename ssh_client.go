@@ -4,12 +4,13 @@
 package awwan
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io/fs"
 	"path/filepath"
+	"strings"
 
-	"github.com/shuLhan/share/lib/ascii"
 	"github.com/shuLhan/share/lib/ssh"
 	"github.com/shuLhan/share/lib/ssh/config"
 	"github.com/shuLhan/share/lib/ssh/sftp"
@@ -29,13 +30,16 @@ type sshClient struct {
 
 	// dirTmp temporary directory for sudoGet or sudoPut operations.
 	dirTmp string
+
+	// dirHome define the remote user home directory.
+	dirHome string
 }
 
 // newSSHClient create new clients using the SSH config section.
 //
 // Once connection established, the client create new temporary directory on
 // server at dirTmp for sudoGet or sudoPut operations.
-func newSSHClient(req *ExecRequest, section *config.Section, dirTmp string) (sshc *sshClient, err error) {
+func newSSHClient(req *ExecRequest, section *config.Section) (sshc *sshClient, err error) {
 	var logp = `newSSHClient`
 
 	req.mlog.Outf(`--- SSH connection: %s@%s:%s`,
@@ -45,7 +49,6 @@ func newSSHClient(req *ExecRequest, section *config.Section, dirTmp string) (ssh
 
 	sshc = &sshClient{
 		section: section,
-		dirTmp:  dirTmp,
 	}
 
 	sshc.conn, err = ssh.NewClientInteractive(section)
@@ -60,10 +63,15 @@ func newSSHClient(req *ExecRequest, section *config.Section, dirTmp string) (ssh
 		req.mlog.Errf(`%s: %s`, logp, err)
 	}
 
-	if len(dirTmp) == 0 {
-		var randomString = string(ascii.Random([]byte(ascii.LettersNumber), 16))
-		sshc.dirTmp = filepath.Join(defTmpDir, defDirTmpPrefix+randomString)
+	// Get the remote user's home directory.
+	var stdout []byte
+	stdout, _, err = sshc.conn.Output(`pwd`)
+	if err != nil {
+		return nil, err
 	}
+
+	sshc.dirHome = string(bytes.TrimSpace(stdout))
+	sshc.dirTmp = strings.Replace(defTmpDirPlay, `~`, sshc.dirHome, 1)
 
 	err = sshc.mkdir(sshc.dirTmp, 0700)
 	if err != nil {
@@ -99,8 +107,6 @@ func (sshc *sshClient) chown(remoteFile, owner string) (err error) {
 
 // close the connections and release all resources.
 func (sshc *sshClient) close() (err error) {
-	err = sshc.rmdirAll(sshc.dirTmp)
-
 	var errClose error
 
 	if sshc.sftpc != nil {
@@ -134,14 +140,14 @@ func (sshc *sshClient) get(remote, local string) (err error) {
 // mkdir create directory on the remote server.
 func (sshc *sshClient) mkdir(dir string, permission uint32) (err error) {
 	if sshc.sftpc == nil {
-		var mkdirStmt = fmt.Sprintf(`mkdir %s`, dir)
+		var mkdirStmt = fmt.Sprintf(`mkdir -p %s`, dir)
 
 		err = sshc.conn.Execute(mkdirStmt)
 	} else {
 		var fa = sftp.FileAttrs{}
 
 		fa.SetPermissions(permission)
-		err = sshc.sftpc.Mkdir(dir, &fa)
+		err = sshc.sftpc.MkdirAll(dir, &fa)
 	}
 	return err
 }

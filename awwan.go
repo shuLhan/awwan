@@ -47,7 +47,6 @@ const (
 	defEnvFileName = `awwan.env` // The default awwan environment file name.
 	defSSHConfig   = `config`    // The default SSH config file name.
 	defSSHDir      = `.ssh`      // The default SSH config directory name.
-	defTmpDir      = `/tmp`
 )
 
 // defEncryptExt default file extension for encrypted file.
@@ -55,6 +54,12 @@ const defEncryptExt = `.vault`
 
 // defFileEnvVault default awwan environment file name that is encrypted.
 const defFileEnvVault = `.awwan.env.vault`
+
+// defTmpDirLocal default temporary directory in local.
+const defTmpDirLocal = `.cache/`
+
+// defTmpDirPlay default temporary directory in remote.
+const defTmpDirPlay = `~/.cache/awwan`
 
 // Awwan is the service that run script in local or remote.
 // Awwan contains cache of sessions and cache of environment files.
@@ -328,12 +333,6 @@ func (aww *Awwan) Local(req *ExecRequest) (err error) {
 	}
 	req.mlog.Outf(`=== END: %s %s %s`, req.Mode, req.Script, req.LineRange)
 out:
-	if ses != nil {
-		var errRemove = os.RemoveAll(ses.dirTmp)
-		if errRemove != nil {
-			req.mlog.Errf(`!!! %s: %s`, logp, errRemove)
-		}
-	}
 	if err != nil {
 		req.mlog.Errf(`!!! %s`, err)
 		err = fmt.Errorf(`%s: %w`, logp, err)
