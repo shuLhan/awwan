@@ -17,15 +17,16 @@ import (
 )
 
 func TestAwwanLocal(t *testing.T) {
+	type testCase struct {
+		lineRange string
+		tagOutput string
+	}
+
 	var (
-		baseDir    = `testdata/local`
-		scriptDir  = baseDir
-		scriptFile = filepath.Join(scriptDir, `local.aww`)
-		tdataFile  = filepath.Join(scriptDir, `local_test.data`)
-		mockrw     = mock.ReadWriter{}
+		baseDir   = `testdata/local`
+		tdataFile = filepath.Join(baseDir, `local_test.data`)
 
 		tdata *test.Data
-		aww   *Awwan
 		err   error
 	)
 
@@ -33,6 +34,11 @@ func TestAwwanLocal(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	var (
+		mockrw = mock.ReadWriter{}
+		aww    *Awwan
+	)
 
 	aww, err = New(baseDir)
 	if err != nil {
@@ -42,25 +48,36 @@ func TestAwwanLocal(t *testing.T) {
 	// Mock terminal to read passphrase for private key.
 	aww.cryptoc.termrw = &mockrw
 
+	var cases = []testCase{{
+		lineRange: `1-`,
+		tagOutput: `local:1-`,
+	}, {
+		lineRange: `100-`,
+		tagOutput: `local:100-`,
+	}}
+
 	var (
-		req  *ExecRequest
-		logw bytes.Buffer
+		scriptFile = filepath.Join(baseDir, `local.aww`)
+		req        *ExecRequest
+		logw       bytes.Buffer
+		c          testCase
 	)
+	for _, c = range cases {
+		req, err = NewExecRequest(CommandModeLocal, scriptFile, c.lineRange)
+		if err != nil {
+			t.Fatal(err)
+		}
 
-	req, err = NewExecRequest(CommandModeLocal, scriptFile, `1-`)
-	if err != nil {
-		t.Fatal(err)
+		logw.Reset()
+		req.registerLogWriter(`output`, &logw)
+
+		err = aww.Local(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		test.Assert(t, `stdout`, string(tdata.Output[c.tagOutput]), logw.String())
 	}
-
-	req.registerLogWriter(`output`, &logw)
-
-	err = aww.Local(req)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	var exp = string(tdata.Output[`local:output`])
-	test.Assert(t, `stdout`, exp, logw.String())
 }
 
 func TestAwwanLocal_Get(t *testing.T) {

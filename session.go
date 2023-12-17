@@ -414,6 +414,10 @@ func (ses *Session) close() (err error) {
 // executeRequires run the "#require:" statements from line 0 until
 // the start argument in the local system.
 func (ses *Session) executeRequires(req *ExecRequest, pos linePosition) (err error) {
+	if pos.start >= int64(len(req.script.requires)) {
+		return nil
+	}
+
 	var (
 		stmt *Statement
 		x    int64

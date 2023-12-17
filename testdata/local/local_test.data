@@ -1,6 +1,6 @@
 Test on "local" command.
 
-<<< local:output
+<<< local:1-
 - === BEGIN: local testdata/local/local.aww 1-
 - -->   1: echo "hello"
 hello
@@ -9,3 +9,7 @@ nothing
 - -->   5: echo "local"
 local
 - === END: local testdata/local/local.aww 1-
+
+<<< local:100-
+- === BEGIN: local testdata/local/local.aww 100-
+- === END: local testdata/local/local.aww 100-
