@@ -35,7 +35,7 @@ type sshClient struct {
 	dirHome string
 }
 
-// newSSHClient create new clients using the SSH config section.
+// newSSHClient create new SSH client using the SSH config section.
 //
 // Once connection established, the client create new temporary directory on
 // server at dirTmp for sudoGet or sudoPut operations.
