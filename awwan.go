@@ -72,6 +72,9 @@ type Awwan struct {
 	httpd *httpServer
 
 	BaseDir string
+
+	// currDir contains the current working directory.
+	currDir string
 }
 
 // New create and initialize new Awwan service using baseDir as the root of
@@ -100,7 +103,12 @@ func (aww *Awwan) init(baseDir string) (err error) {
 		}
 	}
 
-	aww.BaseDir, err = lookupBaseDir(baseDir)
+	aww.currDir, err = osGetwd()
+	if err != nil {
+		return err
+	}
+
+	aww.BaseDir, err = lookupBaseDir(baseDir, aww.currDir)
 	if err != nil {
 		return err
 	}
@@ -198,10 +206,7 @@ func (aww *Awwan) EnvGet(dir, key string) (val string, err error) {
 
 	dir = strings.TrimSpace(dir)
 	if len(dir) == 0 {
-		dir, err = os.Getwd()
-		if err != nil {
-			return ``, fmt.Errorf(`%s: empty key`, logp)
-		}
+		dir = aww.currDir
 	}
 
 	key = strings.TrimSpace(key)
@@ -242,13 +247,7 @@ func (aww *Awwan) EnvSet(key, val, file string) (err error) {
 
 	file = strings.TrimSpace(file)
 	if len(file) == 0 {
-		var wd string
-		wd, err = osGetwd()
-		if err != nil {
-			return fmt.Errorf(`%s: %w`, logp, err)
-		}
-
-		file = filepath.Join(wd, defEnvFileName)
+		file = filepath.Join(aww.currDir, defEnvFileName)
 	}
 
 	var env *ini.Ini
@@ -473,7 +472,7 @@ func (aww *Awwan) loadSSHConfig() (err error) {
 // lookupBaseDir find the directory that contains ".ssh" directory from
 // current working directory until "/", as the base working directory of
 // awwan.
-func lookupBaseDir(baseDir string) (dir string, err error) {
+func lookupBaseDir(baseDir, currDir string) (dir string, err error) {
 	var (
 		logp  = "lookupBaseDir"
 		found bool
@@ -487,10 +486,7 @@ func lookupBaseDir(baseDir string) (dir string, err error) {
 		return baseDir, nil
 	}
 
-	dir, err = os.Getwd()
-	if err != nil {
-		return "", fmt.Errorf("%s: %w", logp, err)
-	}
+	dir = currDir
 
 	for dir != "/" {
 		_, err = os.Stat(filepath.Join(dir, defSSHDir))
