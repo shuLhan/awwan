@@ -7,6 +7,7 @@ package awwan
 
 import (
 	"bytes"
+	"context"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -84,6 +85,7 @@ func TestAwwan_Local_SudoGet(t *testing.T) {
 	}}
 
 	var (
+		ctx    = context.Background()
 		script = filepath.Join(baseDir, `get.aww`)
 		mockin = &mockStdin{}
 
@@ -105,7 +107,7 @@ func TestAwwan_Local_SudoGet(t *testing.T) {
 		mockin.buf.WriteString(c.sudoPass)
 		req.stdin = mockin
 
-		err = aww.Local(req)
+		err = aww.Local(ctx, req)
 		if err != nil {
 			test.Assert(t, `Local: error`, c.expError, err.Error())
 			continue
@@ -179,6 +181,7 @@ func TestAwwan_Local_SudoPut(t *testing.T) {
 	}}
 
 	var (
+		ctx      = context.Background()
 		mockin   = &mockStdin{}
 		mockout  = &bytes.Buffer{}
 		mockTerm = mock.ReadWriter{}
@@ -214,7 +217,7 @@ func TestAwwan_Local_SudoPut(t *testing.T) {
 		mockin.buf.WriteString(c.sudoPass)
 		req.stdin = mockin
 
-		err = aww.Local(req)
+		err = aww.Local(ctx, req)
 		if err != nil {
 			test.Assert(t, `Local error`, c.expError, err.Error())
 			continue

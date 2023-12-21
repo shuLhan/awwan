@@ -6,6 +6,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"log"
@@ -199,6 +200,8 @@ func main() {
 		log.Fatalf(`%s: %s`, logp, err)
 	}
 
+	var ctx = context.Background()
+
 	switch cmdMode {
 	case awwan.CommandModeDecrypt:
 		var filePlain string
@@ -241,9 +244,9 @@ func main() {
 	case awwan.CommandModeEnvSet:
 		err = aww.EnvSet(flag.Arg(1), flag.Arg(2), flag.Arg(3))
 	case awwan.CommandModeLocal:
-		err = aww.Local(req)
+		err = aww.Local(ctx, req)
 	case awwan.CommandModePlay:
-		err = aww.Play(req)
+		err = aww.Play(ctx, req)
 	case awwan.CommandModeServe:
 		err = aww.Serve(*serveAddress, *isDev)
 	}

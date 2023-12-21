@@ -5,6 +5,7 @@ package awwan
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -49,6 +50,10 @@ type httpServer struct {
 	// idExecRes contains the execution ID and its response.
 	idExecRes map[string]*ExecResponse
 
+	// idContextCancel contains the execution ID and its context
+	// cancellation function.
+	idContextCancel map[string]context.CancelFunc
+
 	aww       *Awwan
 	memfsBase *memfs.MemFS // The files caches.
 
@@ -63,7 +68,8 @@ func newHTTPServer(aww *Awwan, address string) (httpd *httpServer, err error) {
 	)
 
 	httpd = &httpServer{
-		idExecRes: make(map[string]*ExecResponse),
+		idExecRes:       make(map[string]*ExecResponse),
+		idContextCancel: make(map[string]context.CancelFunc),
 
 		aww:     aww,
 		baseDir: aww.BaseDir,
@@ -701,11 +707,20 @@ func (httpd *httpServer) Execute(epr *libhttp.EndpointRequest) (resb []byte, err
 
 	httpd.idExecRes[execRes.ID] = execRes
 
+	var (
+		ctx         = context.Background()
+		ctxDoCancel context.CancelFunc
+	)
+
+	ctx, ctxDoCancel = context.WithCancel(ctx)
+
+	httpd.idContextCancel[execRes.ID] = ctxDoCancel
+
 	go func() {
 		if req.Mode == CommandModeLocal {
-			err = httpd.aww.Local(req)
+			err = httpd.aww.Local(ctx, req)
 		} else {
-			err = httpd.aww.Play(req)
+			err = httpd.aww.Play(ctx, req)
 		}
 		execRes.end(err)
 	}()

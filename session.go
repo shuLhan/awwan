@@ -5,6 +5,7 @@ package awwan
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -22,8 +23,7 @@ import (
 	"github.com/shuLhan/share/lib/ssh/config"
 )
 
-// Session manage and cache SSH client and list of scripts.
-// One session have one SSH client, but may contains more than one script.
+// Session manage environment and SSH client.
 type Session struct {
 	cryptoc *cryptoContext
 
@@ -228,7 +228,7 @@ func (ses *Session) Put(req *ExecRequest, stmt *Statement) (err error) {
 }
 
 // SudoCopy copy file in local system using sudo.
-func (ses *Session) SudoCopy(req *ExecRequest, stmt *Statement) (err error) {
+func (ses *Session) SudoCopy(ctx context.Context, req *ExecRequest, stmt *Statement) (err error) {
 	var (
 		logp = `SudoCopy`
 		src  = stmt.args[0]
@@ -254,7 +254,7 @@ func (ses *Session) SudoCopy(req *ExecRequest, stmt *Statement) (err error) {
 		raw:  []byte(fmt.Sprintf(`sudo cp %q %q`, src, dst)),
 	}
 
-	err = ExecLocal(req, sudoCp)
+	err = ExecLocal(ctx, req, sudoCp)
 	if isVault {
 		var errRemove = os.Remove(src)
 		if errRemove != nil {
@@ -275,7 +275,7 @@ func (ses *Session) SudoCopy(req *ExecRequest, stmt *Statement) (err error) {
 				raw:  []byte(fmt.Sprintf(`sudo chmod %o %q`, stmt.mode, dst)),
 			}
 		)
-		err = ExecLocal(req, sudoChmod)
+		err = ExecLocal(ctx, req, sudoChmod)
 		if err != nil {
 			return fmt.Errorf(`%s: chmod: %w`, logp, err)
 		}
@@ -287,7 +287,7 @@ func (ses *Session) SudoCopy(req *ExecRequest, stmt *Statement) (err error) {
 			args: []string{`chown`, stmt.owner, dst},
 			raw:  []byte(fmt.Sprintf(`sudo chown %s %q`, stmt.owner, dst)),
 		}
-		err = ExecLocal(req, sudoChown)
+		err = ExecLocal(ctx, req, sudoChown)
 		if err != nil {
 			return fmt.Errorf(`%s: chown: %w`, logp, err)
 		}
@@ -300,7 +300,7 @@ func (ses *Session) SudoCopy(req *ExecRequest, stmt *Statement) (err error) {
 // local using sudo.
 // If the owner and/or mode is set, it will also applied using sudo on local
 // host, after the file has been retrieved.
-func (ses *Session) SudoGet(req *ExecRequest, stmt *Statement) (err error) {
+func (ses *Session) SudoGet(ctx context.Context, req *ExecRequest, stmt *Statement) (err error) {
 	var (
 		logp = `SudoGet`
 		src  = stmt.args[0]
@@ -313,13 +313,13 @@ func (ses *Session) SudoGet(req *ExecRequest, stmt *Statement) (err error) {
 	}
 
 	if stmt.mode != 0 {
-		err = ses.localSudoChmod(req, dst, stmt.mode)
+		err = ses.localSudoChmod(ctx, req, dst, stmt.mode)
 		if err != nil {
 			return fmt.Errorf(`%s: %w`, logp, err)
 		}
 	}
 	if len(stmt.owner) != 0 {
-		err = ses.localSudoChown(req, dst, stmt.owner)
+		err = ses.localSudoChown(ctx, req, dst, stmt.owner)
 		if err != nil {
 			return fmt.Errorf(`%s: %w`, logp, err)
 		}
@@ -378,7 +378,7 @@ func (ses *Session) SudoPut(req *ExecRequest, stmt *Statement) (err error) {
 //
 // The raw field must be used when generating Command to handle arguments
 // with quotes.
-func ExecLocal(req *ExecRequest, stmt *Statement) (err error) {
+func ExecLocal(ctx context.Context, req *ExecRequest, stmt *Statement) (err error) {
 	if stmt.cmd == `sudo` {
 		if req.stdin != nil {
 			var raw = make([]byte, 0, len(stmt.raw))
@@ -388,7 +388,7 @@ func ExecLocal(req *ExecRequest, stmt *Statement) (err error) {
 		}
 	}
 
-	var cmd = exec.Command(`/bin/sh`, `-c`, string(stmt.raw))
+	var cmd = exec.CommandContext(ctx, `/bin/sh`, `-c`, string(stmt.raw))
 
 	cmd.Stdin = req.stdin
 	cmd.Stdout = req.mlog
@@ -413,7 +413,7 @@ func (ses *Session) close() (err error) {
 
 // executeRequires run the "#require:" statements from line 0 until
 // the start argument in the local system.
-func (ses *Session) executeRequires(req *ExecRequest, pos linePosition) (err error) {
+func (ses *Session) executeRequires(ctx context.Context, req *ExecRequest, pos linePosition) (err error) {
 	if pos.start >= int64(len(req.script.requires)) {
 		return nil
 	}
@@ -424,22 +424,27 @@ func (ses *Session) executeRequires(req *ExecRequest, pos linePosition) (err err
 	)
 
 	for x = 0; x <= pos.start; x++ {
-		stmt = req.script.requires[x]
-		if stmt == nil {
-			continue
-		}
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		default:
+			stmt = req.script.requires[x]
+			if stmt == nil {
+				continue
+			}
 
-		req.mlog.Outf(`--- require %d: %v`, x, stmt)
+			req.mlog.Outf(`--- require %d: %v`, x, stmt)
 
-		err = ExecLocal(req, stmt)
-		if err != nil {
-			return err
+			err = ExecLocal(ctx, req, stmt)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
 }
 
-func (ses *Session) executeScriptOnLocal(req *ExecRequest, pos linePosition) (err error) {
+func (ses *Session) executeScriptOnLocal(ctx context.Context, req *ExecRequest, pos linePosition) (err error) {
 	var max = int64(len(req.script.stmts))
 	if pos.start > max {
 		return
@@ -449,41 +454,46 @@ func (ses *Session) executeScriptOnLocal(req *ExecRequest, pos linePosition) (er
 	}
 
 	for x := pos.start; x <= pos.end; x++ {
-		stmt := req.script.stmts[x]
-		if stmt == nil {
-			continue
-		}
-		if stmt.kind == statementKindComment {
-			continue
-		}
-		if stmt.kind == statementKindRequire {
-			continue
-		}
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		default:
+			stmt := req.script.stmts[x]
+			if stmt == nil {
+				continue
+			}
+			if stmt.kind == statementKindComment {
+				continue
+			}
+			if stmt.kind == statementKindRequire {
+				continue
+			}
 
-		req.mlog.Outf(`--> %3d: %s`, x, stmt.String())
+			req.mlog.Outf(`--> %3d: %s`, x, stmt.String())
 
-		switch stmt.kind {
-		case statementKindDefault:
-			err = ExecLocal(req, stmt)
-		case statementKindGet:
-			err = ses.Copy(req, stmt)
-		case statementKindLocal:
-			err = ExecLocal(req, stmt)
-		case statementKindPut:
-			err = ses.Copy(req, stmt)
-		case statementKindSudoGet:
-			err = ses.SudoCopy(req, stmt)
-		case statementKindSudoPut:
-			err = ses.SudoCopy(req, stmt)
-		}
-		if err != nil {
-			return err
+			switch stmt.kind {
+			case statementKindDefault:
+				err = ExecLocal(ctx, req, stmt)
+			case statementKindGet:
+				err = ses.Copy(req, stmt)
+			case statementKindLocal:
+				err = ExecLocal(ctx, req, stmt)
+			case statementKindPut:
+				err = ses.Copy(req, stmt)
+			case statementKindSudoGet:
+				err = ses.SudoCopy(ctx, req, stmt)
+			case statementKindSudoPut:
+				err = ses.SudoCopy(ctx, req, stmt)
+			}
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
 }
 
-func (ses *Session) executeScriptOnRemote(req *ExecRequest, pos linePosition) (err error) {
+func (ses *Session) executeScriptOnRemote(ctx context.Context, req *ExecRequest, pos linePosition) (err error) {
 	var max = int64(len(req.script.stmts))
 	if pos.start > max {
 		return
@@ -512,11 +522,11 @@ func (ses *Session) executeScriptOnRemote(req *ExecRequest, pos linePosition) (e
 		case statementKindGet:
 			err = ses.Get(stmt)
 		case statementKindLocal:
-			err = ExecLocal(req, stmt)
+			err = ExecLocal(ctx, req, stmt)
 		case statementKindPut:
 			err = ses.Put(req, stmt)
 		case statementKindSudoGet:
-			err = ses.SudoGet(req, stmt)
+			err = ses.SudoGet(ctx, req, stmt)
 		case statementKindSudoPut:
 			err = ses.SudoPut(req, stmt)
 		}
@@ -742,7 +752,7 @@ func (ses *Session) loadRawEnv(content []byte) (err error) {
 
 // localSudoChmod change the file permission in local environment using
 // sudo.
-func (ses *Session) localSudoChmod(req *ExecRequest, file string, mode fs.FileMode) (err error) {
+func (ses *Session) localSudoChmod(ctx context.Context, req *ExecRequest, file string, mode fs.FileMode) (err error) {
 	var (
 		fsmode    = strconv.FormatUint(uint64(mode), 8)
 		sudoChmod = &Statement{
@@ -752,7 +762,7 @@ func (ses *Session) localSudoChmod(req *ExecRequest, file string, mode fs.FileMo
 			raw:  []byte(fmt.Sprintf(`sudo chmod %o %q`, mode, file)),
 		}
 	)
-	err = ExecLocal(req, sudoChmod)
+	err = ExecLocal(ctx, req, sudoChmod)
 	if err != nil {
 		return fmt.Errorf(`%s: %w`, sudoChmod.raw, err)
 	}
@@ -760,14 +770,14 @@ func (ses *Session) localSudoChmod(req *ExecRequest, file string, mode fs.FileMo
 }
 
 // localSudoChown change the file owner in local environment using sudo.
-func (ses *Session) localSudoChown(req *ExecRequest, file, owner string) (err error) {
+func (ses *Session) localSudoChown(ctx context.Context, req *ExecRequest, file, owner string) (err error) {
 	var sudoChown = &Statement{
 		kind: statementKindDefault,
 		cmd:  `sudo`,
 		args: []string{`chown`, owner, file},
 		raw:  []byte(fmt.Sprintf(`sudo chown %s %q`, owner, file)),
 	}
-	err = ExecLocal(req, sudoChown)
+	err = ExecLocal(ctx, req, sudoChown)
 	if err != nil {
 		return fmt.Errorf(`%s: %w`, sudoChown.raw, err)
 	}

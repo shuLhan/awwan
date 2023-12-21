@@ -7,6 +7,7 @@ package awwan
 
 import (
 	"bytes"
+	"context"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -66,6 +67,8 @@ func TestAwwan_Play_withLocal(t *testing.T) {
 	}}
 
 	var (
+		ctx = context.Background()
+
 		c    testCase
 		req  *ExecRequest
 		logw bytes.Buffer
@@ -81,7 +84,7 @@ func TestAwwan_Play_withLocal(t *testing.T) {
 		logw.Reset()
 		req.registerLogWriter(`output`, &logw)
 
-		err = aww.Play(req)
+		err = aww.Play(ctx, req)
 		if err != nil {
 			test.Assert(t, `Play: error`, c.expError, err.Error())
 			continue
@@ -132,6 +135,8 @@ func TestAwwan_Play_Get(t *testing.T) {
 	}}
 
 	var (
+		ctx = context.Background()
+
 		req        *ExecRequest
 		c          testCaseGetPut
 		fi         os.FileInfo
@@ -150,7 +155,7 @@ func TestAwwan_Play_Get(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		err = aww.Play(req)
+		err = aww.Play(ctx, req)
 		if err != nil {
 			test.Assert(t, `play error`, c.expError, err.Error())
 		}
@@ -219,6 +224,8 @@ func TestAwwan_Play_Put(t *testing.T) {
 	}}
 
 	var (
+		ctx = context.Background()
+
 		req        *ExecRequest
 		c          testCaseGetPut
 		fi         os.FileInfo
@@ -237,7 +244,7 @@ func TestAwwan_Play_Put(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		err = aww.Play(req)
+		err = aww.Play(ctx, req)
 		if err != nil {
 			test.Assert(t, `play error`, c.expError, err.Error())
 		}
@@ -310,6 +317,7 @@ func TestAwwan_Play_SudoGet(t *testing.T) {
 	}}
 
 	var (
+		ctx    = context.Background()
 		mockin = &mockStdin{}
 
 		req        *ExecRequest
@@ -335,7 +343,7 @@ func TestAwwan_Play_SudoGet(t *testing.T) {
 		mockin.buf.WriteString(c.sudoPass)
 		req.stdin = mockin
 
-		err = aww.Play(req)
+		err = aww.Play(ctx, req)
 		if err != nil {
 			test.Assert(t, `play error`, c.expError, err.Error())
 		}
@@ -405,6 +413,8 @@ func TestAwwan_Play_SudoPut(t *testing.T) {
 	}}
 
 	var (
+		ctx = context.Background()
+
 		req        *ExecRequest
 		c          testCaseGetPut
 		fi         os.FileInfo
@@ -423,7 +433,7 @@ func TestAwwan_Play_SudoPut(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		err = aww.Play(req)
+		err = aww.Play(ctx, req)
 		if err != nil {
 			test.Assert(t, `play error`, c.expError, err.Error())
 		}

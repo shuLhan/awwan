@@ -4,6 +4,7 @@
 package awwan
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -284,7 +285,7 @@ func (aww *Awwan) EnvSet(key, val, file string) (err error) {
 }
 
 // Local execute the script in the local machine using shell.
-func (aww *Awwan) Local(req *ExecRequest) (err error) {
+func (aww *Awwan) Local(ctx context.Context, req *ExecRequest) (err error) {
 	var (
 		logp       = `Local`
 		sessionDir = filepath.Dir(req.scriptPath)
@@ -320,14 +321,20 @@ func (aww *Awwan) Local(req *ExecRequest) (err error) {
 
 	req.mlog.Outf(`=== BEGIN: %s %s %s`, req.Mode, req.Script, req.LineRange)
 	for _, pos = range req.lineRange.list {
-		err = ses.executeRequires(req, pos)
-		if err != nil {
+		select {
+		case <-ctx.Done():
+			err = ctx.Err()
 			goto out
-		}
+		default:
+			err = ses.executeRequires(ctx, req, pos)
+			if err != nil {
+				goto out
+			}
 
-		err = ses.executeScriptOnLocal(req, pos)
-		if err != nil {
-			goto out
+			err = ses.executeScriptOnLocal(ctx, req, pos)
+			if err != nil {
+				goto out
+			}
 		}
 	}
 	req.mlog.Outf(`=== END: %s %s %s`, req.Mode, req.Script, req.LineRange)
@@ -341,7 +348,7 @@ out:
 }
 
 // Play execute the script in the remote machine using SSH.
-func (aww *Awwan) Play(req *ExecRequest) (err error) {
+func (aww *Awwan) Play(ctx context.Context, req *ExecRequest) (err error) {
 	var (
 		logp       = `Play`
 		sessionDir = filepath.Dir(req.scriptPath)
@@ -391,14 +398,20 @@ func (aww *Awwan) Play(req *ExecRequest) (err error) {
 
 	req.mlog.Outf(`=== BEGIN: %s %s %s`, req.Mode, req.Script, req.LineRange)
 	for _, pos = range req.lineRange.list {
-		err = ses.executeRequires(req, pos)
-		if err != nil {
+		select {
+		case <-ctx.Done():
+			err = ctx.Err()
 			goto out
-		}
+		default:
+			err = ses.executeRequires(ctx, req, pos)
+			if err != nil {
+				goto out
+			}
 
-		err = ses.executeScriptOnRemote(req, pos)
-		if err != nil {
-			goto out
+			err = ses.executeScriptOnRemote(ctx, req, pos)
+			if err != nil {
+				goto out
+			}
 		}
 	}
 	req.mlog.Outf(`=== END: %s %s %s`, req.Mode, req.Script, req.LineRange)

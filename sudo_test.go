@@ -7,6 +7,7 @@ package awwan
 
 import (
 	"bytes"
+	"context"
 	"testing"
 
 	"github.com/shuLhan/share/lib/test"
@@ -85,6 +86,8 @@ func TestExecLocal_sudo(t *testing.T) {
 	}}
 
 	var (
+		ctx = context.Background()
+
 		c    testCase
 		stmt Statement
 		x    int
@@ -98,7 +101,7 @@ func TestExecLocal_sudo(t *testing.T) {
 		mockin.buf.WriteString(c.sudoPass)
 
 		for x, stmt = range c.listStmt {
-			err = ExecLocal(req, &stmt)
+			err = ExecLocal(ctx, req, &stmt)
 			if err != nil {
 				t.Log(mockout.String())
 				var expError = c.expError[x]

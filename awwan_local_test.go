@@ -7,10 +7,12 @@ package awwan
 
 import (
 	"bytes"
+	"context"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/shuLhan/share/lib/test"
 	"github.com/shuLhan/share/lib/test/mock"
@@ -66,6 +68,8 @@ func TestAwwanLocal(t *testing.T) {
 	}}
 
 	var (
+		ctx = context.Background()
+
 		req  *ExecRequest
 		logw bytes.Buffer
 		c    testCase
@@ -80,7 +84,7 @@ func TestAwwanLocal(t *testing.T) {
 		logw.Reset()
 		req.registerLogWriter(`output`, &logw)
 
-		err = aww.Local(req)
+		err = aww.Local(ctx, req)
 		if err != nil {
 			test.Assert(t, `error`, c.expError, err.Error())
 			continue
@@ -88,6 +92,62 @@ func TestAwwanLocal(t *testing.T) {
 
 		test.Assert(t, `stdout`, string(tdata.Output[c.tagOutput]), logw.String())
 	}
+}
+
+func TestAwwanLocalCancel(t *testing.T) {
+	var (
+		baseDir    = `testdata/local`
+		scriptFile = filepath.Join(baseDir, `cancel.aww`)
+		tdataFile  = filepath.Join(baseDir, `cancel_test.data`)
+		mockrw     = mock.ReadWriter{}
+
+		tdata *test.Data
+		aww   *Awwan
+		err   error
+	)
+
+	tdata, err = test.LoadData(tdataFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	aww, err = New(baseDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Mock terminal to read passphrase for private key.
+	aww.cryptoc.termrw = &mockrw
+
+	var execReq *ExecRequest
+
+	execReq, err = NewExecRequest(CommandModeLocal, scriptFile, `1`)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var logw bytes.Buffer
+
+	execReq.registerLogWriter(`output`, &logw)
+
+	var (
+		ctx         = context.Background()
+		ctxDoCancel context.CancelFunc
+	)
+
+	ctx, ctxDoCancel = context.WithCancel(ctx)
+
+	go func() {
+		var err2 = aww.Local(ctx, execReq)
+		t.Logf(`LocalCancel: error: %s`, err2)
+	}()
+
+	// Wait for actual exec.CommandContext to run ...
+	time.Sleep(500 * time.Millisecond)
+
+	ctxDoCancel()
+
+	test.Assert(t, `stdout`, string(tdata.Output[`cancel`]), logw.String())
 }
 
 func TestAwwanLocal_Get(t *testing.T) {
@@ -148,6 +208,7 @@ func TestAwwanLocal_Get(t *testing.T) {
 	}}
 
 	var (
+		ctx    = context.Background()
 		script = filepath.Join(baseDir, `get.aww`)
 
 		c          testCase
@@ -166,7 +227,7 @@ func TestAwwanLocal_Get(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		err = aww.Local(req)
+		err = aww.Local(ctx, req)
 		if err != nil {
 			test.Assert(t, `Local: error`, c.expError, err.Error())
 			continue
@@ -255,6 +316,7 @@ func TestAwwanLocal_Put(t *testing.T) {
 	}}
 
 	var (
+		ctx    = context.Background()
 		mockrw = mock.ReadWriter{}
 
 		aww        *Awwan
@@ -289,7 +351,7 @@ func TestAwwanLocal_Put(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		err = aww.Local(req)
+		err = aww.Local(ctx, req)
 		if err != nil {
 			test.Assert(t, `Local error`, c.expError, err.Error())
 			continue
@@ -378,6 +440,8 @@ func TestAwwanLocal_withEncryption(t *testing.T) {
 	}}
 
 	var (
+		ctx = context.Background()
+
 		c    testCase
 		logw bytes.Buffer
 		req  *ExecRequest
@@ -399,7 +463,7 @@ func TestAwwanLocal_withEncryption(t *testing.T) {
 		mockrw.BufRead.WriteString(c.pass)
 		aww.cryptoc.privateKey = nil
 
-		err = aww.Local(req)
+		err = aww.Local(ctx, req)
 		if err != nil {
 			test.Assert(t, `Local error`, c.expError, err.Error())
 		}
