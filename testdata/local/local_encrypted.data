@@ -1,23 +1,23 @@
 <<< echo_encrypted
-- === BEGIN: local testdata/local/local_encrypted.aww 3
-- -->   3: echo this_is_a_secret
+----/--/-- --:--:-- === BEGIN: local testdata/local/local_encrypted.aww 3
+----/--/-- --:--:-- -->   3: echo this_is_a_secret
 this_is_a_secret
-- === END: local testdata/local/local_encrypted.aww 3
+----/--/-- --:--:-- === END: local testdata/local/local_encrypted.aww 3
 
 <<< echo_encrypted_no_pass
 Local: NewScript: ParseScript: template: local_encrypted.aww:3:7: executing "local_encrypted.aww" at <.Val>: error calling Val: "secret::pass" is empty
 
 <<< echo_encrypted_no_pass:output
-- !!! NewScript: ParseScript: template: local_encrypted.aww:3:7: executing "local_encrypted.aww" at <.Val>: error calling Val: "secret::pass" is empty
+----/--/-- --:--:-- !!! NewScript: ParseScript: template: local_encrypted.aww:3:7: executing "local_encrypted.aww" at <.Val>: error calling Val: "secret::pass" is empty
 
 <<< echo_encrypted_invalid_pass
 Local: NewSession: .awwan.env.vault: LoadPrivateKeyInteractive: x509: decryption password incorrect
 
 <<< echo_encrypted_invalid_pass:output
-- !!! NewSession: .awwan.env.vault: LoadPrivateKeyInteractive: x509: decryption password incorrect
+----/--/-- --:--:-- !!! NewSession: .awwan.env.vault: LoadPrivateKeyInteractive: x509: decryption password incorrect
 
 <<< sub_echo_encrypted
-- === BEGIN: local testdata/local/sub/local_encrypted.aww 1
-- -->   1: echo this_is_a_secret_in_sub
+----/--/-- --:--:-- === BEGIN: local testdata/local/sub/local_encrypted.aww 1
+----/--/-- --:--:-- -->   1: echo this_is_a_secret_in_sub
 this_is_a_secret_in_sub
-- === END: local testdata/local/sub/local_encrypted.aww 1
+----/--/-- --:--:-- === END: local testdata/local/sub/local_encrypted.aww 1

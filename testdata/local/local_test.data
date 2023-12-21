@@ -1,15 +1,15 @@
 Test on "local" command.
 
 <<< local:1-
-- === BEGIN: local testdata/local/local.aww 1-
-- -->   1: echo "hello"
+----/--/-- --:--:-- === BEGIN: local testdata/local/local.aww 1-
+----/--/-- --:--:-- -->   1: echo "hello"
 hello
-- -->   3: #local: echo "nothing"
+----/--/-- --:--:-- -->   3: #local: echo "nothing"
 nothing
-- -->   5: echo "local"
+----/--/-- --:--:-- -->   5: echo "local"
 local
-- === END: local testdata/local/local.aww 1-
+----/--/-- --:--:-- === END: local testdata/local/local.aww 1-
 
 <<< local:100-
-- === BEGIN: local testdata/local/local.aww 100-
-- === END: local testdata/local/local.aww 100-
+----/--/-- --:--:-- === BEGIN: local testdata/local/local.aww 100-
+----/--/-- --:--:-- === END: local testdata/local/local.aww 100-
