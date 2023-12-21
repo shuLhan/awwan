@@ -7,3 +7,4 @@ sleep 3
 echo "command #4"
 sleep 3
 echo "completed"
+sleep 300

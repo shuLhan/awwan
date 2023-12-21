@@ -27,6 +27,7 @@ const CLASS_AWWAN_EXECUTE = "awwan_execute";
 const ID_INP_LINE_RANGE = "com_inp_line_range";
 const ID_BTN_EXEC_LOCAL = "com_btn_local";
 const ID_BTN_EXEC_REMOTE = "com_btn_remote";
+const ID_BTN_STOP = "com_btn_stop";
 
 const ID_COM_RESIZE_EDITOR = "com_resize_editor";
 
@@ -98,7 +99,7 @@ export function renderHtml() {
         <div id="${ID_OUTPUT_WRAPPER}" class="output">
           <div>
             <div class="${CLASS_AWWAN_EXECUTE}">
-              <span id="exec_icon">&#9898;</span>
+              <button id="${ID_BTN_STOP}" disabled="true">&#9899; Stop</button>
               Execute line
               <input id="${ID_INP_LINE_RANGE}" placeholder="Ex: 1,2-4,5-"/>
               on
@@ -152,6 +153,7 @@ export class Awwan {
   private orgContent: string = "";
   private _posx: number = 0;
   private _posy: number = 0;
+  private execID = "";
 
   constructor() {
     renderHtml();
@@ -182,7 +184,7 @@ export class Awwan {
       });
     }
 
-    el = document.getElementById("exec_icon");
+    el = document.getElementById(ID_BTN_STOP);
     if (el) {
       this.elExecIcon = el;
     }
@@ -535,6 +537,23 @@ export class Awwan {
     this.doSaveFile(this.request.script, this.request.content);
   }
 
+  async onClickStop() {
+    const httpRes = await fetch(`/awwan/api/execute?id=${this.execID}`, {
+      method: "DELETE",
+      headers: {
+        Accept: "application/json",
+      },
+    });
+
+    const res = await httpRes.json();
+    if (res.code != 200) {
+      this.notifError(`Stop failed: ${res.message}`);
+      return;
+    }
+
+    this.notifInfo(res.message);
+  }
+
   editorOnSave(content: string) {
     this.doSaveFile(this.request.script, content);
   }
@@ -628,6 +647,8 @@ export class Awwan {
 
     // Stream the execution output using Server-sent events.
 
+    this.execID = execRes.id;
+
     const execTail = new EventSource(
       `/awwan/api/execute/tail?id=${execRes.id}`,
     );
@@ -663,17 +684,24 @@ export class Awwan {
   private preExecute() {
     this.comBtnLocal.disabled = true;
     this.comBtnPlay.disabled = true;
-    this.elExecIcon.innerHTML = "&#128993;";
+    this.elExecIcon.innerHTML = "&#128993; Stop";
   }
 
   private whileExecute() {
-    this.elExecIcon.innerHTML = "&#128994;";
+    this.elExecIcon.disabled = false;
+    this.elExecIcon.innerHTML = "&#128994; Stop";
+    this.elExecIcon.onclick = () => {
+      this.onClickStop();
+    };
   }
 
   private postExecute() {
     this.comBtnLocal.disabled = false;
     this.comBtnPlay.disabled = false;
-    this.elExecIcon.innerHTML = "&#9898;";
+    this.elExecIcon.innerHTML = "&#9899; Stop";
+    this.elExecIcon.disabled = true;
+    this.elExecIcon.onclick = null;
+    this.execID = "";
   }
 
   private async newNode(isDir: boolean) {

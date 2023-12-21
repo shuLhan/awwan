@@ -419,6 +419,7 @@ var awwan = (() => {
   var ID_INP_LINE_RANGE = "com_inp_line_range";
   var ID_BTN_EXEC_LOCAL = "com_btn_local";
   var ID_BTN_EXEC_REMOTE = "com_btn_remote";
+  var ID_BTN_STOP = "com_btn_stop";
   var ID_COM_RESIZE_EDITOR = "com_resize_editor";
   var ID_OUTPUT_WRAPPER = "output_wrapper";
   var ID_OUTPUT = "output";
@@ -455,7 +456,7 @@ var awwan = (() => {
         <div id="${ID_OUTPUT_WRAPPER}" class="output">
           <div>
             <div class="${CLASS_AWWAN_EXECUTE}">
-              <span id="exec_icon">&#9898;</span>
+              <button id="${ID_BTN_STOP}" disabled="true">&#9899; Stop</button>
               Execute line
               <input id="${ID_INP_LINE_RANGE}" placeholder="Ex: 1,2-4,5-"/>
               on
@@ -486,6 +487,7 @@ var awwan = (() => {
       this.orgContent = "";
       this._posx = 0;
       this._posy = 0;
+      this.execID = "";
       renderHtml();
       let el;
       el = document.getElementById(ID_AWWAN_NAV_LEFT);
@@ -508,7 +510,7 @@ var awwan = (() => {
           this._posx = 0;
         });
       }
-      el = document.getElementById("exec_icon");
+      el = document.getElementById(ID_BTN_STOP);
       if (el) {
         this.elExecIcon = el;
       }
@@ -806,6 +808,20 @@ var awwan = (() => {
       this.request.content = content;
       this.doSaveFile(this.request.script, this.request.content);
     }
+    async onClickStop() {
+      const httpRes = await fetch(`/awwan/api/execute?id=${this.execID}`, {
+        method: "DELETE",
+        headers: {
+          Accept: "application/json"
+        }
+      });
+      const res = await httpRes.json();
+      if (res.code != 200) {
+        this.notifError(`Stop failed: ${res.message}`);
+        return;
+      }
+      this.notifInfo(res.message);
+    }
     editorOnSave(content) {
       this.doSaveFile(this.request.script, content);
     }
@@ -883,6 +899,7 @@ var awwan = (() => {
       this.notifInfo(
         `Execute submitted ${execRes.script} on ${execRes.mode} with ID=${execRes.id}`
       );
+      this.execID = execRes.id;
       const execTail = new EventSource(
         `/awwan/api/execute/tail?id=${execRes.id}`
       );
@@ -916,15 +933,22 @@ var awwan = (() => {
     preExecute() {
       this.comBtnLocal.disabled = true;
       this.comBtnPlay.disabled = true;
-      this.elExecIcon.innerHTML = "&#128993;";
+      this.elExecIcon.innerHTML = "&#128993; Stop";
     }
     whileExecute() {
-      this.elExecIcon.innerHTML = "&#128994;";
+      this.elExecIcon.disabled = false;
+      this.elExecIcon.innerHTML = "&#128994; Stop";
+      this.elExecIcon.onclick = () => {
+        this.onClickStop();
+      };
     }
     postExecute() {
       this.comBtnLocal.disabled = false;
       this.comBtnPlay.disabled = false;
-      this.elExecIcon.innerHTML = "&#9898;";
+      this.elExecIcon.innerHTML = "&#9899; Stop";
+      this.elExecIcon.disabled = true;
+      this.elExecIcon.onclick = null;
+      this.execID = "";
     }
     async newNode(isDir) {
       if (!this.currentNode) {
