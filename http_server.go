@@ -845,20 +845,21 @@ func (httpd *httpServer) ExecuteTail(sseconn *libhttp.SSEConn) {
 	}
 	execRes.mtxOutput.Unlock()
 
-	if len(execRes.EndAt) != 0 {
-		// The execution has been completed.
-		sseconn.WriteEvent(`end`, execRes.EndAt, nil)
-		return
-	}
-
-	// And wait for the rest...
-
 	var (
 		ok = true
 
 		ev   sseclient.Event
 		evid int64
 	)
+
+	if len(execRes.EndAt) != 0 {
+		// The execution has been completed.
+		sseconn.WriteEvent(`end`, execRes.EndAt, nil)
+		goto out
+	}
+
+	// And wait for the rest...
+
 	for {
 		ev, ok = <-execRes.eventq
 		if !ok {
@@ -877,4 +878,7 @@ func (httpd *httpServer) ExecuteTail(sseconn *libhttp.SSEConn) {
 		}
 		sseconn.WriteEvent(ev.Type, ev.Data, &ev.ID)
 	}
+out:
+	delete(httpd.idExecRes, execID)
+	delete(httpd.idContextCancel, execID)
 }
