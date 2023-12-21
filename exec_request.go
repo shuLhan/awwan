@@ -97,6 +97,15 @@ func (req *ExecRequest) init(workDir string) (err error) {
 		return err
 	}
 
+	var fi os.FileInfo
+	fi, err = os.Stat(req.scriptPath)
+	if err != nil {
+		return err
+	}
+	if fi.Mode().IsDir() {
+		return fmt.Errorf(`%q is a directory`, req.Script)
+	}
+
 	req.lineRange = parseLineRange(req.LineRange)
 
 	// Create log file to record all input and output for audit in the

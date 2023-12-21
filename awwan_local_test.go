@@ -18,8 +18,10 @@ import (
 
 func TestAwwanLocal(t *testing.T) {
 	type testCase struct {
-		lineRange string
-		tagOutput string
+		scriptFile string
+		lineRange  string
+		tagOutput  string
+		expError   string
 	}
 
 	var (
@@ -49,23 +51,30 @@ func TestAwwanLocal(t *testing.T) {
 	aww.cryptoc.termrw = &mockrw
 
 	var cases = []testCase{{
-		lineRange: `1-`,
-		tagOutput: `local:1-`,
+		scriptFile: filepath.Join(baseDir, `local.aww`),
+		lineRange:  `1-`,
+		tagOutput:  `local:1-`,
 	}, {
-		lineRange: `100-`,
-		tagOutput: `local:100-`,
+		scriptFile: filepath.Join(baseDir, `local.aww`),
+		lineRange:  `100-`,
+		tagOutput:  `local:100-`,
+	}, {
+		// Pass directory as script.
+		scriptFile: filepath.Join(baseDir, `sub`),
+		lineRange:  `1-`,
+		expError:   `NewExecRequest: "testdata/local/sub" is a directory`,
 	}}
 
 	var (
-		scriptFile = filepath.Join(baseDir, `local.aww`)
-		req        *ExecRequest
-		logw       bytes.Buffer
-		c          testCase
+		req  *ExecRequest
+		logw bytes.Buffer
+		c    testCase
 	)
 	for _, c = range cases {
-		req, err = NewExecRequest(CommandModeLocal, scriptFile, c.lineRange)
+		req, err = NewExecRequest(CommandModeLocal, c.scriptFile, c.lineRange)
 		if err != nil {
-			t.Fatal(err)
+			test.Assert(t, `error`, c.expError, err.Error())
+			continue
 		}
 
 		logw.Reset()
@@ -73,7 +82,8 @@ func TestAwwanLocal(t *testing.T) {
 
 		err = aww.Local(req)
 		if err != nil {
-			t.Fatal(err)
+			test.Assert(t, `error`, c.expError, err.Error())
+			continue
 		}
 
 		test.Assert(t, `stdout`, string(tdata.Output[c.tagOutput]), logw.String())

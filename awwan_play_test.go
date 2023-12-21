@@ -29,11 +29,17 @@ type testCaseGetPut struct {
 }
 
 func TestAwwan_Play_withLocal(t *testing.T) {
+	type testCase struct {
+		scriptFile string
+		lineRange  string
+		expOutput  string
+		expError   string
+	}
+
 	var (
-		baseDir    = `testdata/play`
-		scriptDir  = filepath.Join(baseDir, `awwanssh.test`)
-		scriptFile = filepath.Join(scriptDir, `play.aww`)
-		tdataFile  = filepath.Join(scriptDir, `play_test.data`)
+		baseDir   = `testdata/play`
+		scriptDir = filepath.Join(baseDir, `awwanssh.test`)
+		tdataFile = filepath.Join(scriptDir, `play_test.data`)
 
 		tdata *test.Data
 		aww   *Awwan
@@ -50,25 +56,39 @@ func TestAwwan_Play_withLocal(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	var cases = []testCase{{
+		scriptFile: filepath.Join(scriptDir, `play.aww`),
+		lineRange:  `1-`,
+		expOutput:  string(tdata.Output[`play_with_local:output`]),
+	}, {
+		scriptFile: filepath.Join(scriptDir, `tmp`),
+		expError:   `NewExecRequest: "testdata/play/awwanssh.test/tmp" is a directory`,
+	}}
+
 	var (
+		c    testCase
 		req  *ExecRequest
 		logw bytes.Buffer
 	)
 
-	req, err = NewExecRequest(CommandModePlay, scriptFile, `1-`)
-	if err != nil {
-		t.Fatal(err)
+	for _, c = range cases {
+		req, err = NewExecRequest(CommandModePlay, c.scriptFile, c.lineRange)
+		if err != nil {
+			test.Assert(t, `NewExecRequest: error`, c.expError, err.Error())
+			continue
+		}
+
+		logw.Reset()
+		req.registerLogWriter(`output`, &logw)
+
+		err = aww.Play(req)
+		if err != nil {
+			test.Assert(t, `Play: error`, c.expError, err.Error())
+			continue
+		}
+
+		test.Assert(t, `Local`, c.expOutput, logw.String())
 	}
-
-	req.registerLogWriter(`output`, &logw)
-
-	err = aww.Play(req)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	var exp = string(tdata.Output[`play_with_local:output`])
-	test.Assert(t, `play_with_local:output`, exp, logw.String())
 }
 
 func TestAwwan_Play_Get(t *testing.T) {
