@@ -1,0 +1,55 @@
+Test cancelling Execute using HTTP API.
+The SSE data is quoted to make the string viewable.
+
+>>> local:/cancel.aww:1-
+{
+  "mode": "local",
+  "script": "/cancel.aww",
+  "line_range": "1-"
+}
+
+<<< local:/cancel.aww:1-
+{
+  "data": {
+    "mode": "local",
+    "script": "/cancel.aww",
+    "line_range": "1-",
+    "id": "local:/cancel.aww:1-:1701012060",
+    "begin_at": "2023-11-26T15:21:00Z",
+    "end_at": "",
+    "error": "",
+    "output": []
+  },
+  "code": 200
+}
+
+<<< local:/cancel.aww:1-:tail
+event: open
+
+event: begin
+data: "2023-11-26T15:21:00Z"
+
+event: message
+data: "----/--/-- --:--:-- === BEGIN: local /cancel.aww 1-\n"
+id: 0
+
+event: message
+data: "----/--/-- --:--:-- -->   1: sleep 300\n"
+id: 1
+
+event: message
+data: "----/--/-- --:--:-- !!! ExecLocal: signal: killed\n"
+id: 2
+
+event: message
+data: "Local: ExecLocal: signal: killed"
+id: 2
+
+event: end
+data: "2023-11-26T15:21:00Z"
+id: 2
+
+
+
+<<< local:/cancel.aww:1-:response
+{"message":"execution ID \"local:/cancel.aww:1-:1701012060\" has been cancelled","code":200}

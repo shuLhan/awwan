@@ -192,6 +192,19 @@ func (httpd *httpServer) registerEndpoints() (err error) {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
 
+	// Register endpoint to cancel execution.
+
+	err = httpd.RegisterEndpoint(&libhttp.Endpoint{
+		Method:       libhttp.RequestMethodDelete,
+		Path:         pathAwwanAPIExecute,
+		RequestType:  libhttp.RequestTypeJSON,
+		ResponseType: libhttp.ResponseTypeJSON,
+		Call:         httpd.ExecuteCancel,
+	})
+	if err != nil {
+		return fmt.Errorf(`%s: %w`, logp, err)
+	}
+
 	// Register Server-sent events to tail the execution state and
 	// output.
 
@@ -726,6 +739,43 @@ func (httpd *httpServer) Execute(epr *libhttp.EndpointRequest) (resb []byte, err
 	}()
 
 	return resb, nil
+}
+
+// ExecuteCancel cancel execution by its ID.
+//
+// Request format,
+//
+//	DELETE /awwan/api/execute?id=<string>
+//
+// If the ID is exist, the execution will be cancelled and return HTTP
+// status 200 with the following body,
+//
+//	Content-Type: application/json
+//	{
+//		"code": 200,
+//	}
+//
+// Otherwise it will return HTTP status 404 with error message.
+func (httpd *httpServer) ExecuteCancel(epr *libhttp.EndpointRequest) (resb []byte, err error) {
+	var (
+		endRes      = &libhttp.EndpointResponse{}
+		execID      = epr.HttpRequest.Form.Get(paramNameID)
+		ctxDoCancel = httpd.idContextCancel[execID]
+	)
+
+	if ctxDoCancel == nil {
+		endRes.Code = http.StatusNotFound
+		endRes.Message = fmt.Sprintf(`execution ID not found: %q`, execID)
+		return nil, endRes
+	}
+
+	ctxDoCancel()
+
+	endRes.Code = http.StatusOK
+	endRes.Message = fmt.Sprintf(`execution ID %q has been cancelled`, execID)
+
+	resb, err = json.Marshal(endRes)
+	return resb, err
 }
 
 // ExecuteTail fetch the latest output of execution using Server-sent

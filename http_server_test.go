@@ -13,6 +13,7 @@ import (
 	"math/big"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 	"time"
 
@@ -322,6 +323,154 @@ func TestHttpServer_Execute(t *testing.T) {
 	}
 
 	test.Assert(t, `Execute tail`, string(tdata.Output[`local:/local.aww:1-:tail`]), buf.String())
+}
+
+func TestHttpServer_ExecuteCancel(t *testing.T) {
+	var (
+		baseDir = `testdata/http_server/execute`
+
+		tdata *test.Data
+		err   error
+	)
+
+	tdata, err = test.LoadData(baseDir + `/cancel_test.data`)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var aww *Awwan
+
+	aww, err = New(baseDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var (
+		address = testGenerateServerAddress()
+		isDev   = false
+	)
+
+	go func() {
+		err = aww.Serve(address, isDev)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}()
+
+	err = libnet.WaitAlive(`tcp`, address, 10*time.Second)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var (
+		clientOpts = libhttp.ClientOptions{
+			ServerUrl: fmt.Sprintf(`http://%s`, address),
+		}
+		reqJSON = tdata.Input[`local:/cancel.aww:1-`]
+
+		execRequest ExecRequest
+		cl          *libhttp.Client
+	)
+
+	cl = libhttp.NewClient(&clientOpts)
+
+	err = json.Unmarshal(reqJSON, &execRequest)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var (
+		resBody []byte
+		buf     bytes.Buffer
+	)
+
+	_, resBody, err = cl.PostJSON(pathAwwanAPIExecute, nil, &execRequest)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	json.Indent(&buf, resBody, ``, `  `)
+
+	var expResp = string(tdata.Output[`local:/cancel.aww:1-`])
+
+	test.Assert(t, `First response`, expResp, buf.String())
+
+	var (
+		res      libhttp.EndpointResponse
+		execResp ExecResponse
+	)
+
+	res.Data = &execResp
+
+	err = json.Unmarshal(resBody, &res)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Tail the execution output.
+
+	var ssec = sseclient.Client{
+		Endpoint: fmt.Sprintf(`http://%s%s?id=%s`, address, pathAwwanAPIExecuteTail, execResp.ID),
+	}
+
+	err = ssec.Connect(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var (
+		timeWait = time.NewTimer(1 * time.Second)
+		ever     = true
+
+		ev sseclient.Event
+	)
+	buf.Reset()
+	for ever {
+		select {
+		case ev = <-ssec.C:
+			if len(ev.Type) != 0 {
+				fmt.Fprintf(&buf, "event: %s\n", ev.Type)
+			}
+			if len(ev.Data) != 0 {
+				fmt.Fprintf(&buf, "data: %q\n", ev.Data)
+			}
+			if len(ev.ID) != 0 {
+				fmt.Fprintf(&buf, "id: %s\n", ev.ID)
+			}
+			buf.WriteByte('\n')
+
+			if ev.ID == `1` {
+				testDoExecuteCancel(t, tdata, cl, execResp.ID)
+			}
+
+			if ev.Type == "end" {
+				ever = false
+				break
+			}
+		case <-timeWait.C:
+			break
+		}
+	}
+
+	test.Assert(t, `Execute cancel`, string(tdata.Output[`local:/cancel.aww:1-:tail`]), buf.String())
+}
+
+func testDoExecuteCancel(t *testing.T, tdata *test.Data, cl *libhttp.Client, execID string) {
+	var (
+		params = url.Values{}
+
+		resBody []byte
+		err     error
+	)
+
+	params.Set(paramNameID, execID)
+
+	_, resBody, err = cl.Delete(pathAwwanAPIExecute, nil, params)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	test.Assert(t, `Cancel response`, string(tdata.Output[`local:/cancel.aww:1-:response`]), string(resBody))
 }
 
 func TestHttpServer_FSGet(t *testing.T) {
