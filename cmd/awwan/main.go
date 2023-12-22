@@ -22,7 +22,7 @@ const (
 )
 
 func usage() {
-	var v = `= awwan v` + awwan.Version + `
+	fmt.Println(`= awwan ` + awwan.Version + `
 
 Configuration management software, infrastructure as file and directory
 layout.
@@ -114,17 +114,14 @@ server known as "myserver",
 
 Run the web-user interface using the current directory as workspace,
 
-	$ awwan serve .`
-
-	fmt.Println(v)
+	$ awwan serve .`)
 }
 
 func main() {
 	var (
 		logp         = `awwan`
 		isDev        = flag.Bool(`dev`, false, `run the "serve" command in development mode`)
-		serveAddress = flag.String(`address`, awwan.DefListenAddress,
-			`HTTP server address to serve WUI.`)
+		serveAddress = flag.String(`address`, awwan.DefListenAddress, `HTTP server address to serve WUI.`)
 	)
 
 	flag.Parse()
