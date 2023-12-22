@@ -188,7 +188,7 @@ func (ses *Session) Get(stmt *Statement) (err error) {
 }
 
 // Put copy file from local to remote system.
-func (ses *Session) Put(req *ExecRequest, stmt *Statement) (err error) {
+func (ses *Session) Put(ctx context.Context, req *ExecRequest, stmt *Statement) (err error) {
 	var (
 		logp = `Put`
 		src  = stmt.args[0]
@@ -213,13 +213,13 @@ func (ses *Session) Put(req *ExecRequest, stmt *Statement) (err error) {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
 	if stmt.mode != 0 {
-		err = ses.sshc.chmod(dst, stmt.mode)
+		err = ses.sshc.chmod(ctx, dst, stmt.mode)
 		if err != nil {
 			return fmt.Errorf(`%s: %w`, logp, err)
 		}
 	}
 	if len(stmt.owner) != 0 {
-		err = ses.sshc.chown(dst, stmt.owner)
+		err = ses.sshc.chown(ctx, dst, stmt.owner)
 		if err != nil {
 			return fmt.Errorf(`%s: %w`, logp, err)
 		}
@@ -307,7 +307,7 @@ func (ses *Session) SudoGet(ctx context.Context, req *ExecRequest, stmt *Stateme
 		dst  = stmt.args[1]
 	)
 
-	err = ses.sshc.sudoGet(src, dst)
+	err = ses.sshc.sudoGet(ctx, src, dst)
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
@@ -329,7 +329,7 @@ func (ses *Session) SudoGet(ctx context.Context, req *ExecRequest, stmt *Stateme
 }
 
 // SudoPut copy file from local to remote using sudo.
-func (ses *Session) SudoPut(req *ExecRequest, stmt *Statement) (err error) {
+func (ses *Session) SudoPut(ctx context.Context, req *ExecRequest, stmt *Statement) (err error) {
 	var (
 		logp = `SudoPut`
 		src  = stmt.args[0]
@@ -343,7 +343,7 @@ func (ses *Session) SudoPut(req *ExecRequest, stmt *Statement) (err error) {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
 
-	err = ses.sshc.sudoPut(src, dst)
+	err = ses.sshc.sudoPut(ctx, src, dst)
 	if isVault {
 		var errRemove = os.Remove(src)
 		if errRemove != nil {
@@ -355,13 +355,13 @@ func (ses *Session) SudoPut(req *ExecRequest, stmt *Statement) (err error) {
 	}
 
 	if stmt.mode != 0 {
-		err = ses.sshc.sudoChmod(dst, stmt.mode)
+		err = ses.sshc.sudoChmod(ctx, dst, stmt.mode)
 		if err != nil {
 			return fmt.Errorf(`%s: %w`, logp, err)
 		}
 	}
 	if len(stmt.owner) != 0 {
-		err = ses.sshc.sudoChown(dst, stmt.owner)
+		err = ses.sshc.sudoChown(ctx, dst, stmt.owner)
 		if err != nil {
 			return fmt.Errorf(`%s: %w`, logp, err)
 		}
@@ -518,17 +518,17 @@ func (ses *Session) executeScriptOnRemote(ctx context.Context, req *ExecRequest,
 
 		switch stmt.kind {
 		case statementKindDefault:
-			err = ses.sshc.conn.Execute(string(stmt.raw))
+			err = ses.sshc.conn.Execute(ctx, string(stmt.raw))
 		case statementKindGet:
 			err = ses.Get(stmt)
 		case statementKindLocal:
 			err = ExecLocal(ctx, req, stmt)
 		case statementKindPut:
-			err = ses.Put(req, stmt)
+			err = ses.Put(ctx, req, stmt)
 		case statementKindSudoGet:
 			err = ses.SudoGet(ctx, req, stmt)
 		case statementKindSudoPut:
-			err = ses.SudoPut(req, stmt)
+			err = ses.SudoPut(ctx, req, stmt)
 		}
 		if err != nil {
 			return err

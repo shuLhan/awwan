@@ -5,6 +5,7 @@ package awwan
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -73,7 +74,7 @@ func newSSHClient(req *ExecRequest, section *config.Section) (sshc *sshClient, e
 	sshc.dirHome = string(bytes.TrimSpace(stdout))
 	sshc.dirTmp = strings.Replace(defTmpDirPlay, `~`, sshc.dirHome, 1)
 
-	err = sshc.mkdir(sshc.dirTmp, 0700)
+	err = sshc.mkdir(context.Background(), sshc.dirTmp, 0700)
 	if err != nil {
 		return nil, err
 	}
@@ -82,10 +83,10 @@ func newSSHClient(req *ExecRequest, section *config.Section) (sshc *sshClient, e
 }
 
 // chmod change the remoteFile permission.
-func (sshc *sshClient) chmod(remoteFile string, perm fs.FileMode) (err error) {
+func (sshc *sshClient) chmod(ctx context.Context, remoteFile string, perm fs.FileMode) (err error) {
 	var chmodStmt = fmt.Sprintf(`chmod %o %q`, perm, remoteFile)
 
-	err = sshc.conn.Execute(chmodStmt)
+	err = sshc.conn.Execute(ctx, chmodStmt)
 	if err != nil {
 		return err
 	}
@@ -95,10 +96,10 @@ func (sshc *sshClient) chmod(remoteFile string, perm fs.FileMode) (err error) {
 // chown change the owner of remoteFile.
 // The owner parameter can be set to user only "user", group only
 // ":group", or user and group "user:group".
-func (sshc *sshClient) chown(remoteFile, owner string) (err error) {
+func (sshc *sshClient) chown(ctx context.Context, remoteFile, owner string) (err error) {
 	var chownStmt = fmt.Sprintf(`chown %s %q`, owner, remoteFile)
 
-	err = sshc.conn.Execute(chownStmt)
+	err = sshc.conn.Execute(ctx, chownStmt)
 	if err != nil {
 		return err
 	}
@@ -138,11 +139,11 @@ func (sshc *sshClient) get(remote, local string) (err error) {
 }
 
 // mkdir create directory on the remote server.
-func (sshc *sshClient) mkdir(dir string, permission uint32) (err error) {
+func (sshc *sshClient) mkdir(ctx context.Context, dir string, permission uint32) (err error) {
 	if sshc.sftpc == nil {
 		var mkdirStmt = fmt.Sprintf(`mkdir -p %s`, dir)
 
-		err = sshc.conn.Execute(mkdirStmt)
+		err = sshc.conn.Execute(ctx, mkdirStmt)
 	} else {
 		var fa = sftp.FileAttrs{}
 
@@ -163,10 +164,10 @@ func (sshc *sshClient) put(local, remote string) (err error) {
 }
 
 // rmdirAll remove the directory on server recursively.
-func (sshc *sshClient) rmdirAll(dir string) (err error) {
+func (sshc *sshClient) rmdirAll(ctx context.Context, dir string) (err error) {
 	var rmdirStmt = fmt.Sprintf(`rm -rf %s`, dir)
 
-	err = sshc.conn.Execute(rmdirStmt)
+	err = sshc.conn.Execute(ctx, rmdirStmt)
 	if err != nil {
 		return fmt.Errorf(`rmdirAll: %s: %w`, dir, err)
 	}
@@ -175,10 +176,10 @@ func (sshc *sshClient) rmdirAll(dir string) (err error) {
 }
 
 // sudoChmod change the permission of remoteFile using sudo.
-func (sshc *sshClient) sudoChmod(remoteFile string, mode fs.FileMode) (err error) {
+func (sshc *sshClient) sudoChmod(ctx context.Context, remoteFile string, mode fs.FileMode) (err error) {
 	var cmd = fmt.Sprintf(`sudo chmod %o %q`, mode, remoteFile)
 
-	err = sshc.conn.Execute(cmd)
+	err = sshc.conn.Execute(ctx, cmd)
 	if err != nil {
 		return err
 	}
@@ -187,10 +188,10 @@ func (sshc *sshClient) sudoChmod(remoteFile string, mode fs.FileMode) (err error
 }
 
 // sudoChown change the owner of remoteFile using sudo.
-func (sshc *sshClient) sudoChown(remoteFile, owner string) (err error) {
+func (sshc *sshClient) sudoChown(ctx context.Context, remoteFile, owner string) (err error) {
 	var cmd = fmt.Sprintf(`sudo chown %s %q`, owner, remoteFile)
 
-	err = sshc.conn.Execute(cmd)
+	err = sshc.conn.Execute(ctx, cmd)
 	if err != nil {
 		return err
 	}
@@ -201,21 +202,21 @@ func (sshc *sshClient) sudoChown(remoteFile, owner string) (err error) {
 // The remote file is copied to temporary directory first, chmod-ed to
 // current SSH user so it can be read.
 // The temporary file then copied from remote to local.
-func (sshc *sshClient) sudoGet(remote, local string) (err error) {
+func (sshc *sshClient) sudoGet(ctx context.Context, remote, local string) (err error) {
 	var (
 		remoteBase    = filepath.Base(remote)
 		remoteTmp     = filepath.Join(sshc.dirTmp, remoteBase)
 		cpRemoteToTmp = fmt.Sprintf(`sudo cp -f %s %s`, remote, remoteTmp)
 	)
 
-	err = sshc.conn.Execute(cpRemoteToTmp)
+	err = sshc.conn.Execute(ctx, cpRemoteToTmp)
 	if err != nil {
 		return err
 	}
 
 	var chmod = fmt.Sprintf(`sudo chown %s %s`, sshc.section.User(), remoteTmp)
 
-	err = sshc.conn.Execute(chmod)
+	err = sshc.conn.Execute(ctx, chmod)
 	if err != nil {
 		return err
 	}
@@ -227,7 +228,7 @@ func (sshc *sshClient) sudoGet(remote, local string) (err error) {
 // sudoPut copy local file to remote using sudo.
 // The file from local copied to remote in temporary directory first, and
 // then the temporary file moved to original destination using sudo.
-func (sshc *sshClient) sudoPut(local, remote string) (err error) {
+func (sshc *sshClient) sudoPut(ctx context.Context, local, remote string) (err error) {
 	var (
 		baseName  = filepath.Base(local)
 		remoteTmp = filepath.Join(sshc.dirTmp, baseName)
@@ -244,6 +245,6 @@ func (sshc *sshClient) sudoPut(local, remote string) (err error) {
 
 	var moveStmt = fmt.Sprintf(`sudo mv -f %s %s`, remoteTmp, remote)
 
-	err = sshc.conn.Execute(moveStmt)
+	err = sshc.conn.Execute(ctx, moveStmt)
 	return err
 }

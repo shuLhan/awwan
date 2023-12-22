@@ -6,3 +6,6 @@ ls -al ~/ | grep .ssh
 echo "test" > /tmp/awwan.test
 cat /tmp/awwan.test
 # test
+
+## Test cancellation.
+sleep 300

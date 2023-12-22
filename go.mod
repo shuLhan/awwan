@@ -8,7 +8,7 @@ go 1.20
 require (
 	git.sr.ht/~shulhan/ciigo v0.11.0
 	github.com/evanw/esbuild v0.19.8
-	github.com/shuLhan/share v0.51.1-0.20231222030113-7a63c70fb199
+	github.com/shuLhan/share v0.51.1-0.20231222082140-8932e7ab20fc
 )
 
 require (
@@ -23,6 +23,8 @@ require (
 )
 
 replace github.com/evanw/esbuild => github.com/shuLhan/esbuild v0.19.9-0.20231209212032-2dc984ffc5f1
+
+replace golang.org/x/crypto => git.sr.ht/~shulhan/go-x-crypto v0.17.1-0.20231222080754-445dd75cd339
 
 //replace github.com/shuLhan/share => ../share
 
