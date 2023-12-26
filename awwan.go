@@ -477,7 +477,7 @@ func (aww *Awwan) loadSSHConfig() (err error) {
 	if baseDirConfig == nil {
 		return nil
 	}
-	aww.sshConfig.Prepend(baseDirConfig)
+	aww.sshConfig.Merge(baseDirConfig)
 
 	return nil
 }
