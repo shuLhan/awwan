@@ -8,7 +8,7 @@ go 1.20
 require (
 	git.sr.ht/~shulhan/ciigo v0.11.0
 	github.com/evanw/esbuild v0.19.8
-	github.com/shuLhan/share v0.51.1-0.20231225193715-bbefc9b4cd94
+	github.com/shuLhan/share v0.52.0
 )
 
 require (
@@ -17,8 +17,8 @@ require (
 	github.com/yuin/goldmark-meta v1.1.0 // indirect
 	golang.org/x/crypto v0.17.0 // indirect
 	golang.org/x/net v0.19.0 // indirect
-	golang.org/x/sys v0.15.0 // indirect
-	golang.org/x/term v0.15.0 // indirect
+	golang.org/x/sys v0.16.0 // indirect
+	golang.org/x/term v0.16.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
 
