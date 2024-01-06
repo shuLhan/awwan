@@ -5,6 +5,98 @@
 This page document changes on each release.
 
 
+[#v0_11_0]
+== awwan v0.11.0 (2024-01-06)
+
+In this release we create
+https://tour.awwan.org
+where user can try and learn awwan using step-by-step tutorial.
+
+In the web-user interface (WUI) we add functionality to stop the local or
+SSH execution.
+
+
+[#v0_11_0__breaking_changes]
+=== Breaking changes
+
+all: make the magic line "#put:" use explicit source for encrypted file::
++
+--
+Previously, the magic line "#put" detect whether the source file is
+encrypted or not automatically, so we did not need to put ".vault"
+suffix in the source path.
+This changes make it to be always explicit.
+If we want to copy encrypted file than the source file must be the path
+to encrypted file.
+--
+
+[#v0_11_0__new_features]
+=== New features
+
+_wui: implement button to stop execution::
++
+--
+The Stop button call "DELETE /awwan/api/execute?id=" with id is the
+previous execution ID.
+--
+
+all: implement HTTP API to stop local or play execution::
++
+--
+The HTTP API for stopping execution have the following signature,
+
+	DELETE /awwan/api/execute?id=<string>
+
+If the ID is exist, the execution will be cancelled and return HTTP
+status 200 with the following body,
+
+	Content-Type: application/json
+	{
+		"code": 200,
+	}
+
+Otherwise it will return HTTP status 404 with error message.
+--
+
+[#v0_11_0__bug_fixes]
+=== Bug fixes
+
+all: check script file is a directory::
++
+--
+This changes we make sure that the passed script path is not a directory
+to prevent error when running play with unknown host name.
+--
+
+all: fix panic due to out of range when running "#require" statement::
+
+[#v0_11_0__enhancements]
+=== Enhancements
+
+all: delete the execution response and context cancellation on finished::
++
+--
+Once the ExecResponse EndAt is not empty or event queue has been closed,
+clear the map that store the execution response and context cancellation
+to minimize resources usage.
+--
+
+all: change the remote temporary directory to "~/.cache/awwan"::
++
+--
+If the file to be copied contains sensitive data, putting them in
+"/tmp" considered a security risk, even though it will be moved to
+destination later.
+
+The issue is when the "#put" command failed, the plain file is left
+on "/tmp" directory.
+
+This changes add additional advantage where we did not need to remove
+the temporary directory on remote when execution completed, since the
+temporary directory should be accessible by user only.
+--
+
+
 [#v0_10_0]
 == awwan v0.10.0 (2023-12-16)
 
