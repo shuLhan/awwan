@@ -1,12 +1,12 @@
 # Maintainer: shulhan <ms@kilabit.info>
 
 pkgname=awwan-git
-pkgver=0.10.0.r0.gf30f148
+pkgver=0.11.0.r2.g5e4e1d7
 pkgrel=1
 
-pkgdesc="Configuration management software, infrastructure as file and directory layout."
-arch=(x86_64)
-url='https://git.sr.ht/~shulhan/awwan'
+pkgdesc='Configuration management software, infrastructure as file and directory layout.'
+arch=('any')
+url='https://awwan.org'
 license=('GPL3')
 
 makedepends=(
@@ -16,8 +16,13 @@ makedepends=(
 
 provides=('awwan')
 
+## For testing in local.
+#source=(
+#	"${pkgname}-local::git+file:///home/ms/go/src/git.sr.ht/~shulhan/awwan#branch=dev"
+#	"wui-local::git+file:///home/ms/src/wui"
+#)
 source=(
-	"$pkgname::git+https://git.sr.ht/~shulhan/awwan"
+	"${pkgname}::git+https://git.sr.ht/~shulhan/awwan"
 	"wui::git+https://git.sr.ht/~shulhan/wui"
 )
 md5sums=(
@@ -26,24 +31,26 @@ md5sums=(
 )
 
 pkgver() {
-	cd "$pkgname"
+	cd "${pkgname}"
 	git describe --long --tags | sed 's/^v//;s/\([^-]*-g\)/r\1/;s/-/./g'
 }
 
 prepare() {
-	cd "$pkgname"
+	cd "${pkgname}"
 	git submodule init
 	git config submodule."submodules/wui".url "${srcdir}/wui"
 	git submodule update
 }
 
 build() {
-	cd "$pkgname"
+	cd "${pkgname}"
 	make build
 }
 
 package() {
-	cd "$pkgname"
-	install -Dm755 _bin/awwan $pkgdir/usr/bin/awwan
-	install -Dm755 COPYING $pkgdir/usr/share/licenses/awwan/COPYING
+	cd "${pkgname}"
+	install -Dm755 _bin/awwan "${pkgdir}/usr/bin/awwan"
+	install -Dm755 COPYING    "${pkgdir}/usr/share/licenses/awwan/COPYING"
+	install -Dm644 _sys/usr/share/bash-completion/completions/awwan \
+		 "${pkgdir}/usr/share/bash-completion/completions/awwan"
 }

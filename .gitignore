@@ -3,11 +3,6 @@
 /.cache
 /CHANGELOG.html
 /README.html
-/_AUR/*.tar.zst
-/_AUR/awwan-git
-/_AUR/pkg
-/_AUR/src
-/_AUR/wui
 /_doc/*.html
 /_example/.cache
 /_mkosi/awwan-test
