@@ -3,36 +3,36 @@ The "env-get" is the command to get the value from environment files,
 
 The syntax is
 
-  <key> <directory>
+  <directory> <key>
 
-Remember, the second parameter is a directory not a file, because the
+Remember that the first parameter is a directory not a file, because the
 environment files are loaded recursively from top to bottom.
-An environment key may not exist in sub directory, but defined in their
+An environment "key" may not exist in the directory, but defined in their
 parent directory.
 
 Lets try on the base directory first,
 
-  awwan env-get "host::name" {{.BaseDir}}
+  awwan env-get {{.BaseDir}} "host::name"
 
 It will print,
 
   2023/12/04 22:18:06 --- BaseDir: /home/awwan/play
   2023/12/04 22:18:06 --- NewSession "."
   2023/12/04 22:18:06 --- Loading "awwan.env" ...
-  2023/12/04 15:18:06 -->  15: awwan env-get "host::name" /home/awwan/play
+  2023/12/04 15:18:06 -->  15: awwan env-get /home/awwan/play "host::name"
   awwan
 
 But if we changes the directory to "remotehost",
 
-  awwan env-get "host::name" {{.BaseDir}}/remotehost
+  awwan env-get {{.BaseDir}}/remotehost "host::name"
 
 It will print,
 
-  2023/12/04 15:24:32 -->  29: awwan env-get "host::name" /home/awwan/play/remotehost
   2023/12/04 22:24:32 --- BaseDir: /home/awwan/play
   2023/12/04 22:24:32 --- NewSession "remotehost"
   2023/12/04 22:24:32 --- Loading "awwan.env" ...
   2023/12/04 22:24:32 --- Loading "remotehost/awwan.env" ...
+  2023/12/04 15:24:32 -->  29: awwan env-get /home/awwan/play/remotehost "host::name"
   remotehost
 
 Because the environment variable "host::name" is overridden in "awwan.env"

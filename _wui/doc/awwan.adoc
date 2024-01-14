@@ -24,7 +24,7 @@ command = "decrypt" / "encrypt" / "help" / "local" / "play" / "serve"
         Encrypt the file using RSA private key at
         "<workspace>/.ssh/awwan.key".
 
-    env-get <key> [dir]
+    env-get <dir> <key>
         Get the value from environment based on the key.
 
     env-set <key> <value> [env-file]
@@ -135,22 +135,21 @@ The env-get command get the value from environment files.
 Syntax,
 
 ----
-<key> [dir]
+<dir> <key>
 ----
+
+The "dir" argument define the directory where environment files ("awwan.env"
+and/or ".awwan.env.vault") will be loaded, recursively, from BaseDir to dir.
 
 The "key" argument define the key where value is stored in environment using
 "section:sub:name" format.
-
-The "dir" argument is optional, its define the directory where environment
-files will be loaded, recursively, from BaseDir to dir.
-If its empty default to the current directory.
 
 If the key is not exist it will return an empty string.
 
 For example, to get the value of "name" under section "host", run
 
 ----
-$ awwan env-get host::name
+$ awwan env-get . host::name
 myhost
 ----
 

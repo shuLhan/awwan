@@ -50,10 +50,11 @@ command = "decrypt" / "encrypt" / "help" / "local" / "play" / "serve" / "version
 		REMINDER: the private key should not be committed into
 		VCS if its not protected with passphrase.
 
-	env-get <key> [dir]
+	env-get <dir> <key>
 		Get the environment value based on key using
 		"section:sub:name" format.
-		The dir argument is optional, default to current directory.
+		The "dir" argument define the directory where environment
+		files will be loaded, recursively, from BaseDir to dir.
 		If the key is not exist it will return an empty string.
 
 	env-set <key> <value> [env-file]
@@ -157,7 +158,7 @@ func main() {
 		}
 
 	case awwan.CommandModeEnvGet:
-		if flag.NArg() < 2 {
+		if flag.NArg() < 3 {
 			err = fmt.Errorf(`%s: missing key argument`, cmdMode)
 		}
 
@@ -222,16 +223,10 @@ func main() {
 
 	case awwan.CommandModeEnvGet:
 		var (
-			key = flag.Arg(1)
-			dir = flag.Arg(2)
+			dir = flag.Arg(1)
+			key = flag.Arg(2)
 			val string
 		)
-		if len(dir) == 0 {
-			dir, err = os.Getwd()
-			if err != nil {
-				log.Fatalf(`%s: %s: %s`, logp, cmdMode, err)
-			}
-		}
 		val, err = aww.EnvGet(dir, key)
 		if err != nil {
 			log.Fatalf(`%s: %s %q: %s`, logp, cmdMode, key, err)
