@@ -12,38 +12,49 @@ _awwan_completions()
 	local key=${COMP_WORDS[2]}
 
 	case "$cmd" in
-		decrypt)
+	decrypt)
+		COMPREPLY=($(compgen -A file -X "?(.git|*.log)" -- "$key"))
+		;;
+	encrypt)
+		COMPREPLY=($(compgen -A file -X "?(.git|*.log)" -- "$key"))
+		;;
+	env-get)
+		case $COMP_CWORD in
+		2)
 			COMPREPLY=($(compgen -A file -X "?(.git|*.log)" -- "$key"))
 			;;
-		encrypt)
-			COMPREPLY=($(compgen -A file -X "?(.git|*.log)" -- "$key"))
+		3)
+			local listKey=$(awwan env-keys "${key}" 2>/dev/null)
+			local argKey=${COMP_WORDS[${COMP_CWORD}]}
+			local filteredKeys=$(compgen -W "${listKey}" -- "${argKey}")
+			COMPREPLY=(${filteredKeys})
 			;;
-		env-get)
-			;;
-		env-set)
-			;;
-		help)
-			;;
-		local)
-			COMPREPLY=($(compgen -A file -X "?(*.log|.*)" -- "$key"))
-			;;
-		play)
-			COMPREPLY=($(compgen -A file -X "?(*.log|.*)" -- "$key"))
-			;;
-		serve)
-			COMPREPLY=($(compgen -A directory -- "$key"))
-			;;
-		version)
-			;;
-		*)
-			if [[ -z $cmd ]]; then
-				COMPREPLY=("${commands[@]}")
-			else
-				local list="${commands[@]}"
-				COMPREPLY=($(compgen -W "$list" -- "$cmd"))
-			fi
-			;;
+		esac
+		;;
+	env-set)
+		;;
+	help)
+		;;
+	local)
+		COMPREPLY=($(compgen -A file -X "?(*.log|.*)" -- "$key"))
+		;;
+	play)
+		COMPREPLY=($(compgen -A file -X "?(*.log|.*)" -- "$key"))
+		;;
+	serve)
+		COMPREPLY=($(compgen -A directory -- "$key"))
+		;;
+	version)
+		;;
+	*)
+		if [[ -z $cmd ]]; then
+			COMPREPLY=("${commands[@]}")
+		else
+			local list="${commands[@]}"
+			COMPREPLY=($(compgen -W "$list" -- "$cmd"))
+		fi
+		;;
 	esac
 }
 
-complete -o bashdefault -F _awwan_completions awwan
+complete -o nospace -o bashdefault -F _awwan_completions awwan
