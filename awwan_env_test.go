@@ -74,6 +74,62 @@ func TestAwwanEnvGet(t *testing.T) {
 	}
 }
 
+func TestAwwanEnvKeys(t *testing.T) {
+	type testCase struct {
+		desc    string
+		path    string
+		expKeys []string
+	}
+
+	var (
+		baseDir = `testdata/env-get/`
+
+		aww *Awwan
+		err error
+	)
+
+	aww, err = New(baseDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var cases = []testCase{{
+		desc: `With empty path`,
+		expKeys: []string{
+			`host::name`,
+			`user:database:pass`,
+		},
+	}, {
+		desc: `With path is a directory`,
+		path: `testdata/env-get/myhost`,
+		expKeys: []string{
+			`host::name`,
+			`user:database:pass`,
+		},
+	}, {
+		desc: `With path is a file`,
+		path: `testdata/env-get/myhost/awwan.env`,
+		expKeys: []string{
+			`host::name`,
+			`user:database:pass`,
+		},
+	}}
+
+	var (
+		c       testCase
+		gotKeys []string
+	)
+
+	for _, c = range cases {
+		gotKeys, err = aww.EnvKeys(c.path)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		test.Assert(t, c.desc, c.expKeys, gotKeys)
+	}
+}
+
 func TestAwwanEnvSet(t *testing.T) {
 	var (
 		baseDir = t.TempDir()

@@ -6,8 +6,8 @@ git.sr.ht/~shulhan/go-x-crypto v0.17.1-0.20231222080754-445dd75cd339 h1:iq2/NVwT
 git.sr.ht/~shulhan/go-x-crypto v0.17.1-0.20231222080754-445dd75cd339/go.mod h1:gCAAfMLgwOJRpTjQ2zCCt2OcSfYMTeZVSRtQlPC7Nq4=
 github.com/shuLhan/esbuild v0.19.9-0.20231209212032-2dc984ffc5f1 h1:U4DRlREmugTNkevukauQjjUsz82o3YRjtbxDILoN/Xs=
 github.com/shuLhan/esbuild v0.19.9-0.20231209212032-2dc984ffc5f1/go.mod h1:D2vIQZqV/vIf/VRHtViaUtViZmG7o+kKmlBfVQuRi48=
-github.com/shuLhan/share v0.52.0 h1:xbHez3JUYlt7WsUV8JOBLJOkd65P6dpp6zIq1EFXVvI=
-github.com/shuLhan/share v0.52.0/go.mod h1:aNDs/SjnVYXaLEEJzjmfrUFeLD6u0YHWy6pI8o8iqYw=
+github.com/shuLhan/share v0.52.1-0.20240114122306-3f26ff758251 h1:BD1mgC/2pKccoMvA/F86jXw/IKAomLzWjKhjdzpLX0U=
+github.com/shuLhan/share v0.52.1-0.20240114122306-3f26ff758251/go.mod h1:aNDs/SjnVYXaLEEJzjmfrUFeLD6u0YHWy6pI8o8iqYw=
 github.com/yuin/goldmark v1.6.0 h1:boZcn2GTjpsynOsC0iJHnBWa4Bi0qzfJjthwauItG68=
 github.com/yuin/goldmark v1.6.0/go.mod h1:6yULJ656Px+3vBD8DxQVa3kxgyrAnzto9xy5taEt/CY=
 github.com/yuin/goldmark-meta v1.1.0 h1:pWw+JLHGZe8Rk0EGsMVssiNb/AaPMHfSRszZeUeiOUc=

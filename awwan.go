@@ -227,6 +227,44 @@ func (aww *Awwan) EnvGet(dir, key string) (val string, err error) {
 	return val, nil
 }
 
+// EnvKeys load environment files from BaseDir to path and return all its
+// keys.
+// The path is optional, default to BaseDir if its empty.
+func (aww *Awwan) EnvKeys(path string) (keys []string, err error) {
+	var (
+		logp = `EnvKeys`
+
+		dir string
+		fi  os.FileInfo
+	)
+
+	if path == `` {
+		path = aww.BaseDir
+	}
+
+	fi, err = os.Stat(path)
+	if err != nil {
+		return nil, fmt.Errorf(`%s: %w`, logp, err)
+	}
+
+	if fi.IsDir() {
+		dir = path
+	} else {
+		dir = filepath.Dir(path)
+	}
+
+	var ses *Session
+
+	ses, err = NewSession(aww, dir)
+	if err != nil {
+		return nil, fmt.Errorf(`%s: %w`, logp, err)
+	}
+
+	keys = ses.vars.Keys()
+
+	return keys, nil
+}
+
 // EnvSet set the value in the environment file based on the key.
 //
 // The key is using the "<section>:<sub>:<name>" format.

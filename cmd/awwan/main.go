@@ -17,6 +17,11 @@ import (
 )
 
 const (
+	// cmdEnvKeys print list of environment environment variables under
+	// a directory.
+	// This command is internal, used by bash completion.
+	cmdEnvKeys = `env-keys`
+
 	cmdHelp    = "help"
 	cmdVersion = "version"
 )
@@ -162,6 +167,11 @@ func main() {
 			err = fmt.Errorf(`%s: missing key argument`, cmdMode)
 		}
 
+	case cmdEnvKeys:
+		if flag.NArg() <= 1 {
+			err = fmt.Errorf(`%s: missing environment file argument`, cmdMode)
+		}
+
 	case awwan.CommandModeEnvSet:
 		if flag.NArg() < 3 {
 			err = fmt.Errorf(`%s: missing arguments`, cmdMode)
@@ -232,6 +242,11 @@ func main() {
 			log.Fatalf(`%s: %s %q: %s`, logp, cmdMode, key, err)
 		}
 		fmt.Println(val)
+
+	case cmdEnvKeys:
+		var keys []string
+		keys, _ = aww.EnvKeys(flag.Arg(1))
+		fmt.Println(strings.Join(keys, ` `))
 
 	case awwan.CommandModeEnvSet:
 		err = aww.EnvSet(flag.Arg(1), flag.Arg(2), flag.Arg(3))
