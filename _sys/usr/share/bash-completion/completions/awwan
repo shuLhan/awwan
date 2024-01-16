@@ -32,6 +32,17 @@ _awwan_completions()
 		esac
 		;;
 	env-set)
+		case $COMP_CWORD in
+		2)
+			COMPREPLY=($(compgen -A file -X "?(.git|*.log)" -- "$key"))
+			;;
+		3)
+			local listKey=$(awwan env-keys "${key}" 2>/dev/null)
+			local argKey=${COMP_WORDS[${COMP_CWORD}]}
+			local filteredKeys=$(compgen -W "${listKey}" -- "${argKey}")
+			COMPREPLY=(${filteredKeys})
+			;;
+		esac
 		;;
 	help)
 		;;

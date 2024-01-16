@@ -9,6 +9,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -215,6 +216,13 @@ func (aww *Awwan) EnvGet(dir, key string) (val string, err error) {
 		return ``, fmt.Errorf(`%s: empty key`, logp)
 	}
 
+	var unqkey string
+
+	unqkey, err = strconv.Unquote(key)
+	if err == nil {
+		key = unqkey
+	}
+
 	var ses *Session
 
 	ses, err = NewSession(aww, dir)
@@ -267,12 +275,16 @@ func (aww *Awwan) EnvKeys(path string) (keys []string, err error) {
 
 // EnvSet set the value in the environment file based on the key.
 //
-// The key is using the "<section>:<sub>:<name>" format.
+// The file parameter point to "awwan.env" or INI formatted file.
 //
-// The file is optional, if its empty default to "awwan.env" in the current
-// directory.
-func (aww *Awwan) EnvSet(key, val, file string) (err error) {
+// The key is using the "<section>:<sub>:<name>" format.
+func (aww *Awwan) EnvSet(file, key, val string) (err error) {
 	var logp = `EnvSet`
+
+	file = strings.TrimSpace(file)
+	if len(file) == 0 {
+		return fmt.Errorf(`%s: empty file`, logp)
+	}
 
 	key = strings.TrimSpace(key)
 	if len(key) == 0 {
@@ -284,19 +296,14 @@ func (aww *Awwan) EnvSet(key, val, file string) (err error) {
 		return fmt.Errorf(`%s: empty value`, logp)
 	}
 
-	file = strings.TrimSpace(file)
-	if len(file) == 0 {
-		file = filepath.Join(aww.currDir, defEnvFileName)
+	var (
+		tags   []string
+		unqkey string
+	)
+	unqkey, err = strconv.Unquote(key)
+	if err == nil {
+		key = unqkey
 	}
-
-	var env *ini.Ini
-
-	env, err = ini.Open(file)
-	if err != nil {
-		return fmt.Errorf(`%s: %w`, logp, err)
-	}
-
-	var tags []string
 
 	tags = ini.ParseTag(key)
 
@@ -305,6 +312,13 @@ func (aww *Awwan) EnvSet(key, val, file string) (err error) {
 	}
 	if len(tags[2]) == 0 {
 		return fmt.Errorf(`%s: missing name in key`, logp)
+	}
+
+	var env *ini.Ini
+
+	env, err = ini.Open(file)
+	if err != nil {
+		return fmt.Errorf(`%s: %w`, logp, err)
 	}
 
 	var ok bool
