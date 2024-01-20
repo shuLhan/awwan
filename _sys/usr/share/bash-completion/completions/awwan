@@ -47,10 +47,18 @@ _awwan_completions()
 	help)
 		;;
 	local)
-		COMPREPLY=($(compgen -A file -X "?(*.log|.*)" -- "$key"))
+		case $COMP_CWORD in
+		2)
+			COMPREPLY=($(compgen -A file -X "?(*.log|.*)" -- "$key"))
+			;;
+		esac
 		;;
 	play)
-		COMPREPLY=($(compgen -A file -X "?(*.log|.*)" -- "$key"))
+		case $COMP_CWORD in
+		2)
+			COMPREPLY=($(compgen -A file -X "?(*.log|.*)" -- "$key"))
+			;;
+		esac
 		;;
 	serve)
 		COMPREPLY=($(compgen -A directory -- "$key"))
