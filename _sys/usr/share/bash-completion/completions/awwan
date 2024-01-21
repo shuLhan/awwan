@@ -2,6 +2,90 @@
 ## SPDX-FileCopyrightText: 2024 Shulhan <ms@kilabit.info>
 ## SPDX-License-Identifier: GPL-3.0-or-later
 
+##
+## Given param, parse comma separated values "x,y,z", and get the last item.
+## From there split z into "start", "-", "end" and return them.
+##
+_awwan_parse_last_range()
+{
+	local param=$1
+	local listpos=( ${param//,/ } )
+	local len=${#listpos[@]}
+	local lastitem=""
+	local prefix=""
+	if [[ $len -gt 0 ]]; then
+		lastitem=${listpos[-1]}
+		unset "listpos[$len-1]"
+		prefix=$(IFS=, ; echo "${listpos[*]}")
+		prefix+=","
+	fi
+
+	local has_sep=false
+	if [[ $lastitem = *"-"* ]]; then
+		has_sep=true
+	fi
+
+	local range=( ${lastitem//-/ } )
+	case "${#range[@]}" in
+	0)
+		echo "${prefix}" "1" "1" $has_sep
+		;;
+	1)
+		echo "${prefix}" "${range[0]}" "0" $has_sep
+		;;
+	2)
+		echo "${prefix}" "${range[0]}" "${range[1]}" $has_sep
+		;;
+	esac
+	return 0
+}
+
+_awwan_echo()
+{
+	echo "${@}" >&2
+}
+
+##
+## _awwan_complete_range given the range from third parameter, either empty
+## "" or "$start" or "$start-"; read the script file, and print each line
+## started with line number.
+##
+_awwan_complete_range()
+{
+	compopt -o nosort
+
+	local file=${COMP_WORDS[2]}
+	local range=${COMP_WORDS[3]}
+
+	local prefix start sep has_sep
+	read prefix start end has_sep < <(_awwan_parse_last_range "$range")
+
+	local lines=$( cat --number "$file" | tail --lines=+${start} )
+	local list_num=()
+	local list_stmt=()
+	while read -r num "stmt"; do
+		list_num+=("${num}")
+		list_stmt+=("${stmt}")
+	done <<< "${lines}"
+
+
+	if [[ $has_sep ]]; then
+		prefix="${prefix}${start}-"
+	fi
+
+	_awwan_echo ""
+	local list_range=()
+	for ((x = 0 ; x < ${#list_num[@]} ; x++)); do
+		stmt=$(printf "%s\t%s" "${list_num[$x]}" "${list_stmt[$x]}")
+		if [[ "${list_stmt[$x]}" ]]; then
+			list_range+=("${prefix}${list_num[$x]}")
+		fi
+		_awwan_echo "${stmt}"
+	done
+	COMPREPLY=( "${list_range[@]}" )
+	return 0
+}
+
 _awwan_completions()
 {
 	local commands=("decrypt" "encrypt" "env-get" "env-set" "help"
@@ -51,12 +135,18 @@ _awwan_completions()
 		2)
 			COMPREPLY=($(compgen -A file -X "?(*.log|.*)" -- "$key"))
 			;;
+		3)
+			_awwan_complete_range
+			;;
 		esac
 		;;
 	play)
 		case $COMP_CWORD in
 		2)
 			COMPREPLY=($(compgen -A file -X "?(*.log|.*)" -- "$key"))
+			;;
+		3)
+			_awwan_complete_range
 			;;
 		esac
 		;;
@@ -76,4 +166,4 @@ _awwan_completions()
 	esac
 }
 
-complete -o nospace -o bashdefault -F _awwan_completions awwan
+complete -o nospace -F _awwan_completions awwan
