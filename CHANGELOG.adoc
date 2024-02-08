@@ -5,6 +5,44 @@
 This page document changes on each release.
 
 
+[#v0_12_0]
+== awwan v0.12.0 (2024-02-08)
+
+[#v0_12_0__breaking_changes]
+=== Breaking changes
+
+all: refactoring "env-set" arguments::
++
+--
+Previously, the "env-set" take the file argument as the last argument
+and optional.
+This changes move the file argument to the first argument so the bash
+completion can detect and print the completion for list of keys.
+
+While at it, fix handling key with quoted in EnvSet and EnvGet.
+--
+
+all: refactoring env-get command::
++
+This changes the order of arguments of env-get command to pass the
+directory first before the key.
+The reason is to simplify auto-completion later from the command line.
+
+[#v0_12_0__new_features]
+=== New features
+
+all: add command env-keys::
++
+The "env-keys" command print list of environment variables under a
+directory.
+This command is internal, not documented, used by bash completion.
+
+all: add bash completion script::
++
+Using awwan from CLI now can automatically complete the arguments based on
+the command and current parameter number.
+
+
 [#v0_11_0]
 == awwan v0.11.0 (2024-01-06)
 
