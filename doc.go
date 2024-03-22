@@ -49,7 +49,7 @@ local or remote.
 
 # References
 
-[1] https://pkg.go.dev/github.com/shuLhan/share/lib/ini
+[1] https://pkg.go.dev/git.sr.ht/~shulhan/pakakeh.go/lib/ini
 
 [2] https://git-scm.com/docs/git-config#_configuration_file
 */

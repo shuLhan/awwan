@@ -9,7 +9,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/shuLhan/share/lib/mlog"
+	"git.sr.ht/~shulhan/pakakeh.go/lib/mlog"
 )
 
 // defLogTimeFormat define the default log time format.

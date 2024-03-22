@@ -17,10 +17,10 @@ import (
 	"testing"
 	"time"
 
-	libhttp "github.com/shuLhan/share/lib/http"
-	"github.com/shuLhan/share/lib/http/sseclient"
-	libnet "github.com/shuLhan/share/lib/net"
-	"github.com/shuLhan/share/lib/test"
+	libhttp "git.sr.ht/~shulhan/pakakeh.go/lib/http"
+	"git.sr.ht/~shulhan/pakakeh.go/lib/http/sseclient"
+	libnet "git.sr.ht/~shulhan/pakakeh.go/lib/net"
+	"git.sr.ht/~shulhan/pakakeh.go/lib/test"
 )
 
 func TestHttpServer_Decrypt(t *testing.T) {
@@ -238,7 +238,7 @@ func TestHttpServer_Execute(t *testing.T) {
 
 	var (
 		clientOpts = libhttp.ClientOptions{
-			ServerUrl: fmt.Sprintf(`http://%s`, address),
+			ServerURL: fmt.Sprintf(`http://%s`, address),
 		}
 		reqJSON = tdata.Input[`local:/local.aww:1-`]
 
@@ -246,7 +246,7 @@ func TestHttpServer_Execute(t *testing.T) {
 		cl          *libhttp.Client
 	)
 
-	cl = libhttp.NewClient(&clientOpts)
+	cl = libhttp.NewClient(clientOpts)
 
 	err = json.Unmarshal(reqJSON, &execRequest)
 	if err != nil {
@@ -254,16 +254,21 @@ func TestHttpServer_Execute(t *testing.T) {
 	}
 
 	var (
-		resBody []byte
-		buf     bytes.Buffer
+		clientReq = libhttp.ClientRequest{
+			Path:   pathAwwanAPIExecute,
+			Params: &execRequest,
+		}
+		clientResp *libhttp.ClientResponse
 	)
 
-	_, resBody, err = cl.PostJSON(pathAwwanAPIExecute, nil, &execRequest)
+	clientResp, err = cl.PostJSON(clientReq)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	json.Indent(&buf, resBody, ``, `  `)
+	var buf bytes.Buffer
+
+	json.Indent(&buf, clientResp.Body, ``, `  `)
 
 	var expResp = string(tdata.Output[`local:/local.aww:1-`])
 
@@ -276,7 +281,7 @@ func TestHttpServer_Execute(t *testing.T) {
 
 	res.Data = &execResp
 
-	err = json.Unmarshal(resBody, &res)
+	err = json.Unmarshal(clientResp.Body, &res)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -364,7 +369,7 @@ func TestHttpServer_ExecuteCancel(t *testing.T) {
 
 	var (
 		clientOpts = libhttp.ClientOptions{
-			ServerUrl: fmt.Sprintf(`http://%s`, address),
+			ServerURL: fmt.Sprintf(`http://%s`, address),
 		}
 		reqJSON = tdata.Input[`local:/cancel.aww:1-`]
 
@@ -372,7 +377,7 @@ func TestHttpServer_ExecuteCancel(t *testing.T) {
 		cl          *libhttp.Client
 	)
 
-	cl = libhttp.NewClient(&clientOpts)
+	cl = libhttp.NewClient(clientOpts)
 
 	err = json.Unmarshal(reqJSON, &execRequest)
 	if err != nil {
@@ -380,16 +385,21 @@ func TestHttpServer_ExecuteCancel(t *testing.T) {
 	}
 
 	var (
-		resBody []byte
-		buf     bytes.Buffer
+		clientReq = libhttp.ClientRequest{
+			Path:   pathAwwanAPIExecute,
+			Params: &execRequest,
+		}
+		clientResp *libhttp.ClientResponse
 	)
 
-	_, resBody, err = cl.PostJSON(pathAwwanAPIExecute, nil, &execRequest)
+	clientResp, err = cl.PostJSON(clientReq)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	json.Indent(&buf, resBody, ``, `  `)
+	var buf bytes.Buffer
+
+	json.Indent(&buf, clientResp.Body, ``, `  `)
 
 	var expResp = string(tdata.Output[`local:/cancel.aww:1-`])
 
@@ -402,7 +412,7 @@ func TestHttpServer_ExecuteCancel(t *testing.T) {
 
 	res.Data = &execResp
 
-	err = json.Unmarshal(resBody, &res)
+	err = json.Unmarshal(clientResp.Body, &res)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -457,20 +467,22 @@ func TestHttpServer_ExecuteCancel(t *testing.T) {
 
 func testDoExecuteCancel(t *testing.T, tdata *test.Data, cl *libhttp.Client, execID string) {
 	var (
-		params = url.Values{}
-
-		resBody []byte
-		err     error
+		clientReq = libhttp.ClientRequest{
+			Path: pathAwwanAPIExecute,
+			Params: url.Values{
+				paramNameID: []string{execID},
+			},
+		}
+		clientResp *libhttp.ClientResponse
+		err        error
 	)
 
-	params.Set(paramNameID, execID)
-
-	_, resBody, err = cl.Delete(pathAwwanAPIExecute, nil, params)
+	clientResp, err = cl.Delete(clientReq)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	test.Assert(t, `Cancel response`, string(tdata.Output[`local:/cancel.aww:1-:response`]), string(resBody))
+	test.Assert(t, `Cancel response`, string(tdata.Output[`local:/cancel.aww:1-:response`]), string(clientResp.Body))
 }
 
 func TestHttpServer_FSGet(t *testing.T) {

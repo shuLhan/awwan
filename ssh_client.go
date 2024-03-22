@@ -12,9 +12,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/shuLhan/share/lib/ssh"
-	"github.com/shuLhan/share/lib/ssh/config"
-	"github.com/shuLhan/share/lib/ssh/sftp"
+	"git.sr.ht/~shulhan/pakakeh.go/lib/ssh"
+	"git.sr.ht/~shulhan/pakakeh.go/lib/ssh/sftp"
+	"git.sr.ht/~shulhan/pakakeh.go/lib/sshconfig"
 )
 
 // sshClient contains clients for SSH and SFTP (SSH File Transport Protocol
@@ -24,7 +24,7 @@ import (
 // If the remote server does not support SFTP, it will fallback to use scp
 // command using SSH connection.
 type sshClient struct {
-	section *config.Section
+	section *sshconfig.Section
 
 	conn  *ssh.Client
 	sftpc *sftp.Client
@@ -40,7 +40,7 @@ type sshClient struct {
 //
 // Once connection established, the client create new temporary directory on
 // server at dirTmp for sudoGet or sudoPut operations.
-func newSSHClient(req *ExecRequest, section *config.Section) (sshc *sshClient, err error) {
+func newSSHClient(req *ExecRequest, section *sshconfig.Section) (sshc *sshClient, err error) {
 	var logp = `newSSHClient`
 
 	req.mlog.Outf(`--- SSH connection: %s@%s:%s`,

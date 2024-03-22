@@ -11,10 +11,10 @@ import (
 	"time"
 
 	"git.sr.ht/~shulhan/ciigo"
+	"git.sr.ht/~shulhan/pakakeh.go/lib/memfs"
+	"git.sr.ht/~shulhan/pakakeh.go/lib/mlog"
 	"github.com/evanw/esbuild/pkg/api"
 	esapi "github.com/evanw/esbuild/pkg/api"
-	"github.com/shuLhan/share/lib/memfs"
-	"github.com/shuLhan/share/lib/mlog"
 )
 
 // MemfsWui contains the embedded files under _wui for web-user interface.
@@ -189,7 +189,11 @@ func Watch() {
 					mlog.Errf(`%s %q: %s`, logp, ns.Node.Path, err)
 					continue
 				}
-				node.Update(&ns.Node, 0)
+				err = node.Update(&ns.Node, 0)
+				if err != nil {
+					mlog.Errf(`%s %q: %s`, logp, ns.Node.Path, err)
+					continue
+				}
 				embedCount++
 
 			case strings.HasSuffix(ns.Node.SysPath, DocConvertOpts.HTMLTemplate):

@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"strings"
 
-	libexec "github.com/shuLhan/share/lib/os/exec"
+	libexec "git.sr.ht/~shulhan/pakakeh.go/lib/os/exec"
 )
 
 const (

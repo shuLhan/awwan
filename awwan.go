@@ -13,8 +13,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/shuLhan/share/lib/ini"
-	"github.com/shuLhan/share/lib/ssh/config"
+	"git.sr.ht/~shulhan/pakakeh.go/lib/ini"
+	"git.sr.ht/~shulhan/pakakeh.go/lib/sshconfig"
 
 	"git.sr.ht/~shulhan/awwan/internal"
 )
@@ -69,7 +69,7 @@ type Awwan struct {
 	cryptoc *cryptoContext
 
 	// All the Host values from SSH config files.
-	sshConfig *config.Config
+	sshConfig *sshconfig.Config
 
 	httpd *httpServer
 
@@ -406,7 +406,7 @@ func (aww *Awwan) Play(ctx context.Context, req *ExecRequest) (err error) {
 		sessionDir = filepath.Dir(req.scriptPath)
 
 		ses        *Session
-		sshSection *config.Section
+		sshSection *sshconfig.Section
 		pos        linePosition
 	)
 
@@ -504,7 +504,7 @@ func (aww *Awwan) loadSSHConfig() (err error) {
 	var (
 		logp = `loadSSHConfig`
 
-		baseDirConfig *config.Config
+		baseDirConfig *sshconfig.Config
 		homeDir       string
 		configFile    string
 	)
@@ -515,14 +515,14 @@ func (aww *Awwan) loadSSHConfig() (err error) {
 	}
 
 	configFile = filepath.Join(homeDir, defSSHDir, defSSHConfig)
-	aww.sshConfig, err = config.Load(configFile)
+	aww.sshConfig, err = sshconfig.Load(configFile)
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
 
 	configFile = filepath.Join(aww.BaseDir, defSSHDir, defSSHConfig)
 
-	baseDirConfig, err = config.Load(configFile)
+	baseDirConfig, err = sshconfig.Load(configFile)
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
 	}

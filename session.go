@@ -17,10 +17,10 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/shuLhan/share/lib/ini"
-	libos "github.com/shuLhan/share/lib/os"
-	libexec "github.com/shuLhan/share/lib/os/exec"
-	"github.com/shuLhan/share/lib/ssh/config"
+	"git.sr.ht/~shulhan/pakakeh.go/lib/ini"
+	libos "git.sr.ht/~shulhan/pakakeh.go/lib/os"
+	libexec "git.sr.ht/~shulhan/pakakeh.go/lib/os/exec"
+	"git.sr.ht/~shulhan/pakakeh.go/lib/sshconfig"
 )
 
 // Session manage environment and SSH client.
@@ -623,7 +623,7 @@ func (ses *Session) generatePaths() (err error) {
 	return nil
 }
 
-func (ses *Session) initSSHClient(req *ExecRequest, sshSection *config.Section) (err error) {
+func (ses *Session) initSSHClient(req *ExecRequest, sshSection *sshconfig.Section) (err error) {
 	var (
 		logp          = "initSSHClient"
 		lastIdentFile string

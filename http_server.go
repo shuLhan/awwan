@@ -18,9 +18,9 @@ import (
 	"strconv"
 	"strings"
 
-	libhttp "github.com/shuLhan/share/lib/http"
-	"github.com/shuLhan/share/lib/http/sseclient"
-	"github.com/shuLhan/share/lib/memfs"
+	libhttp "git.sr.ht/~shulhan/pakakeh.go/lib/http"
+	"git.sr.ht/~shulhan/pakakeh.go/lib/http/sseclient"
+	"git.sr.ht/~shulhan/pakakeh.go/lib/memfs"
 
 	"git.sr.ht/~shulhan/awwan/internal"
 )
@@ -91,7 +91,7 @@ func newHTTPServer(aww *Awwan, address string) (httpd *httpServer, err error) {
 		return nil, fmt.Errorf(`%s: %w`, logp, err)
 	}
 
-	var serverOpts = &libhttp.ServerOptions{
+	var serverOpts = libhttp.ServerOptions{
 		Memfs:   internal.MemfsWui,
 		Address: address,
 	}
@@ -113,7 +113,7 @@ func newHTTPServer(aww *Awwan, address string) (httpd *httpServer, err error) {
 func (httpd *httpServer) registerEndpoints() (err error) {
 	var logp = `registerEndpoints`
 
-	err = httpd.RegisterEndpoint(&libhttp.Endpoint{
+	err = httpd.RegisterEndpoint(libhttp.Endpoint{
 		Method:       libhttp.RequestMethodGet,
 		Path:         pathAwwanAPIFs,
 		RequestType:  libhttp.RequestTypeQuery,
@@ -124,7 +124,7 @@ func (httpd *httpServer) registerEndpoints() (err error) {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
 
-	err = httpd.RegisterEndpoint(&libhttp.Endpoint{
+	err = httpd.RegisterEndpoint(libhttp.Endpoint{
 		Method:       libhttp.RequestMethodDelete,
 		Path:         pathAwwanAPIFs,
 		RequestType:  libhttp.RequestTypeJSON,
@@ -135,7 +135,7 @@ func (httpd *httpServer) registerEndpoints() (err error) {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
 
-	err = httpd.RegisterEndpoint(&libhttp.Endpoint{
+	err = httpd.RegisterEndpoint(libhttp.Endpoint{
 		Method:       libhttp.RequestMethodPost,
 		Path:         pathAwwanAPIFs,
 		RequestType:  libhttp.RequestTypeJSON,
@@ -146,7 +146,7 @@ func (httpd *httpServer) registerEndpoints() (err error) {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
 
-	err = httpd.RegisterEndpoint(&libhttp.Endpoint{
+	err = httpd.RegisterEndpoint(libhttp.Endpoint{
 		Method:       libhttp.RequestMethodPut,
 		Path:         pathAwwanAPIFs,
 		RequestType:  libhttp.RequestTypeJSON,
@@ -164,7 +164,7 @@ func (httpd *httpServer) registerEndpoints() (err error) {
 		ResponseType: libhttp.ResponseTypeJSON,
 		Call:         httpd.Decrypt,
 	}
-	err = httpd.RegisterEndpoint(&epDecrypt)
+	err = httpd.RegisterEndpoint(epDecrypt)
 	if err != nil {
 		return fmt.Errorf(`%s %q: %w`, logp, epDecrypt.Path, err)
 	}
@@ -176,12 +176,12 @@ func (httpd *httpServer) registerEndpoints() (err error) {
 		ResponseType: libhttp.ResponseTypeJSON,
 		Call:         httpd.Encrypt,
 	}
-	err = httpd.RegisterEndpoint(&epEncrypt)
+	err = httpd.RegisterEndpoint(epEncrypt)
 	if err != nil {
 		return fmt.Errorf(`%s %q: %w`, logp, epEncrypt.Path, err)
 	}
 
-	err = httpd.RegisterEndpoint(&libhttp.Endpoint{
+	err = httpd.RegisterEndpoint(libhttp.Endpoint{
 		Method:       libhttp.RequestMethodPost,
 		Path:         pathAwwanAPIExecute,
 		RequestType:  libhttp.RequestTypeJSON,
@@ -194,7 +194,7 @@ func (httpd *httpServer) registerEndpoints() (err error) {
 
 	// Register endpoint to cancel execution.
 
-	err = httpd.RegisterEndpoint(&libhttp.Endpoint{
+	err = httpd.RegisterEndpoint(libhttp.Endpoint{
 		Method:       libhttp.RequestMethodDelete,
 		Path:         pathAwwanAPIExecute,
 		RequestType:  libhttp.RequestTypeJSON,
@@ -208,7 +208,7 @@ func (httpd *httpServer) registerEndpoints() (err error) {
 	// Register Server-sent events to tail the execution state and
 	// output.
 
-	var epExecuteTail = &libhttp.SSEEndpoint{
+	var epExecuteTail = libhttp.SSEEndpoint{
 		Path: pathAwwanAPIExecuteTail,
 		Call: httpd.ExecuteTail,
 	}
@@ -407,7 +407,7 @@ func (httpd *httpServer) FSGet(epr *libhttp.EndpointRequest) (resb []byte, err e
 		path string
 	)
 
-	path = epr.HttpRequest.Form.Get(paramNamePath)
+	path = epr.HTTPRequest.Form.Get(paramNamePath)
 	if len(path) == 0 {
 		res.Code = http.StatusOK
 		res.Data = httpd.memfsBase
@@ -759,7 +759,7 @@ func (httpd *httpServer) Execute(epr *libhttp.EndpointRequest) (resb []byte, err
 func (httpd *httpServer) ExecuteCancel(epr *libhttp.EndpointRequest) (resb []byte, err error) {
 	var (
 		endRes      = &libhttp.EndpointResponse{}
-		execID      = epr.HttpRequest.Form.Get(paramNameID)
+		execID      = epr.HTTPRequest.Form.Get(paramNameID)
 		ctxDoCancel = httpd.idContextCancel[execID]
 	)
 
@@ -808,7 +808,7 @@ func (httpd *httpServer) ExecuteCancel(epr *libhttp.EndpointRequest) (resb []byt
 //	data: invalid or empty ID ${id}
 func (httpd *httpServer) ExecuteTail(sseconn *libhttp.SSEConn) {
 	var (
-		execID  = sseconn.HttpRequest.Form.Get(paramNameID)
+		execID  = sseconn.HTTPRequest.Form.Get(paramNameID)
 		execRes = httpd.idExecRes[execID]
 	)
 	if execRes == nil {
@@ -817,7 +817,7 @@ func (httpd *httpServer) ExecuteTail(sseconn *libhttp.SSEConn) {
 	}
 
 	var (
-		lastEventIDStr = sseconn.HttpRequest.Header.Get(libhttp.HeaderLastEventID)
+		lastEventIDStr = sseconn.HTTPRequest.Header.Get(libhttp.HeaderLastEventID)
 		lastEventID    int64
 	)
 

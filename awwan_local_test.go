@@ -14,8 +14,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/shuLhan/share/lib/test"
-	"github.com/shuLhan/share/lib/test/mock"
+	"git.sr.ht/~shulhan/pakakeh.go/lib/test"
+	"git.sr.ht/~shulhan/pakakeh.go/lib/test/mock"
 )
 
 func TestAwwanLocal(t *testing.T) {

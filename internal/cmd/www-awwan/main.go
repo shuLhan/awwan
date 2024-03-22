@@ -14,9 +14,10 @@ import (
 	"path/filepath"
 	"syscall"
 
-	"git.sr.ht/~shulhan/awwan/internal"
 	"git.sr.ht/~shulhan/ciigo"
-	"github.com/shuLhan/share/lib/memfs"
+	"git.sr.ht/~shulhan/pakakeh.go/lib/memfs"
+
+	"git.sr.ht/~shulhan/awwan/internal"
 )
 
 const defAddress = `127.0.0.1:4358`

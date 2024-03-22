@@ -18,7 +18,7 @@ import (
 	"os"
 	"path/filepath"
 
-	libcrypto "github.com/shuLhan/share/lib/crypto"
+	libcrypto "git.sr.ht/~shulhan/pakakeh.go/lib/crypto"
 )
 
 // defFilePrivateKey define the default private key file name.

@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/shuLhan/share/lib/http/sseclient"
+	"git.sr.ht/~shulhan/pakakeh.go/lib/http/sseclient"
 )
 
 // ExecResponse contains the request and output of command execution, from
