@@ -4,6 +4,22 @@
 
 This page document changes on each release.
 
+[#v0_12_1]
+== awwan v0.12.1 (2024-04-06)
+
+This release replace module "share" with "pakakeh.go".
+
+In the "_wui", we use shared static assets from Cloud Storage.
+The idea is to minimize noise in the logs that does not related to
+page access and minimize binary size.
+
+In the "_ops", we use shared mkosi cache in user's home ".cache".
+This is to minimize duplicate files and allow us to find or grep files
+without excluding certains directory.
+
+In some code, we apply some recommendations from linters, mostly related
+to using string concatenation instead of [fmt.Sprintf] and error checking.
+
 
 [#v0_12_0]
 == awwan v0.12.0 (2024-02-08)
