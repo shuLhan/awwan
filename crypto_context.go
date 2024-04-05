@@ -151,7 +151,7 @@ func (cryptoc *cryptoContext) loadPrivateKey() (err error) {
 	return nil
 }
 
-// loadPassphrase load passphrase from file ".ssh/awwan.pass"
+// loadPassphrase load passphrase from file ".ssh/awwan.pass".
 func (cryptoc *cryptoContext) loadPassphrase() (pass []byte, err error) {
 	var (
 		logp     = `loadPassphrase`

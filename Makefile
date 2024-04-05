@@ -15,10 +15,15 @@ test:
 
 .PHONY: lint
 lint:
-	-go vet ./...
 	-fieldalignment ./...
 	-shadow ./...
-	-revive ./...
+	-golangci-lint run \
+		--presets bugs,metalinter,performance,unused \
+		--disable bodyclose \
+		--disable contextcheck \
+		--disable dupword \
+		--disable gomoddirectives \
+		./...
 
 ## embed convert the TypeScript files into JavaScript and embed all _wui
 ## assets into memfs for web-user interface.

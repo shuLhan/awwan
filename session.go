@@ -388,6 +388,7 @@ func ExecLocal(ctx context.Context, req *ExecRequest, stmt *Statement) (err erro
 		}
 	}
 
+	//nolint:gosec
 	var cmd = exec.CommandContext(ctx, `/bin/sh`, `-c`, string(stmt.raw))
 
 	cmd.Stdin = req.stdin

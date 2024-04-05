@@ -19,7 +19,7 @@ import (
 
 // sshClient contains clients for SSH and SFTP (SSH File Transport Protocol
 // v3).
-// The sftp client is for transfering file, put or get, to or from remote
+// The sftp client is for transferring file, put or get, to or from remote
 // server.
 // If the remote server does not support SFTP, it will fallback to use scp
 // command using SSH connection.
@@ -141,7 +141,7 @@ func (sshc *sshClient) get(remote, local string) (err error) {
 // mkdir create directory on the remote server.
 func (sshc *sshClient) mkdir(ctx context.Context, dir string, permission uint32) (err error) {
 	if sshc.sftpc == nil {
-		var mkdirStmt = fmt.Sprintf(`mkdir -p %s`, dir)
+		var mkdirStmt = `mkdir -p ` + dir
 
 		err = sshc.conn.Execute(ctx, mkdirStmt)
 	} else {
@@ -161,18 +161,6 @@ func (sshc *sshClient) put(local, remote string) (err error) {
 		err = sshc.sftpc.Put(local, remote)
 	}
 	return err
-}
-
-// rmdirAll remove the directory on server recursively.
-func (sshc *sshClient) rmdirAll(ctx context.Context, dir string) (err error) {
-	var rmdirStmt = fmt.Sprintf(`rm -rf %s`, dir)
-
-	err = sshc.conn.Execute(ctx, rmdirStmt)
-	if err != nil {
-		return fmt.Errorf(`rmdirAll: %s: %w`, dir, err)
-	}
-
-	return nil
 }
 
 // sudoChmod change the permission of remoteFile using sudo.

@@ -27,7 +27,6 @@ func TestHttpServer_Decrypt(t *testing.T) {
 	type testCase struct {
 		desc    string
 		expResp string
-		expErr  string
 		reqBody []byte
 	}
 
@@ -106,7 +105,7 @@ func TestHttpServer_Decrypt(t *testing.T) {
 		resp, _ = io.ReadAll(httpRes.Body)
 
 		gotResp.Reset()
-		json.Indent(&gotResp, resp, ``, `  `)
+		_ = json.Indent(&gotResp, resp, ``, `  `)
 		test.Assert(t, c.desc, c.expResp, gotResp.String())
 	}
 }
@@ -115,7 +114,6 @@ func TestHttpServer_Encrypt(t *testing.T) {
 	type testCase struct {
 		desc    string
 		expResp string
-		expErr  string
 		reqBody []byte
 	}
 
@@ -194,7 +192,7 @@ func TestHttpServer_Encrypt(t *testing.T) {
 		resp, _ = io.ReadAll(httpRes.Body)
 
 		gotResp.Reset()
-		json.Indent(&gotResp, resp, ``, `  `)
+		_ = json.Indent(&gotResp, resp, ``, `  `)
 		test.Assert(t, c.desc, c.expResp, gotResp.String())
 	}
 }
@@ -238,7 +236,7 @@ func TestHttpServer_Execute(t *testing.T) {
 
 	var (
 		clientOpts = libhttp.ClientOptions{
-			ServerURL: fmt.Sprintf(`http://%s`, address),
+			ServerURL: `http://` + address,
 		}
 		reqJSON = tdata.Input[`local:/local.aww:1-`]
 
@@ -268,7 +266,7 @@ func TestHttpServer_Execute(t *testing.T) {
 
 	var buf bytes.Buffer
 
-	json.Indent(&buf, clientResp.Body, ``, `  `)
+	_ = json.Indent(&buf, clientResp.Body, ``, `  `)
 
 	var expResp = string(tdata.Output[`local:/local.aww:1-`])
 
@@ -369,7 +367,7 @@ func TestHttpServer_ExecuteCancel(t *testing.T) {
 
 	var (
 		clientOpts = libhttp.ClientOptions{
-			ServerURL: fmt.Sprintf(`http://%s`, address),
+			ServerURL: `http://` + address,
 		}
 		reqJSON = tdata.Input[`local:/cancel.aww:1-`]
 
@@ -399,7 +397,7 @@ func TestHttpServer_ExecuteCancel(t *testing.T) {
 
 	var buf bytes.Buffer
 
-	json.Indent(&buf, clientResp.Body, ``, `  `)
+	_ = json.Indent(&buf, clientResp.Body, ``, `  `)
 
 	var expResp = string(tdata.Output[`local:/cancel.aww:1-`])
 
@@ -552,7 +550,7 @@ func TestHttpServer_FSGet(t *testing.T) {
 		body, _ = io.ReadAll(httpRes.Body)
 
 		jsonBody.Reset()
-		json.Indent(&jsonBody, body, ``, `  `)
+		_ = json.Indent(&jsonBody, body, ``, `  `)
 		test.Assert(t, c.desc, c.exp, jsonBody.String())
 	}
 }

@@ -24,13 +24,13 @@ var Version = `0.12.0`
 
 // osGetwd define the handler to get current working directory.
 //
-// This variable will be overriden in testing to test running awwan in sub
+// This variable will be overridden in testing to test running awwan in sub
 // directory of workspace.
 var osGetwd = os.Getwd
 
 // timeNow define a function that return the current time.
 //
-// This variable will be overriden in testing to mock time.
+// This variable will be overridden in testing to mock time.
 var timeNow = time.Now
 
 // List of command available for program awwan.
@@ -476,7 +476,7 @@ out:
 	}
 	if err != nil {
 		req.mlog.Errf(`!!! %s`, err)
-		err = fmt.Errorf(`%s: %s`, logp, err)
+		err = fmt.Errorf(`%s: %w`, logp, err)
 	}
 	req.close()
 	return err

@@ -17,8 +17,7 @@ import (
 )
 
 const (
-	// cmdEnvKeys print list of environment environment variables under
-	// a directory.
+	// cmdEnvKeys print list of environment variables under a directory.
 	// This command is internal, used by bash completion.
 	cmdEnvKeys = `env-keys`
 

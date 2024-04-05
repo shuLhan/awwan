@@ -264,7 +264,7 @@ func (httpd *httpServer) Decrypt(epr *libhttp.EndpointRequest) (resb []byte, err
 
 	decRes.PathVault = strings.TrimSpace(decRes.PathVault)
 	if len(decRes.PathVault) == 0 {
-		httpRes.Message = fmt.Sprintf(`%s: empty path_vault`, logp)
+		httpRes.Message = logp + `: empty path_vault`
 		return nil, httpRes
 	}
 
@@ -292,7 +292,7 @@ func (httpd *httpServer) Decrypt(epr *libhttp.EndpointRequest) (resb []byte, err
 		return nil, httpRes
 	}
 
-	nodeVault.Parent.Update(nil, 0)
+	_ = nodeVault.Parent.Update(nil, 0)
 
 	decRes.Path, _ = strings.CutPrefix(decRes.Path, httpd.aww.BaseDir)
 
@@ -344,7 +344,7 @@ func (httpd *httpServer) Encrypt(epr *libhttp.EndpointRequest) (resb []byte, err
 
 	encRes.Path = strings.TrimSpace(encRes.Path)
 	if len(encRes.Path) == 0 {
-		httpRes.Message = fmt.Sprintf(`%s: empty path`, logp)
+		httpRes.Message = logp + `: empty path`
 		return nil, httpRes
 	}
 
@@ -372,7 +372,7 @@ func (httpd *httpServer) Encrypt(epr *libhttp.EndpointRequest) (resb []byte, err
 		return nil, httpRes
 	}
 
-	node.Parent.Update(nil, 0)
+	_ = node.Parent.Update(nil, 0)
 
 	encRes.PathVault, _ = strings.CutPrefix(encRes.PathVault, httpd.aww.BaseDir)
 
@@ -573,7 +573,7 @@ func (httpd *httpServer) awwanAPIFsPost(epr *libhttp.EndpointRequest) (rawBody [
 	}
 	node = httpd.memfsBase.PathNodes.Get(req.Path)
 	if node != nil {
-		res.Message = fmt.Sprintf("%s: file exist", logp)
+		res.Message = logp + `: file exist`
 		return nil, res
 	}
 
@@ -812,7 +812,7 @@ func (httpd *httpServer) ExecuteTail(sseconn *libhttp.SSEConn) {
 		execRes = httpd.idExecRes[execID]
 	)
 	if execRes == nil {
-		sseconn.WriteEvent(``, `ERROR: invalid or empty ID `+execID, nil)
+		_ = sseconn.WriteEvent(``, `ERROR: invalid or empty ID `+execID, nil)
 		return
 	}
 
@@ -825,7 +825,7 @@ func (httpd *httpServer) ExecuteTail(sseconn *libhttp.SSEConn) {
 		lastEventID, _ = strconv.ParseInt(lastEventIDStr, 10, 64)
 	}
 	if lastEventID == 0 {
-		sseconn.WriteEvent(`begin`, execRes.BeginAt, nil)
+		_ = sseconn.WriteEvent(`begin`, execRes.BeginAt, nil)
 	}
 
 	execRes.mtxOutput.Lock()
@@ -839,22 +839,21 @@ func (httpd *httpServer) ExecuteTail(sseconn *libhttp.SSEConn) {
 		)
 		for idx, out = range execRes.Output[int(lastEventID):] {
 			idstr = strconv.FormatInt(int64(idx), 10)
-			sseconn.WriteEvent(``, out, &idstr)
+			_ = sseconn.WriteEvent(``, out, &idstr)
 		}
 		lastEventID = int64(idx)
 	}
 	execRes.mtxOutput.Unlock()
 
 	var (
-		ok = true
-
+		ok   bool
 		ev   sseclient.Event
 		evid int64
 	)
 
 	if len(execRes.EndAt) != 0 {
 		// The execution has been completed.
-		sseconn.WriteEvent(`end`, execRes.EndAt, nil)
+		_ = sseconn.WriteEvent(`end`, execRes.EndAt, nil)
 		goto out
 	}
 
@@ -867,7 +866,7 @@ func (httpd *httpServer) ExecuteTail(sseconn *libhttp.SSEConn) {
 			break
 		}
 		if len(ev.ID) == 0 {
-			sseconn.WriteEvent(ev.Type, ev.Data, nil)
+			_ = sseconn.WriteEvent(ev.Type, ev.Data, nil)
 			continue
 		}
 
@@ -876,7 +875,7 @@ func (httpd *httpServer) ExecuteTail(sseconn *libhttp.SSEConn) {
 		if evid <= lastEventID {
 			continue
 		}
-		sseconn.WriteEvent(ev.Type, ev.Data, &ev.ID)
+		_ = sseconn.WriteEvent(ev.Type, ev.Data, &ev.ID)
 	}
 out:
 	delete(httpd.idExecRes, execID)
