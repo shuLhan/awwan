@@ -1,7 +1,9 @@
 /*.tar.zst
 /awwan-git
 /awwan-git-local
+/awwan-git-remote
 /pkg
 /src
 /wui
 /wui-local
+/wui-remote

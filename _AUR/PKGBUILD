@@ -1,7 +1,7 @@
 # Maintainer: shulhan <ms@kilabit.info>
 
 pkgname=awwan-git
-pkgver=0.11.0.r2.g5e4e1d7
+pkgver=0.11.0.r8.ge41e3a5
 pkgrel=1
 
 pkgdesc='Configuration management software, infrastructure as file and directory layout.'
@@ -16,15 +16,15 @@ makedepends=(
 
 provides=('awwan')
 
-## For testing in local.
-#source=(
-#	"${pkgname}-local::git+file:///home/ms/go/src/git.sr.ht/~shulhan/awwan#branch=dev"
-#	"wui-local::git+file:///home/ms/src/wui"
-#)
 source=(
 	"${pkgname}::git+https://git.sr.ht/~shulhan/awwan"
 	"wui::git+https://git.sr.ht/~shulhan/wui"
 )
+## For testing in local.
+#source=(
+#	"${pkgname}::git+file:///home/ms/go/src/git.sr.ht/~shulhan/awwan#branch=dev"
+#	"wui::git+file:///home/ms/src/wui"
+#)
 md5sums=(
 	'SKIP'
 	'SKIP'
