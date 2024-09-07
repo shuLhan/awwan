@@ -6,6 +6,21 @@
 
 This page document changes on each release.
 
+[#v0_12_2]
+== awwan v0.12.2 (2024-09-08)
+
+[#v0_12_2__chores]
+=== Chores
+
+all: replace licensing format to REUSE.toml::
++
+Using ".reuse/dep5" has been deprecated since REUSE v3.2.0.
+
+_wui: update wui submodule URL::
++
+The wui submodule has been renamed to "pakakeh.ts".
+
+
 [#v0_12_1]
 == awwan v0.12.1 (2024-04-06)
 
