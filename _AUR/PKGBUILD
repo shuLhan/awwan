@@ -1,7 +1,7 @@
 # Maintainer: shulhan <ms@kilabit.info>
 
 pkgname=awwan-git
-pkgver=0.11.0.r8.ge41e3a5
+pkgver=0.12.1.r0.g9586bba
 pkgrel=1
 
 pkgdesc='Configuration management software, infrastructure as file and directory layout.'
@@ -18,7 +18,7 @@ provides=('awwan')
 
 source=(
 	"${pkgname}::git+https://git.sr.ht/~shulhan/awwan"
-	"wui::git+https://git.sr.ht/~shulhan/wui"
+	"wui::git+https://git.sr.ht/~shulhan/pakakeh.ts"
 )
 ## For testing in local.
 #source=(
