@@ -71,7 +71,7 @@ func TestSession_generatePaths(t *testing.T) {
 	)
 
 	for _, c = range cases {
-		t.Logf(c.scriptPath)
+		t.Log(c.scriptPath)
 
 		scriptPath = filepath.Clean(c.scriptPath)
 		ses.ScriptDir = filepath.Dir(scriptPath)

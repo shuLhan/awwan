@@ -448,7 +448,7 @@ func TestAwwanLocal_withEncryption(t *testing.T) {
 	)
 
 	for _, c = range cases {
-		t.Logf(c.desc)
+		t.Log(c.desc)
 
 		req, err = NewExecRequest(CommandModeLocal, c.script, c.lineRange)
 		if err != nil {
