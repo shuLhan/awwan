@@ -6,4 +6,6 @@ systemctl enable org-awwan-tour.service
 
 chmod 0600 /etc/ssh/*_key
 chown -R awwan:awwan /home/awwan/
+chmod 0755 /home/awwan
 chown -R awwanssh:awwanssh /home/awwanssh/
+chmod 0755 /home/awwanssh

@@ -60,7 +60,9 @@ build-awwan-test:
 	@echo ">>> Building container awwan-test ..."
 	sudo mkosi --directory=_ops/awwan-test/ --force build
 
-	sudo machinectl --force import-tar /data/awwan/awwan-test.tar
+	sudo importctl -m import-tar --force /data/awwan/awwan-test.tar
+	sudo mkdir -p /etc/systemd/nspawn
+	sudo cp /data/awwan/awwan-tour.nspawn /etc/systemd/nspawn/
 	sudo machinectl start awwan-test
 
 	## Once the container is imported, we can enable and run them any
@@ -176,7 +178,9 @@ build-tour-local: build-tour
 	mkdir -p /data/awwan/
 	ln -sTf $$(pwd) /data/awwan/src
 
-	sudo machinectl --force import-tar /data/awwan/awwan-tour.tar
+	sudo importctl -m import-tar --force /data/awwan/awwan-tour.tar
+	sudo mkdir -p /etc/systemd/nspawn
+	sudo cp /data/awwan/awwan-tour.nspawn /etc/systemd/nspawn/
 	sudo machinectl start awwan-tour
 
 #}}}
