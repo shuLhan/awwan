@@ -59,7 +59,7 @@ func Build() (err error) {
 		return fmt.Errorf(`%s: %w`, logp, err)
 	}
 
-	err = ciigo.Convert(&DocConvertOpts)
+	err = ciigo.Convert(DocConvertOpts)
 	if err != nil {
 		return fmt.Errorf(`%s: %w`, logp, err)
 	}
@@ -94,7 +94,7 @@ func Watch() {
 		err       error
 	)
 
-	err = ciigo.Convert(&DocConvertOpts)
+	err = ciigo.Convert(DocConvertOpts)
 	if err != nil {
 		mlog.Fatalf(`%s: %s`, logp, err)
 	}
@@ -197,7 +197,7 @@ func Watch() {
 				embedCount++
 
 			case strings.HasSuffix(ns.Node.SysPath, DocConvertOpts.HTMLTemplate):
-				err = ciigo.Convert(&DocConvertOpts)
+				err = ciigo.Convert(DocConvertOpts)
 				if err != nil {
 					mlog.Errf(`%s: %s`, logp, err)
 				}
@@ -252,7 +252,7 @@ func goEmbed() (err error) {
 		return fmt.Errorf(`%s: %w`, logp, err)
 	}
 
-	err = ciigo.GoEmbed(&docEmbedOpts)
+	err = ciigo.GoEmbed(docEmbedOpts)
 	if err != nil {
 		mlog.Fatalf(`%s: %s`, logp, err)
 	}

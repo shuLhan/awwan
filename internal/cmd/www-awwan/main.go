@@ -67,7 +67,7 @@ func main() {
 
 	log.Printf(`--- Starting %s at http://%s with dev=%v`, binName, *flagAddress, *flagDev)
 
-	var optsServe = &ciigo.ServeOptions{
+	var optsServe = ciigo.ServeOptions{
 		Mfs:            MemfsWww,
 		Address:        *flagAddress,
 		ConvertOptions: internal.DocConvertOpts,
