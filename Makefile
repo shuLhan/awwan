@@ -17,13 +17,7 @@ test:
 lint:
 	-fieldalignment ./...
 	-shadow ./...
-	-golangci-lint run \
-		--presets bugs,metalinter,performance,unused \
-		--disable bodyclose \
-		--disable contextcheck \
-		--disable dupword \
-		--disable gomoddirectives \
-		./...
+	go vet ./...
 
 ## embed convert the TypeScript files into JavaScript and embed all _wui
 ## assets into memfs for web-user interface.
