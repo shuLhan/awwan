@@ -7,12 +7,15 @@ package internal
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
 	"git.sr.ht/~shulhan/ciigo"
 	"git.sr.ht/~shulhan/pakakeh.go/lib/memfs"
 	"git.sr.ht/~shulhan/pakakeh.go/lib/mlog"
+	"git.sr.ht/~shulhan/pakakeh.go/lib/watchfs/v2"
 	"github.com/evanw/esbuild/pkg/api"
 	esapi "github.com/evanw/esbuild/pkg/api"
 )
@@ -120,24 +123,24 @@ func Watch() {
 		}
 	}
 
-	var (
-		dw = memfs.DirWatcher{
-			Options: memfs.Options{
-				Root: MemfsWui.Opts.Root,
-				Includes: []string{
-					`.*\.(adoc|html|js|md|ts)$`,
-				},
-				Excludes: []string{
-					`node_modules`,
-				},
-			},
-			Delay: 200 * time.Millisecond,
-		}
-	)
+	var dwOpts = watchfs.DirWatcherOptions{
+		Root: MemfsWui.Opts.Root,
+		Includes: []string{
+			`.*\.(adoc|html|js|md|ts)$`,
+		},
+		Excludes: []string{
+			`node_modules`,
+		},
+		FileWatcherOptions: watchfs.FileWatcherOptions{
+			File:     filepath.Join(MemfsWui.Opts.Root, `.rescan`),
+			Interval: 200 * time.Millisecond,
+		},
+	}
+	var dw *watchfs.DirWatcher
 
-	err = dw.Start()
+	dw, err = watchfs.WatchDir(dwOpts)
 	if err != nil {
-		mlog.Fatalf(`%s: %s`, logp, err)
+		mlog.Fatalf(`%s: %w`, logp, err)
 	}
 
 	defer dw.Stop()
@@ -145,63 +148,67 @@ func Watch() {
 	var (
 		buildTicker = time.NewTicker(200 * time.Millisecond)
 
-		ns         memfs.NodeState
 		node       *memfs.Node
 		fmarkup    *ciigo.FileMarkup
+		listfi     []os.FileInfo
 		tsCount    int
 		embedCount int
 	)
 
 	for {
 		select {
-		case ns = <-dw.C:
-			mlog.Outf(`%s: update on Path=%q SysPath=%q`, logp, ns.Node.Path, ns.Node.SysPath)
+		case listfi = <-dw.C:
+			for _, fi := range listfi {
+				var name = fi.Name()
+				mlog.Outf(`%s: update on %q`, logp, name)
 
-			switch {
-			case strings.HasSuffix(ns.Node.Path, `.adoc`),
-				strings.HasSuffix(ns.Node.Path, `.md`):
+				switch {
+				case strings.HasSuffix(name, `.adoc`),
+					strings.HasSuffix(name, `.md`):
 
-				fmarkup, err = ciigo.NewFileMarkup(ns.Node.SysPath, nil)
-				if err != nil {
-					mlog.Errf(`%s %q: %s`, logp, ns.Node.SysPath, err)
-					continue
+					var pathMarkup = filepath.Join(MemfsWui.Opts.Root, name)
+					fmarkup, err = ciigo.NewFileMarkup(pathMarkup, nil)
+					if err != nil {
+						mlog.Errf(`%s %q: %s`, logp, name, err)
+						continue
+					}
+
+					err = ciigoConv.ToHTMLFile(fmarkup)
+					if err != nil {
+						mlog.Errf(`%s %q: %s`, logp, name, err)
+						continue
+					}
+
+					embedCount++
+
+				case strings.HasSuffix(name, `.ts`),
+					strings.HasSuffix(name, `tsconfig.json`):
+
+					tsCount++
+
+				case strings.HasSuffix(name, `.css`),
+					strings.HasSuffix(name, `.js`),
+					strings.HasSuffix(name, `.html`):
+
+					node, err = MemfsWui.Get(name)
+					if err != nil {
+						mlog.Errf(`%s %q: %s`, logp, name, err)
+						continue
+					}
+					err = node.Update(node, 0)
+					if err != nil {
+						mlog.Errf(`%s %q: %s`, logp, name, err)
+						continue
+					}
+					embedCount++
+
+				case strings.HasSuffix(name, DocConvertOpts.HTMLTemplate):
+					err = ciigo.Convert(DocConvertOpts)
+					if err != nil {
+						mlog.Errf(`%s: %s`, logp, err)
+					}
+					embedCount++
 				}
-
-				err = ciigoConv.ToHTMLFile(fmarkup)
-				if err != nil {
-					mlog.Errf(`%s %q: %s`, logp, ns.Node.Path, err)
-					continue
-				}
-
-				embedCount++
-
-			case strings.HasSuffix(ns.Node.Path, `.ts`),
-				strings.HasSuffix(ns.Node.Path, `tsconfig.json`):
-
-				tsCount++
-
-			case strings.HasSuffix(ns.Node.Path, `.css`),
-				strings.HasSuffix(ns.Node.Path, `.js`),
-				strings.HasSuffix(ns.Node.Path, `.html`):
-
-				node, err = MemfsWui.Get(ns.Node.Path)
-				if err != nil {
-					mlog.Errf(`%s %q: %s`, logp, ns.Node.Path, err)
-					continue
-				}
-				err = node.Update(&ns.Node, 0)
-				if err != nil {
-					mlog.Errf(`%s %q: %s`, logp, ns.Node.Path, err)
-					continue
-				}
-				embedCount++
-
-			case strings.HasSuffix(ns.Node.SysPath, DocConvertOpts.HTMLTemplate):
-				err = ciigo.Convert(DocConvertOpts)
-				if err != nil {
-					mlog.Errf(`%s: %s`, logp, err)
-				}
-				embedCount++
 			}
 
 		case <-buildTicker.C:
