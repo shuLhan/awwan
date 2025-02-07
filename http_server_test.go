@@ -55,10 +55,7 @@ func TestHttpServer_Decrypt(t *testing.T) {
 	}
 
 	var endpointDecrypt = &libhttp.Endpoint{
-		Method:       libhttp.RequestMethodPost,
-		Path:         pathAwwanAPIDecrypt,
-		RequestType:  libhttp.RequestTypeJSON,
-		ResponseType: libhttp.ResponseTypeJSON,
+		Path: pathAwwanAPIDecrypt,
 	}
 
 	var cases = []testCase{{
@@ -142,10 +139,7 @@ func TestHttpServer_Encrypt(t *testing.T) {
 	}
 
 	var endpointEncrypt = &libhttp.Endpoint{
-		Method:       libhttp.RequestMethodPost,
-		Path:         pathAwwanAPIEncrypt,
-		RequestType:  libhttp.RequestTypeJSON,
-		ResponseType: libhttp.ResponseTypeJSON,
+		Path: pathAwwanAPIEncrypt,
 	}
 
 	var cases = []testCase{{
