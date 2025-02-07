@@ -1,18 +1,26 @@
-#!/bin/sh
+#!/bin/bash
 
 set -x
 
 ## User testing sudo with password prompt.
-## The UID of user in container must equal with UID in host, for
-## better compatibility.
 ## The password is "awwan".
+
 useradd --create-home --user-group \
-	--uid $MKOSI_UID \
 	--password '$2a$10$XVhjfOB4Un5DJE4TQEBPrOHfBVGVWP4iA3ElUMzcbJ7jdc2zZPgZ2' \
 	awwan
 
+mkdir -p /home/awwan/src
+mkdir -p /home/awwan/.cache/go-build
+mkdir -p /home/awwan/go/pkg/mod
+
+chown -R awwan:awwan /home/awwan/
+chmod 0755 /home/awwan
+
 ## User testing with ssh.
+
 useradd --create-home --user-group --groups wheel \
-	--uid $((MKOSI_UID+1)) \
 	--password '$2a$10$XVhjfOB4Un5DJE4TQEBPrOHfBVGVWP4iA3ElUMzcbJ7jdc2zZPgZ2' \
 	awwanssh
+
+chown -R awwanssh:awwanssh /home/awwanssh/
+chmod 0755 /home/awwanssh

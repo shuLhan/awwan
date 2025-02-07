@@ -1,9 +1,6 @@
-#!/bin/sh
+#!/bin/bash
 
 systemctl enable sshd.service
 
+## Fix sshd service not running due to permission too open.
 chmod 0600 /etc/ssh/*_key
-chown -R awwan:awwan /home/awwan/
-chmod 0755 /home/awwan
-chown -R awwanssh:awwanssh /home/awwanssh/
-chmod 0755 /home/awwanssh

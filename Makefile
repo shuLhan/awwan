@@ -61,7 +61,7 @@ build-awwan-test:
 
 	sudo importctl -m import-tar --force /data/awwan/awwan-test.tar
 	sudo mkdir -p /etc/systemd/nspawn
-	sudo cp /data/awwan/awwan-tour.nspawn /etc/systemd/nspawn/
+	sudo cp _ops/awwan-test/mkosi.nspawn /etc/systemd/nspawn/awwan-test.nspawn
 	sudo machinectl start awwan-test
 
 	## Once the container is imported, we can enable and run them any
