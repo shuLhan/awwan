@@ -6,6 +6,28 @@
 
 This page document changes on each release.
 
+[#v0_12_3]
+== awwan v0.12.3 (2025-02-08)
+
+This release mostly chores, updating the dependencies, linters, and fix on
+integration testing with mkosi and Arch Linux.
+
+[CHORE]
+The default linters now "go vet" and internal/cmd/gocheck.
+The gocheck is collection of static Analyzers that are not included in "go
+vet" from golang.org/x/tools.
+
+[CHORE]
+The replace directive on esbuild and golang.org/x/crypt in go.mod has been
+removed.
+Maintaining fork is not easy and take a lot of time.
+As we seen in crypto fork, we are 10 minor versions behind upstream.
+So now we are back to using upstream.
+
+[CHORE]
+The integration tests using mkosi and Arch Linux has been fixed and updated.
+
+
 [#v0_12_2]
 == awwan v0.12.2 (2024-09-08)
 
