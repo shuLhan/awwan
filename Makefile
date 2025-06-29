@@ -157,6 +157,12 @@ release-sync-local:
 .PHONY: release-tip-local
 release-tip-local: embed build-all-amd64 build-all-arm64 release-sync-local
 
+
+.PHONY: webhook.deploy
+webhook.deploy: build-www
+	sudo rsync --progress ./www-awwan /data/app/bin/
+
+
 #}}}
 #{{{ Tasks for tour.awwan.org.
 
