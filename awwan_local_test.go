@@ -313,6 +313,12 @@ func TestAwwanLocal_Put(t *testing.T) {
 		lineRange: `12`,
 		fileDest:  filepath.Join(baseDir, `tmp`, `put_with_owner.txt`),
 		expError:  `Local: Copy: chown audio:audio: exit status 1`,
+	}, {
+		desc:       `With $noparse`,
+		lineRange:  `18`,
+		fileDest:   filepath.Join(baseDir, `tmp`, `plain_noparse.txt`),
+		expContent: string(tdata.Output[`tmp/plain_noparse.txt`]),
+		expMode:    0600,
 	}}
 
 	var (

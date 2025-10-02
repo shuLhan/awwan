@@ -145,6 +145,41 @@ func TestParseStatement(t *testing.T) {
 			args: []string{`a`},
 			raw:  []byte(` echo "a"`),
 		},
+	}, {
+		raw: []byte(`#put:user:group+0700$noparse src dst`),
+		exp: &Statement{
+			kind:       statementKindPut,
+			owner:      `user:group`,
+			mode:       0700,
+			args:       []string{`src`, `dst`},
+			raw:        []byte(`src dst`),
+			optNoparse: true,
+		},
+	}, {
+		raw: []byte(`#put:+0700$noparse src dst`),
+		exp: &Statement{
+			kind:       statementKindPut,
+			mode:       0700,
+			args:       []string{`src`, `dst`},
+			raw:        []byte(`src dst`),
+			optNoparse: true,
+		},
+	}, {
+		raw: []byte(`#put:$noparse src dst`),
+		exp: &Statement{
+			kind:       statementKindPut,
+			args:       []string{`src`, `dst`},
+			raw:        []byte(`src dst`),
+			optNoparse: true,
+		},
+	}, {
+		raw: []byte(`#put:$unknown$noparse src dst`),
+		exp: &Statement{
+			kind:       statementKindPut,
+			args:       []string{`src`, `dst`},
+			raw:        []byte(`src dst`),
+			optNoparse: true,
+		},
 	}}
 
 	var (

@@ -14,3 +14,5 @@ sudo chmod 0644 /etc/plain.txt
 #put!+0516 {{.ScriptDir}}/plain.txt /etc/sudoput_with_mode.txt
 
 #put!awwan:bin+0644 {{.ScriptDir}}/plain.txt /etc/sudoput_with_owner.txt
+
+#put:$noparse {{.ScriptDir}}/plain.txt {{.ScriptDir}}/tmp/plain_noparse.txt

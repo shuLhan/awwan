@@ -4,6 +4,10 @@ Test input and output for "#put".
 The host name is awwanssh.test.
 
 
+<<< plain_noparse.txt
+The host name is {{.Val "host::name"}}.
+
+
 <<< WithoutPermission:error
 Play: Put: Put: permission denied
 

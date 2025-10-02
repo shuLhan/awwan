@@ -2,6 +2,10 @@
 The host name is encrypt.
 
 
+<<< tmp/plain_noparse.txt
+The host name is {{.Val "host::name"}}.
+
+
 <<< missing_val_encrypted
 Local: Copy: generateFileInput: template: missing_val_encrypted.txt:2:25: executing "missing_val_encrypted.txt" at <.Val>: error calling Val: "secret::pass" is empty
 

@@ -221,6 +221,12 @@ func TestAwwan_Play_Put(t *testing.T) {
 		expContent: string(tdata.Output[`plain.txt`]),
 		expMode:    0666,
 		expError:   string(tdata.Output[`WithOwner:error`]),
+	}, {
+		desc:       `With $noparse`,
+		lineRange:  `20`,
+		fileDest:   `/home/awwanssh/put_noparse.txt`,
+		expContent: string(tdata.Output[`plain_noparse.txt`]),
+		expMode:    0666,
 	}}
 
 	var (

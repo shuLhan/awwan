@@ -125,7 +125,7 @@ func (ses *Session) Copy(req *ExecRequest, stmt *Statement) (err error) {
 	case statementKindGet, statementKindSudoGet:
 		// NO-OP.
 	case statementKindPut, statementKindSudoPut:
-		src, isVault, err = ses.generateFileInput(src)
+		src, isVault, err = ses.generateFileInput(stmt, src)
 		if err != nil {
 			return fmt.Errorf(`%s: %w`, logp, err)
 		}
@@ -197,7 +197,7 @@ func (ses *Session) Put(ctx context.Context, req *ExecRequest, stmt *Statement) 
 		isVault bool
 	)
 
-	src, isVault, err = ses.generateFileInput(src)
+	src, isVault, err = ses.generateFileInput(stmt, src)
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
@@ -241,7 +241,7 @@ func (ses *Session) SudoCopy(ctx context.Context, req *ExecRequest, stmt *Statem
 	case statementKindGet, statementKindSudoGet:
 		// NO-OP.
 	case statementKindPut, statementKindSudoPut:
-		src, isVault, err = ses.generateFileInput(src)
+		src, isVault, err = ses.generateFileInput(stmt, src)
 		if err != nil {
 			return fmt.Errorf(`%s: %w`, logp, err)
 		}
@@ -338,7 +338,7 @@ func (ses *Session) SudoPut(ctx context.Context, req *ExecRequest, stmt *Stateme
 		isVault bool
 	)
 
-	src, isVault, err = ses.generateFileInput(src)
+	src, isVault, err = ses.generateFileInput(stmt, src)
 	if err != nil {
 		return fmt.Errorf("%s: %w", logp, err)
 	}
@@ -544,30 +544,27 @@ func (ses *Session) executeScriptOnRemote(ctx context.Context, req *ExecRequest,
 //
 // For example, if the input file path is "{{.BaseDir}}/a/b/script" then the
 // output file path would be "{{.BaseDir}}/.cache/a/b/script".
-func (ses *Session) generateFileInput(in string) (out string, isVault bool, err error) {
+func (ses *Session) generateFileInput(stmt *Statement, in string) (out string, isVault bool, err error) {
 	// Check if the file is binary first, since binary file will not get
 	// encrypted.
 	if !strings.HasSuffix(in, defEncryptExt) && libos.IsBinary(in) {
 		return in, false, nil
 	}
 
-	var (
-		logp         = `generateFileInput`
-		relPathInput = relativePath(ses.BaseDir, in)
+	var logp = `generateFileInput`
+	var newContent []byte
 
-		contentInput []byte
-	)
-
-	contentInput, isVault, err = ses.loadFileInput(in)
+	newContent, isVault, err = ses.loadFileInput(in)
 	if err != nil {
+		var relPathInput = relativePath(ses.BaseDir, in)
 		return ``, false, fmt.Errorf(`%s %q: %w`, logp, relPathInput, err)
 	}
 
-	var contentOut []byte
-
-	contentOut, err = ses.render(in, contentInput)
-	if err != nil {
-		return ``, false, fmt.Errorf(`%s: %w`, logp, err)
+	if !stmt.optNoparse {
+		newContent, err = ses.render(in, newContent)
+		if err != nil {
+			return ``, false, fmt.Errorf(`%s: %w`, logp, err)
+		}
 	}
 
 	var (
@@ -582,7 +579,7 @@ func (ses *Session) generateFileInput(in string) (out string, isVault bool, err 
 
 	out = filepath.Join(outDir, base)
 
-	err = os.WriteFile(out, contentOut, 0600)
+	err = os.WriteFile(out, newContent, 0600)
 	if err != nil {
 		return ``, false, fmt.Errorf(`%s: %s: %w`, logp, out, err)
 	}

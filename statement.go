@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 
+	libascii "git.sr.ht/~shulhan/pakakeh.go/lib/ascii"
 	libexec "git.sr.ht/~shulhan/pakakeh.go/lib/os/exec"
 )
 
@@ -53,6 +54,10 @@ type Statement struct {
 	raw  []byte
 	mode fs.FileMode
 	kind int
+
+	// Option "$noparse" copy the file directly without parsing for
+	// session variables inside the file.
+	optNoparse bool
 }
 
 // ParseStatement create and initialize new Statement from raw line.
@@ -180,7 +185,7 @@ func parseStatementGetPut(kind int, raw []byte) (stmt *Statement, err error) {
 	}
 
 	if raw[0] != ' ' && raw[0] != '\t' {
-		raw, err = stmt.parseOwnerMode(raw)
+		raw, err = stmt.parseGetPutOptions(raw)
 		if err != nil {
 			return nil, err
 		}
@@ -203,48 +208,71 @@ func parseStatementGetPut(kind int, raw []byte) (stmt *Statement, err error) {
 	return stmt, nil
 }
 
-// parseOwnerMode parse the owner and optionally the file mode for
+// parseGetPutOptions parse the owner and optionally the file mode for
 // destination file.
 // The owner and mode has the following syntax,
 //
-//	[ USER [ ":" GROUP ]][ "+" MODE ]
+//	[ USER [ ":" GROUP ]][ "+" MODE ][ "$" OPT ]
 //
 // The USER and/or GROUP is optional, its accept the value as in "chown".
 // The MODE also optional, its value must be an octal.
-func (stmt *Statement) parseOwnerMode(in []byte) (out []byte, err error) {
-	var (
-		sepSpace = " \t"
-		sepMode  = "+"
-
-		tmp []byte
-		idx int
-	)
-
-	idx = bytes.IndexAny(in, sepSpace)
+// The OPT also optional, its affect how the file processed before copying.
+func (stmt *Statement) parseGetPutOptions(in []byte) (out []byte, err error) {
+	var idx = bytes.IndexAny(in, " \t")
 	if idx < 0 {
 		return nil, nil
 	}
 
-	tmp = in[:idx]
+	var tmp = in[:idx]
 	out = in[idx+1:]
 
-	idx = bytes.IndexAny(tmp, sepMode)
-	if idx < 0 {
-		stmt.owner = string(tmp)
-	} else {
-		stmt.owner = string(tmp[:idx])
-
-		var (
-			modeString = string(tmp[idx+1:])
-			mode       uint64
-		)
-
+	if libascii.IsAlpha(tmp[0]) {
+		idx = bytes.IndexAny(tmp, "+$")
+		if idx < 0 {
+			stmt.owner = string(tmp)
+			tmp = nil
+		} else {
+			stmt.owner = string(tmp[:idx])
+			tmp = tmp[idx:]
+		}
+	}
+	if len(tmp) == 0 {
+		return out, nil
+	}
+	if tmp[0] == '+' {
+		tmp = tmp[1:]
+		idx = bytes.IndexAny(tmp, "$")
+		var modeString string
+		if idx < 0 {
+			modeString = string(tmp)
+			tmp = nil
+		} else {
+			modeString = string(tmp[:idx])
+			tmp = tmp[idx:]
+		}
+		var mode uint64
 		mode, err = strconv.ParseUint(modeString, 8, 32)
 		if err != nil {
 			return nil, err
 		}
-
 		stmt.mode = fs.FileMode(mode)
+	}
+	var opt string
+	for len(tmp) > 0 {
+		tmp = tmp[1:]
+		idx = bytes.IndexAny(tmp, "$")
+		if idx < 0 {
+			opt = string(tmp)
+			tmp = nil
+		} else {
+			opt = string(tmp[:idx])
+			tmp = tmp[idx:]
+		}
+		opt = strings.ToLower(opt)
+		switch opt {
+		case "noparse":
+			stmt.optNoparse = true
+		}
 	}
 
 	return out, nil

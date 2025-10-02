@@ -359,7 +359,7 @@ The magic word "#put" copy file from your local to remote server.
 Syntax,
 
 ----
-  PUT = "#put" (":"/"!") [OWNER] ["+" PERM] SP LOCAL_PATH SP REMOTE_PATH
+  PUT = "#put" (":"/"!") [OWNER] ["+" PERM] *(OPT) SP LOCAL_PATH SP REMOTE_PATH
 
 OWNER = [ USER ] [ ":" GROUP ]
 
@@ -368,6 +368,8 @@ OWNER = [ USER ] [ ":" GROUP ]
 OCTAL = "0" ... "7"
 
    SP = " " / "\t"  ; Space characters.
+
+  OPT = "$noparse"
 ----
 
 For example,
@@ -414,6 +416,27 @@ $ sudo cp local/src remote/dst
 $ sudo chmod 0600 remote/dst
 $ sudo chown root:bin remote/dst
 ----
+
+The "#put" command have the following options,
+
+`$noparse`:: Skip parsing the input file.
++
+--
+The input file will be copied as is without parsing and replacing session
+variables inside the file.
+This is useful if the input file contains "{{}}" string.
+
+For example,
+----
+#put:$noparse src dst
+----
+If the content of "src" is
+
+        Hello {{.world}}
+
+then the "dst" file also has the same content.
+--
+
 
 === Magic word "#local"
 
