@@ -280,8 +280,9 @@ func initMemfsWui() (err error) {
 			`_wui/wui`,
 		},
 		Embed: memfs.EmbedOptions{
-			CommentHeader: "// SPDX-FileCopyrightText: 2021 M. Shulhan <ms@kilabit.info>\n" +
-				"// SPDX-License-Identifier: GPL-3.0-or-later\n",
+			CommentHeader: `// SPDX-License-Identifier: GPL-3.0-or-later
+// SPDX-FileCopyrightText: 2021 M. Shulhan <ms@kilabit.info>
+`,
 			PackageName: `internal`,
 			VarName:     `MemfsWui`,
 			GoFileName:  `internal/memfs_wui.go`,

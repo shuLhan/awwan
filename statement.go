@@ -52,8 +52,8 @@ type Statement struct {
 	cmd  string
 	args []string
 	raw  []byte
-	mode fs.FileMode
 	kind int
+	mode fs.FileMode
 
 	// Option "$noparse" copy the file directly without parsing for
 	// session variables inside the file.
