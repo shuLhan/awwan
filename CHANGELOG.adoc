@@ -6,6 +6,20 @@
 
 This page document changes on each release.
 
+[#v0_13_0]
+== awwan v0.13.0 (2025-12-27)
+
+[NEW FEATURES]
+Add option "$noparse" for magic "#put" command.
+The "$noparse" option allow copying file without reading and parsing
+the input file.
+
+[CHORES]
+Fix "reuse lint" warnings due to embedded SPDX annotation.
+
+Fix field alignment on struct Statement.
+
+
 [#v0_12_3]
 == awwan v0.12.3 (2025-02-08)
 

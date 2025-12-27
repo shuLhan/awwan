@@ -20,7 +20,7 @@ import (
 )
 
 // Version current version of this module (library and program).
-var Version = `0.12.3`
+var Version = `0.13.0`
 
 // osGetwd define the handler to get current working directory.
 //
