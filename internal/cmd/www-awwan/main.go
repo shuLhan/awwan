@@ -16,6 +16,7 @@ import (
 
 	"git.sr.ht/~shulhan/ciigo"
 	"git.sr.ht/~shulhan/pakakeh.go/lib/memfs"
+	"git.sr.ht/~shulhan/pakakeh.go/lib/systemd"
 
 	"git.sr.ht/~shulhan/awwan/internal"
 )
@@ -72,6 +73,22 @@ func main() {
 		Address:        *flagAddress,
 		ConvertOptions: internal.DocConvertOpts,
 		IsDevelopment:  *flagDev,
+	}
+
+	listeners, err := systemd.Listeners(true)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if len(listeners) > 1 {
+		log.Fatal(`too many listeners received for activation`)
+	}
+	if len(listeners) == 1 {
+		optsServe.Listener = listeners[0]
+		gotAddr := optsServe.Listener.Addr().String()
+		if gotAddr != optsServe.Address {
+			log.Fatalf(`invalid Listener address, got %s, want %s`,
+				gotAddr, optsServe.Address)
+		}
 	}
 
 	err = ciigo.Serve(optsServe)
