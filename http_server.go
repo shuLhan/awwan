@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"io/fs"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"path"
@@ -62,7 +63,7 @@ type httpServer struct {
 
 // newHTTPServer create and initialize HTTP server to serve awwan HTTP API
 // and web user interface.
-func newHTTPServer(aww *Awwan, address string) (httpd *httpServer, err error) {
+func newHTTPServer(aww *Awwan, listener net.Listener, address string) (httpd *httpServer, err error) {
 	var (
 		logp = `newHTTPServer`
 	)
@@ -92,8 +93,9 @@ func newHTTPServer(aww *Awwan, address string) (httpd *httpServer, err error) {
 	}
 
 	var serverOpts = libhttp.ServerOptions{
-		Memfs:   internal.MemfsWui,
-		Address: address,
+		Listener: listener,
+		Memfs:    internal.MemfsWui,
+		Address:  address,
 	}
 
 	httpd.Server, err = libhttp.NewServer(serverOpts)

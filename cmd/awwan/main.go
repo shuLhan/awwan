@@ -10,10 +10,12 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"net"
 	"os"
 	"strings"
 
 	"git.sr.ht/~shulhan/awwan"
+	"git.sr.ht/~shulhan/pakakeh.go/lib/systemd"
 )
 
 const (
@@ -254,7 +256,24 @@ func main() {
 	case awwan.CommandModePlay:
 		err = aww.Play(ctx, req)
 	case awwan.CommandModeServe:
-		err = aww.Serve(*serveAddress, *isDev)
+		var listeners []net.Listener
+		listeners, err = systemd.Listeners(true)
+		if err != nil {
+			log.Fatal(err)
+		}
+		if len(listeners) > 1 {
+			log.Fatal(`too many listeners received for activation`)
+		}
+		var listener net.Listener
+		if len(listeners) == 1 {
+			listener = listeners[0]
+			gotAddr := listener.Addr().String()
+			if gotAddr != *serveAddress {
+				log.Fatalf(`invalid Listener address, got %s, want %s`,
+					gotAddr, *serveAddress)
+			}
+		}
+		err = aww.Serve(listener, *serveAddress, *isDev)
 	}
 	if err != nil {
 		log.Fatalf(`%s: %s`, logp, err)

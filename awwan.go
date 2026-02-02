@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -483,14 +484,14 @@ out:
 }
 
 // Serve start the web-user interface that serve awwan through HTTP.
-func (aww *Awwan) Serve(address string, isDev bool) (err error) {
+func (aww *Awwan) Serve(listener net.Listener, address string, isDev bool) (err error) {
 	var logp = `Serve`
 
 	if isDev {
 		go internal.Watch()
 	}
 
-	aww.httpd, err = newHTTPServer(aww, address)
+	aww.httpd, err = newHTTPServer(aww, listener, address)
 	if err != nil {
 		return fmt.Errorf(`%s: %w`, logp, err)
 	}

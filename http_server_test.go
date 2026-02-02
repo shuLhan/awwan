@@ -49,7 +49,7 @@ func TestHttpServer_Decrypt(t *testing.T) {
 
 	var httpd *httpServer
 
-	httpd, err = newHTTPServer(aww, ``)
+	httpd, err = newHTTPServer(aww, nil, ``)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -133,7 +133,7 @@ func TestHttpServer_Encrypt(t *testing.T) {
 
 	var httpd *httpServer
 
-	httpd, err = newHTTPServer(aww, ``)
+	httpd, err = newHTTPServer(aww, nil, ``)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -217,7 +217,7 @@ func TestHttpServer_Execute(t *testing.T) {
 	)
 
 	go func() {
-		err = aww.Serve(address, isDev)
+		err = aww.Serve(nil, address, isDev)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -348,7 +348,7 @@ func TestHttpServer_ExecuteCancel(t *testing.T) {
 	)
 
 	go func() {
-		err = aww.Serve(address, isDev)
+		err = aww.Serve(nil, address, isDev)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -497,7 +497,7 @@ func TestHttpServer_FSGet(t *testing.T) {
 
 	var httpd *httpServer
 
-	httpd, err = newHTTPServer(aww, ``)
+	httpd, err = newHTTPServer(aww, nil, ``)
 	if err != nil {
 		t.Fatal(err)
 	}
