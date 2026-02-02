@@ -64,7 +64,7 @@ The manual installation require,
 
 * https://git-scm.com/[Git SCM^] version 2.42 or greater,
 * https://go.dev/dl[Go tools^] version 1.21 or greater, and
-* https://www.gnu.org/software/make[GNU make^] version 4.4.1 or greater.
+* https://savannah.gnu.org/projects/make[GNU make^] version 4.4.1 or greater.
 
 One can build the binary using Go tools directly,
 
