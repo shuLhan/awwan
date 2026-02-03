@@ -173,7 +173,7 @@ webhook.deploy: build-www
 ## Build the tour.awwan.org container in local.
 
 .PHONY: build-tour
-build-tour:
+build-tour: build
 	@echo ">>> Building container ..."
 	sudo mkosi --directory=_ops/awwan-tour --force build
 
@@ -189,7 +189,6 @@ build-tour-local: build-tour
 
 	sudo importctl -m import-tar --force /data/awwan/awwan-tour.tar
 	sudo mkdir -p /etc/systemd/nspawn
-	sudo cp /data/awwan/awwan-tour.nspawn /etc/systemd/nspawn/
 	sudo machinectl start awwan-tour
 
 #}}}
