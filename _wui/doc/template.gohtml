@@ -1,52 +1,69 @@
 <!DOCTYPE html>
 <html>
-
-<head>
+  <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#375EAB" />
     <title>{{.Title}}</title>
-    <link rel="stylesheet" type="text/css" media="all" href="index.css" />
-    <link rel="stylesheet" type="text/css" media="all" href="//storage.googleapis.com/umum.kilabit.info/assets/fonts/go/stylesheet.css" />
-</head>
+{{- if ne .EmbeddedCSS ""}}
+    <style>
+      {{.EmbeddedCSS}}
+    </style>
+{{- end }}
+    <style>
+      .topbar > .awwan-logo {
+        background-color: unset;
+      }
+      .awwan-logo {
+        width: 20px;
+        margin: 0px;
+      }
+    </style>
+{{- range.Styles }}
+    <link rel="stylesheet" href="{{.}}" />
+{{- end }}
+    <link
+      rel="stylesheet"
+      type="text/css"
+      media="all"
+      href="//storage.googleapis.com/umum.kilabit.info/assets/fonts/go/stylesheet.css"
+    />
+  </head>
 
-<body>
-    <img class="background" src="//storage.googleapis.com/umum.kilabit.info/assets/images/maple-leaf-transparent-540.jpg" />
-
+  <body>
     <div class="topbar">
-        <div class="topbar-left">
-            <div>
-                <a href="/">awwan</a>
-            </div>
-        </div>
+      <a class="item title" href="/">awwan</a>
 
-        <div class="topbar-right">
-            <img class="awwan-logo" src="/favicon.ico"></img>
-            <a href="https://tour.awwan.org"> Tour </a>
-            <img class="awwan-logo" src="/favicon.ico"></img>
-            <a href="https://git.sr.ht/~shulhan/awwan" target="_blank"> Repository </a>
-            <img class="awwan-logo" src="/favicon.ico"></img>
-            <a href="https://lists.sr.ht/~shulhan/awwan" target="_blank"> Mailing list </a>
-            <img class="awwan-logo" src="/favicon.ico"></img>
-            <a href="https://todo.sr.ht/~shulhan/awwan" target="_blank"> Issues </a>
-        </div>
+      <img class="item awwan-logo" src="/favicon.ico" />
+      <a class="item" href="https://tour.awwan.org"> Tour </a>
+      <img class="item awwan-logo" src="/favicon.ico" />
+      <a class="item" href="https://git.sr.ht/~shulhan/awwan" target="_blank">
+        Repository
+      </a>
+      <img class="item awwan-logo" src="/favicon.ico" />
+      <a class="item" href="https://lists.sr.ht/~shulhan/awwan" target="_blank">
+        Mailing list
+      </a>
+      <img class="item awwan-logo" src="/favicon.ico" />
+      <a class="item" href="https://todo.sr.ht/~shulhan/awwan" target="_blank">
+        Issues
+      </a>
     </div>
 
     <div class="page">
-        <div class="container">{{.Body}}</div>
-        <!-- .container -->
+      <div class="container">{{.Body}}</div>
+      <!-- .container -->
     </div>
 
     <div class="footer">
-        <div>
-            Copyright 2023, Shulhan &lt;ms@kilabit.info&gt;. All rights
-            reserved.
-        </div>
-        <div>
-            Powered by
-            <a href="https://sr.ht/~shulhan/ciigo" target="_blank">ciigo</a>
-        </div>
+      <div>
+        Copyright 2023, Shulhan &lt;ms&#64;kilabit.info&gt;. All rights
+        reserved.
+      </div>
+      <div>
+        Powered by
+        <a href="https://sr.ht/~shulhan/ciigo" target="_blank">ciigo</a>
+      </div>
     </div>
-</body>
-
+  </body>
 </html>
