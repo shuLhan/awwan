@@ -853,11 +853,14 @@ func (httpd *httpServer) ExecuteTail(sseconn *libhttp.SSEConn) {
 		evid int64
 	)
 
+	execRes.mtxOutput.Lock()
 	if len(execRes.EndAt) != 0 {
 		// The execution has been completed.
 		_ = sseconn.WriteEvent(`end`, execRes.EndAt, nil)
+		execRes.mtxOutput.Unlock()
 		goto out
 	}
+	execRes.mtxOutput.Unlock()
 
 	// And wait for the rest...
 

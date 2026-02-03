@@ -1,6 +1,8 @@
-## SPDX-FileCopyrightText: 2019 M. Shulhan <ms@kilabit.info>
 ## SPDX-License-Identifier: GPL-3.0-or-later
+## SPDX-FileCopyrightText: 2019 M. Shulhan <ms@kilabit.info>
 
+COVER_HTML=cover.html
+COVER_OUT=cover.txt
 LD_FLAGS=-s -w
 VERSION=$(shell git describe --long | sed 's/\([^-]*-g\)/r\1/;s/-/./g')
 
@@ -8,10 +10,10 @@ VERSION=$(shell git describe --long | sed 's/\([^-]*-g\)/r\1/;s/-/./g')
 all: test lint
 
 .PHONY: test
+test: CGO_ENABLED=1
 test:
-	go test -cover ./... -test.gocoverdir=_coverage
-	go tool covdata textfmt -i=_coverage -o cover.txt
-	go tool cover -html=cover.txt -o cover.html
+	go test -failfast -timeout=2m -race -coverprofile=$(COVER_OUT) ./...
+	go tool cover -html=$(COVER_OUT) -o $(COVER_HTML)
 
 .PHONY: lint
 lint:
@@ -74,15 +76,17 @@ test-integration:
 		/bin/sh -c "cd src; ./awwan.test"
 
 .PHONY: test-all
+test-all: CGO_ENABLED=1
 test-all:
 	rm -f _coverage/*
-	go test -cover ./... -test.gocoverdir=_coverage
+	go test -failfast -timeout=2m -race -coverprofile=$(COVER_OUT) ./...
 	machinectl shell awwan@awwan-test \
 		/bin/sh -c "cd src; \
-		go test -cover -tags=integration ./... -test.gocoverdir=_coverage"
-	go tool covdata textfmt -i=_coverage -o cover.txt
-	go tool cover -html=cover.txt -o cover.html
-	go tool covdata percent -i=_coverage
+		go test -failfast -timeout=2m -race \
+			-coverprofile=$(COVER_OUT) \
+			-tags=integration \
+			./...
+	go tool cover -html=$(COVER_OUT) -o $(COVER_HTML)
 
 #}}}
 #{{{ Tasks to test or deploy awwan.org website.

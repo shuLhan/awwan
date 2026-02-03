@@ -89,6 +89,9 @@ func (execRes *ExecResponse) Write(out []byte) (n int, err error) {
 
 // end mark the execution completed, possibly with error.
 func (execRes *ExecResponse) end(execErr error) {
+	execRes.mtxOutput.Lock()
+	defer execRes.mtxOutput.Unlock()
+
 	var ev sseclient.Event
 
 	if execErr != nil {

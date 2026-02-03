@@ -11,12 +11,39 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"sync"
 	"testing"
 	"time"
 
+	"git.sr.ht/~shulhan/pakakeh.go/lib/mlog"
 	"git.sr.ht/~shulhan/pakakeh.go/lib/test"
 	"git.sr.ht/~shulhan/pakakeh.go/lib/test/mock"
 )
+
+type lockBuffer struct {
+	b bytes.Buffer
+	sync.Mutex
+}
+
+func (lb *lockBuffer) Reset() {
+	lb.Lock()
+	lb.b.Reset()
+	lb.Unlock()
+}
+
+func (lb *lockBuffer) String() (s string) {
+	lb.Lock()
+	s = lb.b.String()
+	lb.Unlock()
+	return s
+}
+
+func (lb *lockBuffer) Write(p []byte) (n int, err error) {
+	lb.Lock()
+	n, err = lb.b.Write(p)
+	lb.Unlock()
+	return n, err
+}
 
 func TestAwwanLocal(t *testing.T) {
 	type testCase struct {
@@ -70,10 +97,10 @@ func TestAwwanLocal(t *testing.T) {
 	var (
 		ctx = context.Background()
 
-		req  *ExecRequest
-		logw bytes.Buffer
-		c    testCase
+		req *ExecRequest
+		c   testCase
 	)
+	var logw lockBuffer
 	for _, c = range cases {
 		req, err = NewExecRequest(CommandModeLocal, c.scriptFile, c.lineRange)
 		if err != nil {
@@ -126,16 +153,11 @@ func TestAwwanLocalCancel(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	var logw bytes.Buffer
+	var logw lockBuffer
 
 	execReq.registerLogWriter(`output`, &logw)
 
-	var (
-		ctx         = context.Background()
-		ctxDoCancel context.CancelFunc
-	)
-
-	ctx, ctxDoCancel = context.WithCancel(ctx)
+	var ctx = context.Background()
 
 	go func() {
 		var err2 = aww.Local(ctx, execReq)
@@ -144,8 +166,6 @@ func TestAwwanLocalCancel(t *testing.T) {
 
 	// Wait for actual exec.CommandContext to run ...
 	time.Sleep(500 * time.Millisecond)
-
-	ctxDoCancel()
 
 	test.Assert(t, `stdout`, string(tdata.Output[`cancel`]), logw.String())
 }
@@ -392,7 +412,8 @@ func TestAwwanLocal_withEncryption(t *testing.T) {
 		lineRange string
 		pass      string
 		expError  string
-		expOutput string
+		expStderr string
+		expStdout string
 	}
 
 	var (
@@ -423,36 +444,42 @@ func TestAwwanLocal_withEncryption(t *testing.T) {
 		script:    filepath.Join(basedir, `local_encrypted.aww`),
 		lineRange: `3`,
 		pass:      "s3cret\r",
-		expOutput: string(tdata.Output[`echo_encrypted`]),
+		expStderr: string(tdata.Output[`echo_encrypted:stderr`]),
+		expStdout: string(tdata.Output[`echo_encrypted:stdout`]),
 	}, {
 		desc:      `With encrypted value, no passphrase`,
 		script:    filepath.Join(basedir, `local_encrypted.aww`),
 		lineRange: `3`,
-		expError:  string(tdata.Output[`echo_encrypted_no_pass`]),
-		expOutput: string(tdata.Output[`echo_encrypted_no_pass:output`]),
+		expError:  string(tdata.Output[`echo_encrypted_no_pass:error`]),
+		expStderr: string(tdata.Output[`echo_encrypted_no_pass:stderr`]),
+		expStdout: string(tdata.Output[`echo_encrypted_no_pass:stdout`]),
 	}, {
 		desc:      `With encrypted value, invalid passphrase`,
 		script:    filepath.Join(basedir, `local_encrypted.aww`),
 		lineRange: `3`,
 		pass:      "invalid\r",
-		expError:  string(tdata.Output[`echo_encrypted_invalid_pass`]),
-		expOutput: string(tdata.Output[`echo_encrypted_invalid_pass:output`]),
+		expError:  string(tdata.Output[`echo_encrypted_invalid_pass:error`]),
+		expStderr: string(tdata.Output[`echo_encrypted_invalid_pass:stderr`]),
+		expStdout: string(tdata.Output[`echo_encrypted_invalid_pass:stdout`]),
 	}, {
 		desc:      `With encrypted value in sub`,
 		script:    filepath.Join(basedir, `sub`, `local_encrypted.aww`),
 		lineRange: `1`,
 		pass:      "s3cret\r",
-		expOutput: string(tdata.Output[`sub_echo_encrypted`]),
+		expStderr: string(tdata.Output[`sub_echo_encrypted:stderr`]),
+		expStdout: string(tdata.Output[`sub_echo_encrypted:stdout`]),
 	}}
 
 	var (
 		ctx = context.Background()
 
-		c    testCase
-		logw bytes.Buffer
-		req  *ExecRequest
+		c   testCase
+		req *ExecRequest
 	)
-
+	var testerr bytes.Buffer
+	var namederr = mlog.NewNamedWriter(`testerr`, &testerr)
+	var testout bytes.Buffer
+	var namedout = mlog.NewNamedWriter(`testout`, &testout)
 	for _, c = range cases {
 		t.Log(c.desc)
 
@@ -461,8 +488,10 @@ func TestAwwanLocal_withEncryption(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		logw.Reset()
-		req.registerLogWriter(`output`, &logw)
+		testerr.Reset()
+		testout.Reset()
+		req.mlog.RegisterErrorWriter(namederr)
+		req.mlog.RegisterOutputWriter(namedout)
 
 		// Mock terminal to read passphrase for private key.
 		mockrw.BufRead.Reset()
@@ -474,6 +503,7 @@ func TestAwwanLocal_withEncryption(t *testing.T) {
 			test.Assert(t, `Local error`, c.expError, err.Error())
 		}
 
-		test.Assert(t, `output`, c.expOutput, logw.String())
+		test.Assert(t, c.desc+`: stderr`, c.expStderr, testerr.String())
+		test.Assert(t, c.desc+`: stdout`, c.expStdout, testout.String())
 	}
 }
