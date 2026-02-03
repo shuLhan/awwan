@@ -2,8 +2,8 @@ git.sr.ht/~shulhan/asciidoctor-go v0.7.3-0.20260124143117-f289b7f13a1d h1:rdDzlV
 git.sr.ht/~shulhan/asciidoctor-go v0.7.3-0.20260124143117-f289b7f13a1d/go.mod h1:cY9Ae1vu3OniC7z29twH1/PMJa7ZSSUqbK9QQM4/bhc=
 git.sr.ht/~shulhan/ciigo v0.15.4-0.20260202094016-5c30c1f5d043 h1:K0bx5Jfn06yzqL+X89obw4n9xG0bjbKdScfu7OEuAtE=
 git.sr.ht/~shulhan/ciigo v0.15.4-0.20260202094016-5c30c1f5d043/go.mod h1:uuFWUqsbwzeoTbluiwNcpoEah+rhHRf1rrqiMO+V86U=
-git.sr.ht/~shulhan/pakakeh.go v0.60.3-0.20260202092811-1e3bb9be8444 h1:mqX+Z2dyfChpFOgt6gV9R5AT3oQN3pw4gMbPQLGm1DI=
-git.sr.ht/~shulhan/pakakeh.go v0.60.3-0.20260202092811-1e3bb9be8444/go.mod h1:1MkKXbLZRHTcnheeSEbRpGztkym4Yxzh90ep+jCxbDc=
+git.sr.ht/~shulhan/pakakeh.go v0.60.3-0.20260203102223-128497e265ba h1:SPZsRrAxZq5rChiRMfE4eSSF+NxiiiIFjw5rxReNA1I=
+git.sr.ht/~shulhan/pakakeh.go v0.60.3-0.20260203102223-128497e265ba/go.mod h1:1MkKXbLZRHTcnheeSEbRpGztkym4Yxzh90ep+jCxbDc=
 github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
 github.com/evanw/esbuild v0.27.2 h1:3xBEws9y/JosfewXMM2qIyHAi+xRo8hVx475hVkJfNg=
 github.com/evanw/esbuild v0.27.2/go.mod h1:D2vIQZqV/vIf/VRHtViaUtViZmG7o+kKmlBfVQuRi48=

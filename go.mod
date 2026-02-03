@@ -7,7 +7,7 @@ go 1.24.0
 
 require (
 	git.sr.ht/~shulhan/ciigo v0.15.4-0.20260202094016-5c30c1f5d043
-	git.sr.ht/~shulhan/pakakeh.go v0.60.3-0.20260202092811-1e3bb9be8444
+	git.sr.ht/~shulhan/pakakeh.go v0.60.3-0.20260203102223-128497e265ba
 	github.com/evanw/esbuild v0.27.2
 )
 
