@@ -1,6 +1,6 @@
 "use strict";
 var awwan = (() => {
-  // _wui/wui/editor/editor.ts
+  // _wui/wui/editor/editor.js
   var WUI_EDITOR_CLASS = "wui_editor";
   var WUI_EDITOR_CLASS_LINE_NUMBER = "wui_editor_line_number";
   var WUI_EDITOR_CLASS_CONTENT = "wui_editor_content";
@@ -76,8 +76,9 @@ var awwan = (() => {
         this.elContent.setAttribute("contenteditable", "true");
         this.elContent.setAttribute("spellcheck", "false");
         this.elContent.addEventListener("paste", (ev) => {
+          var _a;
           ev.preventDefault();
-          let text = ev.clipboardData?.getData("text/plain") || "";
+          let text = ((_a = ev.clipboardData) === null || _a === void 0 ? void 0 : _a.getData("text/plain")) || "";
           if (!text) {
             console.error(`on paste: text is ${text}`);
             return;
@@ -203,7 +204,7 @@ var awwan = (() => {
     }
   };
 
-  // _wui/wui/vfs/vfs.ts
+  // _wui/wui/vfs/vfs.js
   var CLASS_VFS_PATH = "wui_vfs_path";
   var CLASS_VFS_LIST = "wui_vfs_list";
   var WuiVfs = class {
