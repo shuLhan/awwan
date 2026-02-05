@@ -30,15 +30,15 @@ event: begin
 data: "2023-11-26T15:21:00Z"
 
 event: message
-data: "----/--/-- --:--:-- === BEGIN: local /cancel.aww 1-\n"
+data: "      === BEGIN: local /cancel.aww 1-\n"
 id: 0
 
 event: message
-data: "----/--/-- --:--:-- -->   1: sleep 300\n"
+data: "      -->   1: sleep 300\n"
 id: 1
 
 event: message
-data: "----/--/-- --:--:-- !!! ExecLocal: signal: killed\n"
+data: "      !!! ExecLocal: signal: killed\n"
 id: 2
 
 event: message

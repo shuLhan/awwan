@@ -12,7 +12,8 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	defLogTimeFormat = `----/--/-- --:--:--`
+	defLogTimeFormat = ``
+	defLogPrefix = `      `
 
 	timeNow = func() time.Time {
 		return time.Date(2023, time.November, 26, 15, 21, 00, 00, time.UTC)

@@ -7,14 +7,14 @@ local
 
 
 <<< [stdout] local.aww 1-
-----/--/-- --:--:-- === BEGIN: local testdata/local/local.aww 1-
-----/--/-- --:--:-- -->   1: echo "hello"
-----/--/-- --:--:-- -->   3: #local: echo "nothing"
-----/--/-- --:--:-- -->   5: echo "local"
-----/--/-- --:--:-- === END: local testdata/local/local.aww 1-
+       === BEGIN: local testdata/local/local.aww 1-
+       -->   1: echo "hello"
+       -->   3: #local: echo "nothing"
+       -->   5: echo "local"
+       === END: local testdata/local/local.aww 1-
 
 <<< [stderr] local.aww 100-
 
 <<< [stdout] local.aww 100-
-----/--/-- --:--:-- === BEGIN: local testdata/local/local.aww 100-
-----/--/-- --:--:-- === END: local testdata/local/local.aww 100-
+       === BEGIN: local testdata/local/local.aww 100-
+       === END: local testdata/local/local.aww 100-

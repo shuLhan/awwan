@@ -16,6 +16,8 @@ import (
 // This is set as variable to make it easy overwriting it in testing.
 var defLogTimeFormat = `2006/01/02 15:04:05`
 
+var defLogPrefix = ``
+
 // ExecRequest request for executing local or remote script.
 // Each request define the Mode of execution, Script file to be executed,
 // and the lineRange -- list of line numbers to be executed.
@@ -84,7 +86,7 @@ func (req *ExecRequest) init(workDir string) (err error) {
 			namedStderr = mlog.NewNamedWriter(`stderr`, os.Stderr)
 		)
 
-		req.mlog = mlog.NewMultiLogger(defLogTimeFormat, ``,
+		req.mlog = mlog.NewMultiLogger(defLogTimeFormat, defLogPrefix,
 			[]mlog.NamedWriter{namedStdout},
 			[]mlog.NamedWriter{namedStderr},
 		)
