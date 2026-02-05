@@ -47,10 +47,12 @@ func (lb *lockBuffer) Write(p []byte) (n int, err error) {
 
 func TestAwwanLocal(t *testing.T) {
 	type testCase struct {
+		desc       string
 		scriptFile string
 		lineRange  string
-		tagOutput  string
 		expError   string
+		expStderr  string
+		expStdout  string
 	}
 
 	var (
@@ -80,44 +82,52 @@ func TestAwwanLocal(t *testing.T) {
 	aww.cryptoc.termrw = &mockrw
 
 	var cases = []testCase{{
+		desc:       `With valid range`,
 		scriptFile: filepath.Join(baseDir, `local.aww`),
 		lineRange:  `1-`,
-		tagOutput:  `local:1-`,
+		expStderr:  string(tdata.Output[`[stderr] local.aww 1-`]),
+		expStdout:  string(tdata.Output[`[stdout] local.aww 1-`]),
 	}, {
+		desc:       `With range over`,
 		scriptFile: filepath.Join(baseDir, `local.aww`),
 		lineRange:  `100-`,
-		tagOutput:  `local:100-`,
+		expStderr:  string(tdata.Output[`[stderr] local.aww 100-`]),
+		expStdout:  string(tdata.Output[`[stdout] local.aww 100-`]),
 	}, {
-		// Pass directory as script.
+		desc:       `With directory as script`,
 		scriptFile: filepath.Join(baseDir, `sub`),
 		lineRange:  `1-`,
 		expError:   `NewExecRequest: "testdata/local/sub" is a directory`,
 	}}
 
-	var (
-		ctx = context.Background()
+	var testerr bytes.Buffer
+	var namederr = mlog.NewNamedWriter(`testerr`, &testerr)
+	var testout bytes.Buffer
+	var namedout = mlog.NewNamedWriter(`testout`, &testout)
+	for _, c := range cases {
+		t.Log(c.desc)
 
-		req *ExecRequest
-		c   testCase
-	)
-	var logw lockBuffer
-	for _, c = range cases {
+		var req *ExecRequest
 		req, err = NewExecRequest(CommandModeLocal, c.scriptFile, c.lineRange)
 		if err != nil {
-			test.Assert(t, `error`, c.expError, err.Error())
+			test.Assert(t, `NewExecRequest error`, c.expError, err.Error())
 			continue
 		}
 
-		logw.Reset()
-		req.registerLogWriter(`output`, &logw)
+		testerr.Reset()
+		testout.Reset()
+		req.mlog.RegisterErrorWriter(namederr)
+		req.mlog.RegisterOutputWriter(namedout)
 
+		ctx := context.Background()
 		err = aww.Local(ctx, req)
 		if err != nil {
-			test.Assert(t, `error`, c.expError, err.Error())
+			test.Assert(t, `Local error`, c.expError, err.Error())
 			continue
 		}
 
-		test.Assert(t, `stdout`, string(tdata.Output[c.tagOutput]), logw.String())
+		test.Assert(t, c.desc+` stdout`, c.expStdout, testout.String())
+		test.Assert(t, c.desc+` stderr`, c.expStderr, testerr.String())
 	}
 }
 
