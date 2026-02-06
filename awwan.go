@@ -389,6 +389,7 @@ func (aww *Awwan) Local(ctx context.Context, req *ExecRequest) (err error) {
 				goto out
 			}
 		}
+		req.mlog.Flush()
 	}
 	req.mlog.Outf(`=== END: %s %s %s`, req.Mode, req.Script, req.LineRange)
 out:
@@ -497,6 +498,12 @@ func (aww *Awwan) Serve(listener net.Listener, address string, isDev bool) (err 
 	}
 
 	return aww.httpd.start()
+}
+
+// Stop the HTTP server from calling [Awwan.Serve].
+func (aww *Awwan) Stop() (err error) {
+	err = aww.httpd.Server.Shutdown(context.Background())
+	return err
 }
 
 // loadSSHConfig load all SSH config from user's home and the awwan base

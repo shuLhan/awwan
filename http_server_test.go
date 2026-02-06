@@ -222,6 +222,9 @@ func TestHttpServer_Execute(t *testing.T) {
 			log.Fatal(err)
 		}
 	}()
+	t.Cleanup(func() {
+		aww.Stop()
+	})
 
 	err = libnet.WaitAlive(`tcp`, address, 10*time.Second)
 	if err != nil {
@@ -299,25 +302,19 @@ func TestHttpServer_Execute(t *testing.T) {
 	for ever {
 		select {
 		case ev = <-ssec.C:
-			if len(ev.Type) != 0 {
-				fmt.Fprintf(&buf, "event: %s\n", ev.Type)
-			}
-			if len(ev.Data) != 0 {
-				fmt.Fprintf(&buf, "data: %q\n", ev.Data)
-			}
-			if len(ev.ID) != 0 {
-				fmt.Fprintf(&buf, "id: %s\n", ev.ID)
-			}
-			buf.WriteByte('\n')
+			fmt.Fprintf(&buf, "event: %s\ndata: %q\nid: %s\n\n",
+				ev.Type, ev.Data, ev.ID)
 
 			if ev.Type == "end" {
 				ever = false
 				break
 			}
+			timeWait.Reset(time.Second)
 		case <-timeWait.C:
 			break
 		}
 	}
+	timeWait.Stop()
 
 	test.Assert(t, `Execute tail`, string(tdata.Output[`local:/local.aww:1-:tail`]), buf.String())
 }
@@ -353,6 +350,9 @@ func TestHttpServer_ExecuteCancel(t *testing.T) {
 			log.Fatal(err)
 		}
 	}()
+	t.Cleanup(func() {
+		aww.Stop()
+	})
 
 	err = libnet.WaitAlive(`tcp`, address, 10*time.Second)
 	if err != nil {
@@ -430,16 +430,8 @@ func TestHttpServer_ExecuteCancel(t *testing.T) {
 	for ever {
 		select {
 		case ev = <-ssec.C:
-			if len(ev.Type) != 0 {
-				fmt.Fprintf(&buf, "event: %s\n", ev.Type)
-			}
-			if len(ev.Data) != 0 {
-				fmt.Fprintf(&buf, "data: %q\n", ev.Data)
-			}
-			if len(ev.ID) != 0 {
-				fmt.Fprintf(&buf, "id: %s\n", ev.ID)
-			}
-			buf.WriteByte('\n')
+			fmt.Fprintf(&buf, "event: %s\ndata: %q\nid: %s\n\n",
+				ev.Type, ev.Data, ev.ID)
 
 			if ev.ID == `1` {
 				testDoExecuteCancel(t, tdata, cl, execResp.ID)
@@ -449,10 +441,12 @@ func TestHttpServer_ExecuteCancel(t *testing.T) {
 				ever = false
 				break
 			}
+			timeWait.Reset(time.Second)
 		case <-timeWait.C:
 			break
 		}
 	}
+	timeWait.Stop()
 
 	test.Assert(t, `Execute cancel`, string(tdata.Output[`local:/cancel.aww:1-:tail`]), buf.String())
 }

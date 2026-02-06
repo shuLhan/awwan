@@ -714,6 +714,9 @@ func (httpd *httpServer) Execute(epr *libhttp.EndpointRequest) (resb []byte, err
 	res.Code = http.StatusOK
 	res.Data = execRes
 
+	execRes.mtxOutput.Lock()
+	defer execRes.mtxOutput.Unlock()
+
 	resb, err = json.Marshal(res)
 	if err != nil {
 		res.Message = fmt.Sprintf(`%s: %s`, logp, err)
@@ -821,42 +824,24 @@ func (httpd *httpServer) ExecuteTail(sseconn *libhttp.SSEConn) {
 	var (
 		lastEventIDStr = sseconn.HTTPRequest.Header.Get(libhttp.HeaderLastEventID)
 		lastEventID    int64
+		ok             bool
 	)
 
 	if len(lastEventIDStr) != 0 {
 		lastEventID, _ = strconv.ParseInt(lastEventIDStr, 10, 64)
 	}
-	if lastEventID == 0 {
-		_ = sseconn.WriteEvent(`begin`, execRes.BeginAt, nil)
-	}
 
 	execRes.mtxOutput.Lock()
-	if lastEventID < int64(len(execRes.Output)) {
-		// Send out the existing output based on request
-		// Last-Event-ID ...
-		var (
-			idx   int
-			out   string
-			idstr string
-		)
-		for idx, out = range execRes.Output[int(lastEventID):] {
-			idstr = strconv.FormatInt(int64(idx), 10)
-			_ = sseconn.WriteEvent(``, out, &idstr)
-		}
-		lastEventID = int64(idx)
+	// Send out the existing output based on request
+	// Last-Event-ID ...
+	var ev sseclient.Event
+	for lastEventID < int64(len(execRes.Output)) {
+		ev = execRes.Output[int(lastEventID)]
+		_ = sseconn.WriteEvent(ev.Type, ev.Data, &ev.ID)
+		lastEventID++
 	}
-	execRes.mtxOutput.Unlock()
-
-	var (
-		ok   bool
-		ev   sseclient.Event
-		evid int64
-	)
-
-	execRes.mtxOutput.Lock()
 	if len(execRes.EndAt) != 0 {
 		// The execution has been completed.
-		_ = sseconn.WriteEvent(`end`, execRes.EndAt, nil)
 		execRes.mtxOutput.Unlock()
 		goto out
 	}
@@ -870,13 +855,9 @@ func (httpd *httpServer) ExecuteTail(sseconn *libhttp.SSEConn) {
 			// Channel has been closed.
 			break
 		}
-		if len(ev.ID) == 0 {
-			_ = sseconn.WriteEvent(ev.Type, ev.Data, nil)
-			continue
-		}
 
 		// Skip event where ID is less than last ID from output.
-		evid = ev.IDInt()
+		evid := ev.IDInt()
 		if evid <= lastEventID {
 			continue
 		}

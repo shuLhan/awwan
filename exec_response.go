@@ -36,7 +36,9 @@ type ExecResponse struct {
 
 	Error string `json:"error"`
 
-	Output []string `json:"output"`
+	Output []sseclient.Event `json:"output"`
+
+	id int
 
 	// mtxOutput protect read/write on Output.
 	mtxOutput sync.Mutex
@@ -53,9 +55,17 @@ func newExecResponse(req *ExecRequest) (execRes *ExecResponse) {
 		ID:      fmt.Sprintf(`%s:%s:%s:%d`, req.Mode, req.Script, req.LineRange, now.Unix()),
 		BeginAt: now.Format(time.RFC3339),
 
-		Output: make([]string, 0, 8),
+		Output: make([]sseclient.Event, 0, 512),
 		eventq: make(chan sseclient.Event, 512),
 	}
+
+	execRes.id++
+	var ev = sseclient.Event{
+		Type: `begin`,
+		Data: execRes.BeginAt,
+		ID:   strconv.Itoa(execRes.id),
+	}
+	execRes.Output = append(execRes.Output, ev)
 
 	// Use the ExecResponse itself as handler for output.
 	req.registerLogWriter(`response`, execRes)
@@ -71,18 +81,19 @@ func (execRes *ExecResponse) Write(out []byte) (n int, err error) {
 	}
 
 	execRes.mtxOutput.Lock()
+	defer execRes.mtxOutput.Unlock()
+
+	execRes.id++
 	var ev = sseclient.Event{
 		Data: string(out),
-		ID:   strconv.FormatInt(int64(len(execRes.Output)), 10),
+		ID:   strconv.Itoa(execRes.id),
 	}
-
-	execRes.Output = append(execRes.Output, ev.Data)
+	execRes.Output = append(execRes.Output, ev)
 
 	select {
 	case execRes.eventq <- ev:
 	default:
 	}
-	execRes.mtxOutput.Unlock()
 
 	return len(out), nil
 }
@@ -106,8 +117,11 @@ func (execRes *ExecResponse) end(execErr error) {
 
 	execRes.EndAt = timeNow().UTC().Format(time.RFC3339)
 
+	execRes.id++
 	ev.Type = `end`
 	ev.Data = execRes.EndAt
+	ev.ID = strconv.Itoa(execRes.id)
+	execRes.Output = append(execRes.Output, ev)
 
 	select {
 	case execRes.eventq <- ev:

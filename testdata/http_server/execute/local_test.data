@@ -16,35 +16,44 @@
     "begin_at": "2023-11-26T15:21:00Z",
     "end_at": "",
     "error": "",
-    "output": []
+    "output": [
+      {
+        "Type": "begin",
+        "Data": "2023-11-26T15:21:00Z",
+        "ID": "1"
+      }
+    ]
   },
   "code": 200
 }
 
 <<< local:/local.aww:1-:tail
 event: open
+data: ""
+id: 
 
 event: begin
 data: "2023-11-26T15:21:00Z"
-
-event: message
-data: "      === BEGIN: local /local.aww 1-\n"
-id: 0
-
-event: message
-data: "      -->   1: echo \"test\"\n"
 id: 1
 
 event: message
-data: "test\n"
+data: "      === BEGIN: local /local.aww 1-\n"
 id: 2
 
 event: message
-data: "      === END: local /local.aww 1-\n"
+data: "      -->   1: echo \"test\"\n"
 id: 3
+
+event: message
+data: "test\n"
+id: 4
+
+event: message
+data: "      === END: local /local.aww 1-\n"
+id: 5
 
 event: end
 data: "2023-11-26T15:21:00Z"
-id: 3
+id: 6
 
 
