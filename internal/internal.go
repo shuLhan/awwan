@@ -271,7 +271,7 @@ func initMemfsWui() (err error) {
 	var mfsOpts = &memfs.Options{
 		Root: `_wui`,
 		Includes: []string{
-			`.*\.(css|js|html|jpg|png|ico)$`,
+			`.*\.(css|js|html|jpg|png|ico|txt)$`,
 		},
 		Excludes: []string{
 			`.*\.(adoc|json|yaml)$`,
