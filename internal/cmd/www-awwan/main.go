@@ -1,5 +1,5 @@
-// SPDX-FileCopyrightText: 2023 M. Shulhan <ms@kilabit.info>
 // SPDX-License-Identifier: GPL-3.0-or-later
+// SPDX-FileCopyrightText: 2023 M. Shulhan <ms@kilabit.info>
 
 // Program www-awwan serve the awwan.org website.
 //
@@ -15,6 +15,7 @@ import (
 	"syscall"
 
 	"git.sr.ht/~shulhan/ciigo"
+	"git.sr.ht/~shulhan/pakakeh.go/lib/http"
 	"git.sr.ht/~shulhan/pakakeh.go/lib/memfs"
 	"git.sr.ht/~shulhan/pakakeh.go/lib/systemd"
 
@@ -69,10 +70,11 @@ func main() {
 	log.Printf(`--- Starting %s at http://%s with dev=%v`, binName, *flagAddress, *flagDev)
 
 	var optsServe = ciigo.ServeOptions{
-		Mfs:            MemfsWww,
-		Address:        *flagAddress,
-		ConvertOptions: internal.DocConvertOpts,
-		IsDevelopment:  *flagDev,
+		ServerOptions: http.ServerOptions{
+			Memfs:   MemfsWww,
+			Address: *flagAddress,
+		},
+		IsDevelopment: *flagDev,
 	}
 
 	listeners, err := systemd.Listeners(true)
@@ -91,7 +93,7 @@ func main() {
 		}
 	}
 
-	err = ciigo.Serve(optsServe)
+	err = ciigo.Serve(optsServe, internal.DocConvertOpts)
 	if err != nil {
 		log.Fatal(err)
 	}
