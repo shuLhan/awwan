@@ -1,10 +1,67 @@
 // SPDX-FileCopyrightText: 2020 M. Shulhan <ms@kilabit.info>
 // SPDX-License-Identifier: GPL-3.0-or-later
+
 = Changelog for awwan
+:sectanchors:
 :toc:
-:sectlinks:
 
 This page document changes on each release.
+
+Legend,
+
+* 🪵: Breaking changes
+* 🌱: New feature
+* 🌼: Enhancement
+* 💧: Chores
+
+
+[#v0_13_1]
+== awwan v0.13.1 (2026-02-09)
+
+**🌼 internal/cmd/www-awwan: implement socket based activation using systemd**
+
+This allow us to run www-awwan only when its activated in the local
+environment.
+
+**🌼 cmd/awwan: implement socket based activation on serve command**
+
+The "awwan serve" command now can run based on socket activation under
+systemd.
+
+**🌼 _wui/doc: use default ciigo style**
+
+The default ciigo style provides consistent style with kilabit.info
+and have support for light and dark themes.
+
+**💧 all: fix data race in tests and [httpServer.ExecuteTail]**
+
+In the test for AwwanLocal, use buffer with lock, so each write and
+read is safe.
+
+In the httpServer, the test found data race during ExecuteTail when
+accessing [ExecResponse.EndAt].
+We fix it by locking the resource during call to end() and when
+accessing the EndAt field.
+
+**💧 _ops/awwan-tour: fix build with latest mkosi**
+
+The option "Incremental" and "CacheDirectory" in mkosi.conf has been moved
+to section "[Build]".
+
+**💧 all: use separate buffer for stdout and stderr in TestAwwanLocal**
+
+This is to fix flaky test on TestAwwanLocal.
+
+**🌼 all: improve the Server-Sent Events (SSE) output**
+
+In the ExecResponse, store the event in the Output instead of message
+data, so the server can iterate the Output directly and pass it to
+WriteEvent directly.
+
+The event ID now start at 1 with type "begin".
+This is to minimize confusion when comparing empty Last-Event-ID from
+client, which is equal to 0.
+
 
 [#v0_13_0]
 == awwan v0.13.0 (2025-12-27)

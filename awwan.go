@@ -1,5 +1,5 @@
-// SPDX-FileCopyrightText: 2019 M. Shulhan <ms@kilabit.info>
 // SPDX-License-Identifier: GPL-3.0-or-later
+// SPDX-FileCopyrightText: 2019 M. Shulhan <ms@kilabit.info>
 
 package awwan
 
@@ -21,7 +21,7 @@ import (
 )
 
 // Version current version of this module (library and program).
-var Version = `0.13.0`
+var Version = `0.13.1`
 
 // osGetwd define the handler to get current working directory.
 //
